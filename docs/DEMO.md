@@ -22,11 +22,24 @@ make check
 You should see both agents, two different model families, and both CLI binaries
 found.
 
-**3.** Give it a task.
+**3.** Give it a task. Use the demo profile: same rules, same guards, faster
+models, so it finishes while people are still watching.
 
 ```bash
-./bin/rally --run "Write fizzbuzz.py and test_fizzbuzz.py that pass python3 -m unittest discover" --no-mail
+make demo
 ```
+
+That is the same as:
+
+```bash
+./bin/rally --config config/rally.demo.json --no-mail \
+  --run "Write fizzbuzz.py with a fizzbuzz(n) function, and test_fizzbuzz.py covering 1, 3, 5 and 15. Must pass python3 -m unittest discover."
+```
+
+**Measured: 57 to 75 seconds, start to report.** The production profile (Opus at high
+effort plus Gemini 3.1 Pro) takes about 3 minutes 30 for the same shape of task.
+Use the demo profile on stage and say you are using faster models; the loop,
+the rules and the invariant are identical.
 
 **4.** Watch the turns alternate. Claude scopes a checklist, Antigravity
 negotiates it, then they take turns working and checking each other.
@@ -101,6 +114,36 @@ which agent, what to look at first, and what is still open.
 
 ---
 
+---
+
+## Before you go on stage
+
+**1. Rehearse it once, on the same network.** `make demo` warms every path: both
+CLIs authenticate, the workspace is created, the report generates.
+
+**2. Do not use Claude Code yourself during the demo.** The agent shares your
+Claude subscription window. Your own session competes with the run.
+
+**3. Do not edit the repo while a run is live.** The containment check compares
+the repo tree before and after each turn and cannot tell your edit from an
+agent's. You will see a containment warning that is really just you.
+
+**4. Have the offline fallback ready.** If the network fails on stage:
+
+```bash
+make dry
+```
+
+Stub agents, no network, no tokens, no API calls. It exercises the real loop,
+the real state machine and the real guards, and finishes instantly. You can talk
+through the whole architecture against it.
+
+**5. Know your two numbers.** About 60 to 75 seconds for the demo profile, 3m30
+for production. If a run goes noticeably longer than that, it is not stuck: the turn
+budget will halt it and report.
+
+---
+
 ## What to point at during the demo
 
 **The checklist is negotiated before any work starts.** Turn 0 is one agent
@@ -124,6 +167,13 @@ for i in s['checklist']:
 **The two agents are different models on purpose.** A model reviewing its own
 work shares its own blind spots. Startup refuses to run two agents from the same
 family, because that failure looks completely healthy in the logs.
+
+**How the work splits varies between runs, and that is fine.** Measured runs have
+gone both ways: sometimes one agent claims everything and the other checks all of
+it, sometimes they split the items and verify each other in both directions. Roles
+are per turn, not per agent. Whoever holds the turn verifies whatever is waiting,
+then advances their own. If someone asks why the split was uneven, even splitting
+was never the goal. Independent checking was, and that holds either way.
 
 **It stops instead of spinning.** Show the limits in
 [RUNBOOK.md](RUNBOOK.md#limits-and-why-they-are-not-optional). A run that is not

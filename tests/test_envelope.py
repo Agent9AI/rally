@@ -142,3 +142,23 @@ class TestScopeClosure(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
+
+class TestVerifierIsAlwaysRecorded(unittest.TestCase):
+    """Regression: the dry harness aliased state, so items reached done with
+    verified_by unset. Reaching done without a recorded verifier must be
+    impossible, because that record IS the invariant."""
+
+    def test_done_always_names_its_verifier(self):
+        prev = [item(state="awaiting-verification", owner="agy")]
+        out, _ = E.reconcile(prev, [item(state="done", owner="agy")], actor="claude")
+        self.assertEqual(out[0]["state"], "done")
+        self.assertEqual(out[0]["verified_by"], "claude")
+
+    def test_passthrough_cannot_launder_an_unverified_done(self):
+        """An item already marked done with no verifier must not survive a turn."""
+        prev = [item(state="awaiting-verification", owner="agy")]
+        sneaky = item(state="done", owner="agy")
+        sneaky["verified_by"] = None
+        out, _ = E.reconcile(prev, [sneaky], actor="claude")
+        self.assertIsNotNone(out[0]["verified_by"], "done must always name a verifier")

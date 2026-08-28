@@ -335,7 +335,11 @@ def take_turn(run: Run, cfg: Dict, dry: bool = False) -> Optional[str]:
 def _stub_reply(run: Run, actor: str) -> str:
     """Deterministic fake agent, for exercising the loop without spending tokens."""
     s = run.s
-    items = list(s["checklist"])
+    # Deep copy. list() aliases the dicts, so the stub would mutate authoritative
+    # state in place and reconcile would see done -> done and pass it straight
+    # through, leaving verified_by unset. The offline demo then displays finished
+    # items with no verifier, which is the opposite of what it exists to show.
+    items = json.loads(json.dumps(s["checklist"]))
     if not items:
         items = [{"id": "c%d" % i, "description": "stub item %d" % i, "state": "open",
                   "owner": None, "verified_by": None, "evidence": None, "rejections": 0}
@@ -498,6 +502,8 @@ def cmd_check(cfg: Dict) -> int:
 def main(argv: List[str]) -> int:
     ap = argparse.ArgumentParser(prog="rally")
     ap.add_argument("--check", action="store_true", help="preflight and exit")
+    ap.add_argument("--config", default=CONFIG,
+                    help="config file (use config/rally.demo.json for fast live demos)")
     ap.add_argument("--run", metavar="TASK", help="commission a run")
     ap.add_argument("--resume", metavar="RUN_ID")
     ap.add_argument("--workdir", default=None,
@@ -515,7 +521,7 @@ def main(argv: List[str]) -> int:
     a.workdir_given = a.workdir is not None
     if a.workdir is None:
         a.workdir = "."
-    cfg = load_config()
+    cfg = load_config(a.config)
     if a.no_mail:
         cfg["mail"]["enabled"] = False
     if a.check:
