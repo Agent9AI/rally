@@ -107,9 +107,6 @@ class TestCompletion(unittest.TestCase):
         self.assertNotEqual(a, b)
 
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
-
 
 class TestClaimAndWorkSameTurn(unittest.TestCase):
     """Regression: agy legitimately claimed and worked five items in one turn."""
@@ -141,3 +138,7 @@ class TestScopeClosure(unittest.TestCase):
         out, viol = E.reconcile([item("c1")], [item("c1"), item("c9")],
                                 actor="agy", allow_new=True)
         self.assertEqual({i["id"] for i in out}, {"c1", "c9"})
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)

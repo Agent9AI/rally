@@ -5,14 +5,20 @@
       "model": "opus",
       "effort": "high",
       "family": "anthropic",
-      "address": "claude@updates.agent9.dev"
+      "address": "claude@updates.agent9.dev",
+      "exec_flags": [
+        "--dangerously-skip-permissions"
+      ]
     },
     "agy": {
       "bin": "agy",
       "model": "gemini-3.1-pro-high",
       "effort": "high",
       "family": "google",
-      "address": "agy@updates.agent9.dev"
+      "address": "agy@updates.agent9.dev",
+      "exec_flags": [
+        "--dangerously-skip-permissions"
+      ]
     }
   },
   "limits": {
@@ -20,11 +26,22 @@
     "sends_per_run": 60,
     "no_progress_halt": 4,
     "rejections_max": 2,
-    "turn_timeout_sec": 1500
+    "turn_timeout_sec": 1500,
+    "require_execution_symmetry": true
   },
   "mail": {
     "enabled": true,
     "cc_human": "exposelocal@gmail.com",
-    "keychain_service": "rally-resend"
+    "keychain_service": "rally-resend",
+    "from_name": "Rally"
+  },
+  "ingress": {
+    "worker_url": "https://rally-ingress.terry-c87.workers.dev",
+    "poll_interval_sec": 20,
+    "poll_token_keychain": "rally-poll-token",
+    "commission_address": "rally@updates.agent9.dev",
+    "owners": [
+      "exposelocal@gmail.com"
+    ]
   }
 }

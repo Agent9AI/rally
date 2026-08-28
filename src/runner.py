@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import time
 import json
 import os
 import subprocess
@@ -18,6 +19,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import agents  # noqa: E402
 import envelope as E  # noqa: E402
+import report  # noqa: E402
 import transport  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -106,7 +108,12 @@ def build_prompt(run: Run, actor: str, cfg: Dict) -> str:
                   .replace("<ME>", actor)]
     parts.append("\nRUN: %s   TURN: %s   YOU ARE: %s   COUNTERPART: %s"
                  % (s["run_id"], s["turn"], actor, other))
-    parts.append("WORKING DIRECTORY: %s (you may read and edit files here)" % s["workdir"])
+    parts.append(
+        "WORKING DIRECTORY: %s\n"
+        "Create and edit files ONLY inside that directory. Do not write anywhere "
+        "else on this machine, and never into Rally's own source tree. If the task "
+        "seems to need a change outside the working directory, do not make it: say "
+        "so in your narrative and mark the item blocked." % s["workdir"])
     parts.append("\nTHE TASK AS COMMISSIONED:\n%s" % s["task"])
 
     if not s["checklist"]:
@@ -133,6 +140,21 @@ def build_prompt(run: Run, actor: str, cfg: Dict) -> str:
         parts.append("\nA MESSAGE FROM THE HUMAN, which takes precedence:\n%s"
                      % s["human_note"])
     return "\n".join(parts)
+
+
+def repo_fingerprint(path: str = ROOT) -> str:
+    """Cheap snapshot of a tree, for detecting writes outside the workdir.
+
+    Observed on the first live run: an agent working in /tmp wrote a new test file
+    into the Rally source repo. The runner sets cwd but does not sandbox, so the
+    only honest posture is to detect the escape and say so.
+    """
+    try:
+        p = subprocess.run(["git", "status", "--porcelain"], cwd=path, timeout=20,
+                           stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+        return p.stdout.decode(errors="replace")
+    except Exception:
+        return ""
 
 
 def git_commit(workdir: str, message: str) -> Optional[str]:
@@ -178,20 +200,81 @@ def mail_turn(run: Run, cfg: Dict, actor: str, narrative: str, commit: Optional[
     run.note("mailed turn %s to %s" % (s["turn"], other))
 
 
+def write_report(run: Run, cfg: Dict, halt: str, dry: bool = False) -> str:
+    """The agent holding the turn writes it. The runner keeps a correct fallback."""
+    s = run.s
+    if dry:
+        return report.mechanical_summary(s, halt)
+    actor = s["actor"]
+    try:
+        raw = agents.run_agent(actor, report.build_report_prompt(s, halt), s["workdir"],
+                               cfg["agents"][actor], 420, "")
+        text = raw.strip()
+        if len(text) < 80:
+            raise agents.AgentError("report too short to be real")
+        run.note("report written by %s" % actor)
+        return text
+    except agents.AgentError as exc:
+        run.note("report generation failed (%s), sending the mechanical summary" % exc)
+        return report.mechanical_summary(s, halt)
+
+
+def mail_report(run: Run, cfg: Dict, text: str, halt: str) -> None:
+    mail = cfg.get("mail", {})
+    human = mail.get("cc_human")
+    if not mail.get("enabled", True) or not human:
+        return
+    s = run.s
+    actor = s["actor"]
+    status = report.classify(halt)[0]
+    ledger = transport.Ledger(LEDGER)
+    ledger.check_and_reserve(s["run_id"], cfg["limits"]["sends_per_run"])
+    key = transport.get_key(mail.get("keychain_service", "rally-resend"))
+    transport.send(
+        key=key,
+        sender="Rally %s <%s>" % (actor, cfg["agents"][actor]["address"]),
+        to=human,
+        subject="[rally #%s %s] %s" % (s["run_id"], status, s["task"][:60]),
+        text=text + "\n\n---\nrun %s, %d turns, workdir %s\n" % (
+            s["run_id"], s["turn"], s["workdir"]),
+        headers={"X-Rally-Run": s["run_id"], "X-Rally-Report": status,
+                 "Auto-Submitted": "auto-generated"},
+    )
+    run.note("report mailed to %s" % human)
+
+
 def take_turn(run: Run, cfg: Dict, dry: bool = False) -> Optional[str]:
     """One turn. Returns a halt reason, or None to continue."""
     s = run.s
     actor = s["actor"]
     limits = cfg["limits"]
+    note = (s.get("human_note") or "").strip()
+    if note.upper().startswith("STOP"):
+        # The kill switch must not require the agents to cooperate, so it is
+        # checked by the runner before a turn is dispatched.
+        s["halt"] = {"reason": "stopped_by_human", "detail": note}
+        run.save()
+        return "stopped_by_human"
     prompt = build_prompt(run, actor, cfg)
     run.note("turn %s: %s thinking (%s)" % (s["turn"], actor, cfg["agents"][actor]["model"]))
 
+    before = "" if dry else repo_fingerprint()
     if dry:
         raw = _stub_reply(run, actor)
     else:
         schema = SCHEMA if cfg["agents"][actor].get("use_schema") else ""
         raw = agents.run_agent(actor, prompt, s["workdir"], cfg["agents"][actor],
                                limits["turn_timeout_sec"], schema)
+
+    if not dry and os.path.abspath(s["workdir"]) != ROOT:
+        after = repo_fingerprint()
+        if after != before:
+            msg = ("containment: %s wrote outside its workdir into the Rally repo. "
+                   "Work only inside %s." % (actor, s["workdir"]))
+            run.note(msg)
+            s.setdefault("containment", []).append(
+                {"turn": s["turn"], "actor": actor, "diff": after[:2000]})
+            s["violations"] = (s.get("violations") or []) + [msg]
 
     env = E.extract(raw)
     if env is None:
@@ -207,10 +290,12 @@ def take_turn(run: Run, cfg: Dict, dry: bool = False) -> Optional[str]:
         s["checklist"], env.get("checklist", []), actor, limits["rejections_max"],
         allow_new=(s["turn"] <= 1))
     s["checklist"] = accepted
-    s["violations"] = problems + violations
+    carried = [v for v in (s.get("violations") or []) if v.startswith("containment:")]
+    s["violations"] = carried + problems + violations
     if violations:
         run.note("%d illegal change(s) reverted" % len(violations))
 
+    s["human_note"] = None  # delivered with this turn's prompt, do not repeat it
     commit = git_commit(s["workdir"], "rally %s t%s (%s)" % (s["run_id"], s["turn"], actor))
     try:
         mail_turn(run, cfg, actor, env.get("narrative", "")[:4000], commit)
@@ -278,6 +363,105 @@ def loop(run: Run, cfg: Dict, dry: bool = False, max_turns: int = 0) -> str:
     return "turn_budget"
 
 
+def new_workspace(run_id: str) -> str:
+    """Every commissioned run gets its own git-initialised tree.
+
+    Isolation is what makes the containment check meaningful, and the branch is
+    what makes figure 1's commit SHA real.
+    """
+    ws = os.path.join(RUNS, run_id, "workspace")
+    os.makedirs(ws, exist_ok=True)
+    if not os.path.isdir(os.path.join(ws, ".git")):
+        for cmd in (["git", "init", "-q"],
+                    ["git", "commit", "-q", "--allow-empty", "-m", "rally: %s" % run_id]):
+            subprocess.run(cmd, cwd=ws, stdout=subprocess.DEVNULL,
+                           stderr=subprocess.DEVNULL, timeout=30)
+    return ws
+
+
+def handle_commission(cfg: Dict, task: str, sender: str) -> str:
+    run = Run.create(task, ".", cfg)
+    run.s["workdir"] = new_workspace(run.s["run_id"])
+    run.s["commissioned_by"] = sender
+    run.save()
+    print("commissioned %s by %s" % (run.s["run_id"], sender))
+    halt = loop(run, cfg)
+    text = write_report(run, cfg, halt)
+    run.s["report"] = text
+    run.save()
+    try:
+        mail_report(run, cfg, text, halt)
+    except transport.SendBlocked as exc:
+        run.note("report not mailed: %s" % exc)
+    return run.s["run_id"]
+
+
+def handle_note(cfg: Dict, run_id: str, text: str) -> None:
+    try:
+        run = Run.load(run_id)
+    except IOError:
+        print("note for unknown run %s, dropped" % run_id)
+        return
+    run.s["human_note"] = text
+    run.save()
+    if text.strip().upper().startswith("STOP"):
+        run.s["halt"] = {"reason": "stopped_by_human", "detail": text}
+        run.save()
+        print("run %s stopped by human" % run_id)
+        report_text = report.mechanical_summary(run.s, "stopped_by_human")
+        try:
+            mail_report(run, cfg, report_text, "stopped_by_human")
+        except transport.SendBlocked:
+            pass
+        return
+    print("note delivered to %s, resuming" % run_id)
+    halt = loop(run, cfg)
+    text_out = write_report(run, cfg, halt)
+    run.s["report"] = text_out
+    run.save()
+    try:
+        mail_report(run, cfg, text_out, halt)
+    except transport.SendBlocked:
+        pass
+
+
+def serve(cfg: Dict, once: bool = False) -> int:
+    """Poll the ingress Worker and act on what arrives."""
+    import ingress
+
+    interval = cfg["ingress"].get("poll_interval_sec", 20)
+    print("rally serving: commission address %s, polling %s every %ds"
+          % (cfg["ingress"]["commission_address"], cfg["ingress"]["worker_url"], interval))
+    while True:
+        try:
+            messages = ingress.collect(cfg)
+        except Exception as exc:  # a poll failure must never kill the daemon
+            print("poll failed: %s" % exc)
+            if once:
+                return 1
+            time.sleep(interval)
+            continue
+
+        handled: List[str] = []
+        for m in messages:
+            kind = m.get("kind")
+            detail = m.get("detail") or {}
+            try:
+                if kind == "commission":
+                    handle_commission(cfg, detail["task"], detail["sender"])
+                elif kind == "note":
+                    handle_note(cfg, detail["run_id"], detail["text"])
+                else:
+                    print("ignored: %s" % (detail.get("why") or m.get("error")))
+            except Exception as exc:
+                print("handling %s failed: %s" % (m.get("id"), exc))
+            handled.append(m["id"])
+        ingress.ack(cfg, handled)
+        if once:
+            return 0
+        time.sleep(interval)
+
+
 def cmd_check(cfg: Dict) -> int:
     print("Rally preflight")
     ok = True
@@ -313,6 +497,11 @@ def main(argv: List[str]) -> int:
     ap.add_argument("--dry", action="store_true", help="stub agents, no tokens spent")
     ap.add_argument("--no-mail", action="store_true")
     ap.add_argument("--max-turns", type=int, default=0)
+    ap.add_argument("--serve", action="store_true",
+                    help="poll the ingress Worker and run what arrives")
+    ap.add_argument("--once", action="store_true", help="with --serve, one pass only")
+    ap.add_argument("--note", metavar="TEXT",
+                    help="inject guidance into the next turn; STOP halts the run")
     a = ap.parse_args(argv)
 
     cfg = load_config()
@@ -320,6 +509,9 @@ def main(argv: List[str]) -> int:
         cfg["mail"]["enabled"] = False
     if a.check:
         return cmd_check(cfg)
+    if a.serve:
+        agents.assert_pins(cfg["agents"])
+        return serve(cfg, a.once)
     if not (a.run or a.resume):
         ap.print_help()
         return 2
@@ -327,14 +519,25 @@ def main(argv: List[str]) -> int:
     agents.assert_pins(cfg["agents"])
     os.makedirs(RUNS, exist_ok=True)
     run = Run.load(a.resume) if a.resume else Run.create(a.run, a.workdir, cfg)
+    if a.note:
+        run.s["human_note"] = a.note
+        run.save()
     print("run %s  workdir %s" % (run.s["run_id"], run.s["workdir"]))
     halt = loop(run, cfg, a.dry, a.max_turns)
-    print("\nHALT: %s after %d turns" % (halt, run.s["turn"]))
+
+    status = report.classify(halt)[0]
     done = sum(1 for i in run.s["checklist"] if i["state"] == "done")
-    print("checklist: %d/%d done" % (done, len(run.s["checklist"])))
-    for i in run.s["checklist"]:
-        print("  [%s] %-22s %s" % ("x" if i["state"] == "done" else " ",
-                                   i["state"], i["description"][:60]))
+    print("\n%s: %s after %d turns, %d/%d verified"
+          % (status, halt, run.s["turn"], done, len(run.s["checklist"])))
+
+    text = write_report(run, cfg, halt, a.dry)
+    run.s["report"] = text
+    run.save()
+    try:
+        mail_report(run, cfg, text, halt)
+    except transport.SendBlocked as exc:
+        run.note("report not mailed: %s" % exc)
+    print("\n" + "=" * 62 + "\n" + text + "\n" + "=" * 62)
     return 0
 
 

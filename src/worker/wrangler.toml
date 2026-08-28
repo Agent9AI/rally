@@ -1,0 +1,15 @@
+name = "rally-ingress"
+main = "index.js"
+compatibility_date = "2026-08-01"
+
+# Durable holding pen for inbound mail. The runner may be asleep; the mail is not.
+# D1, not KV: the inbox is polled, so it needs read-your-writes. KV list is
+# eventually consistent and hid a freshly delivered message for up to a minute.
+[[d1_databases]]
+binding = "INBOX"
+database_name = "rally-inbox"
+database_id = "8f66248a-5b72-452e-bffa-37bca493b511"
+
+# Secrets, set with `wrangler secret put`:
+#   INGEST_TOKEN  path token Resend uses on the inbound webhook URL
+#   POLL_TOKEN    bearer token the runner uses to collect and ack

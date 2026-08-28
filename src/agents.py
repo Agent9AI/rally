@@ -33,6 +33,21 @@ def assert_pins(agents: Dict[str, Dict]) -> None:
                 "Rally needs two different model families." % (name, model, seen[fam], fams, fam)
             )
         seen[fam] = name
+    # Execution symmetry. Discovered on the first live run: agy carried
+    # --dangerously-skip-permissions and claude carried nothing, so claude could
+    # only read source. It still recorded items as "done", which makes the
+    # verification invariant a fiction rather than a check. Neither agent may be
+    # the privileged one.
+    caps = {n: bool(a.get("exec_flags")) for n, a in agents.items()}
+    if len(set(caps.values())) > 1:
+        able = [n for n, v in caps.items() if v]
+        unable = [n for n, v in caps.items() if not v]
+        raise AgentError(
+            "execution asymmetry: %s can run commands, %s cannot. The agent that "
+            "cannot execute can only read source, so its verification is a weaker "
+            "claim than the one recorded. Give both agents exec_flags, or neither."
+            % (", ".join(able), ", ".join(unable)))
+
     agy = agents.get("agy", {})
     if agy and not str(agy.get("model", "")).startswith("gemini-"):
         raise AgentError(
@@ -57,9 +72,23 @@ def _run(cmd: List[str], workdir: str, timeout: int) -> str:
 
 
 def run_claude(prompt: str, workdir: str, cfg: Dict, timeout: int) -> str:
+    """Note the permission flag, which is load-bearing rather than convenience.
+
+    Without it every command claude tries is approval-gated, and since nobody is
+    at a terminal to approve, claude can read source but can never *run* anything.
+    It can therefore never produce the second, independent execution that rule 1
+    requires, so agy's work could only ever be verified by reading. The first live
+    run stalled precisely there and the agents wrote the diagnosis into the
+    checklist themselves (r-20260828-cf40c3, item c8).
+
+    `agy` has carried `--dangerously-skip-permissions` from the start. Matching it
+    here is what makes the two sides equally capable; the asymmetry, not the
+    permission, was the bug. Both agents are pointed at a scratch workdir.
+    """
     cmd = [cfg.get("bin", "claude"), "-p",
            "--model", cfg["model"],
            "--effort", cfg.get("effort", "high"),
+           "--dangerously-skip-permissions",
            prompt]
     return _run(cmd, workdir, timeout)
 
@@ -78,8 +107,8 @@ def run_agy(prompt: str, workdir: str, cfg: Dict, timeout: int, schema_path: str
     cmd = [cfg.get("bin", "agy"),
            "--model", cfg["model"],
            "--effort", effort,
-           "--print-timeout", "%ds" % max(60, timeout - 30),
-           "--dangerously-skip-permissions"]
+           "--print-timeout", "%ds" % max(60, timeout - 30)]
+    cmd += list(cfg.get("exec_flags") or [])
     # `--json-schema` is refused unless --output-format is json/stream-json, which
     # changes the whole reply shape. The runner's reconcile() is the real
     # enforcement, so the schema stays opt-in rather than on by default.

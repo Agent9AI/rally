@@ -1,0 +1,29 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+      - name: Unit tests
+        run: python3 -m unittest discover -s tests -v
+      - name: Worker syntax
+        run: node --check src/worker/index.js
+      - name: Config is valid JSON and pins two families
+        run: |
+          python3 - <<'PY'
+          import json, sys
+          sys.path.insert(0, "src")
+          import agents
+          cfg = json.load(open("config/rally.json"))
+          agents.assert_pins(cfg["agents"])
+          print("pins OK:", {n: a["model"] for n, a in cfg["agents"].items()})
+          PY
