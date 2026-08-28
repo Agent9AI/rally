@@ -196,10 +196,15 @@ cd "$RUN_WORKDIR" && timeout "$TURN_TIMEOUT_SEC" \
 
 ```bash
 cd "$RUN_WORKDIR" && timeout "$TURN_TIMEOUT_SEC" \
-  agy -p --model "$RALLY_AGY_MODEL" --effort "$EFFORT" \
+  agy --model "$RALLY_AGY_MODEL" --effort "$EFFORT" \
       --output-format json --json-schema "$RALLY_ROOT/schema/envelope.json" \
-      --print-timeout 25m "$TURN_PROMPT"
+      --print-timeout 25m -p="$TURN_PROMPT"
 ```
+
+**The prompt must be attached to the flag as `-p=...`, and it must come last.**
+`agy` parses flags Go style, so a bare `-p` swallows the next token: written as
+`agy -p --model gemini-3.1-pro-high "prompt"`, the CLI takes `--model` as the
+prompt and silently discards the real one. Verified on 2026-08-28.
 
 `agy --print-timeout` defaults to five minutes, which is far too short for real
 work, so it is always set explicitly. Its `--effort` scale is `low|medium|high`
