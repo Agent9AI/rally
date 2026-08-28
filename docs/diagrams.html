@@ -1,0 +1,386 @@
+<title>The Rally Protocol</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+  :root{
+    --paper:#F1F4F7;
+    --card:#FFFFFF;
+    --ink:#151A21;
+    --soft:#4E5866;
+    --faint:#7C8797;
+    --rule:#D3DAE3;
+    --rule-soft:#E3E8EE;
+    --blue:#2B5FB8;
+    --red:#B03A31;
+    --shadow:0 1px 2px rgba(21,26,33,.06),0 8px 24px -12px rgba(21,26,33,.18);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#0E1116;
+      --card:#161B22;
+      --ink:#E7ECF2;
+      --soft:#9EAABA;
+      --faint:#778393;
+      --rule:#2B333E;
+      --rule-soft:#222A34;
+      --blue:#7FA8F0;
+      --red:#E58074;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.6);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0E1116;
+    --card:#161B22;
+    --ink:#E7ECF2;
+    --soft:#9EAABA;
+    --faint:#778393;
+    --rule:#2B333E;
+    --rule-soft:#222A34;
+    --blue:#7FA8F0;
+    --red:#E58074;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.6);
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;
+    font-size:16px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:56px 24px 96px;display:flex;flex-direction:column;gap:56px}
+
+  .eyebrow{
+    font-family:"IBM Plex Mono",ui-monospace,monospace;
+    font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--faint);
+  }
+
+  header{display:flex;flex-direction:column;gap:18px;border-bottom:1px solid var(--rule);padding-bottom:34px}
+  h1{
+    font-family:Newsreader,Georgia,serif;
+    font-weight:600;font-size:clamp(40px,7vw,62px);line-height:1.02;
+    margin:0;letter-spacing:-.015em;text-wrap:balance;
+  }
+  .lede{
+    font-family:Newsreader,Georgia,serif;
+    font-size:clamp(19px,2.4vw,22px);line-height:1.5;color:var(--soft);
+    max-width:60ch;margin:0;
+  }
+  .meta{display:flex;flex-wrap:wrap;gap:8px 22px}
+  .meta span{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--faint)}
+
+  section{display:flex;flex-direction:column;gap:14px}
+  h2{
+    font-family:Newsreader,Georgia,serif;
+    font-weight:600;font-size:27px;line-height:1.2;margin:0;letter-spacing:-.01em;
+  }
+  p{margin:0;max-width:66ch;color:var(--soft)}
+  p strong{color:var(--ink);font-weight:600}
+
+  figure{
+    margin:0;background:var(--card);border:1px solid var(--rule);
+    border-radius:3px;padding:26px 22px 18px;box-shadow:var(--shadow);
+    display:flex;flex-direction:column;gap:16px;overflow-x:auto;
+  }
+  figure svg{display:block;width:100%;min-width:600px;height:auto}
+  figcaption{
+    font-size:13.5px;line-height:1.55;color:var(--soft);
+    border-top:1px solid var(--rule-soft);padding-top:13px;max-width:70ch;
+  }
+  figcaption b{color:var(--ink);font-weight:600}
+
+  /* SVG type + strokes, themed through tokens */
+  .n-box{fill:var(--card);stroke:var(--soft);stroke-width:1.25}
+  .n-box-blue{fill:var(--card);stroke:var(--blue);stroke-width:1.6}
+  .n-box-red{fill:var(--card);stroke:var(--red);stroke-width:1.6}
+  .n-band{fill:none;stroke:var(--rule);stroke-width:1;stroke-dasharray:2 4}
+  .t{font-family:"IBM Plex Sans",sans-serif;font-size:13px;fill:var(--ink)}
+  .t-sm{font-family:"IBM Plex Mono",monospace;font-size:10.5px;fill:var(--faint);letter-spacing:.06em}
+  .t-lbl{font-family:"IBM Plex Mono",monospace;font-size:11px;fill:var(--soft)}
+  .t-blue{fill:var(--blue)}
+  .t-red{fill:var(--red)}
+  .ln{stroke:var(--soft);stroke-width:1.25;fill:none}
+  .ln-dash{stroke:var(--faint);stroke-width:1.1;fill:none;stroke-dasharray:3 4}
+  .ln-blue{stroke:var(--blue);stroke-width:1.4;fill:none}
+  .ln-red{stroke:var(--red);stroke-width:1.4;fill:none}
+  .ah{fill:var(--soft)}
+  .ah-b{fill:var(--blue)}
+  .ah-r{fill:var(--red)}
+
+  table{border-collapse:collapse;width:100%;font-size:14px}
+  caption{text-align:left;padding-bottom:10px}
+  th,td{text-align:left;padding:9px 14px 9px 0;border-bottom:1px solid var(--rule-soft)}
+  th{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.12em;
+     text-transform:uppercase;color:var(--faint);font-weight:400}
+  td:nth-child(2){font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;
+     white-space:nowrap;color:var(--ink)}
+  td:nth-child(3){color:var(--soft)}
+  .tbl-wrap{overflow-x:auto}
+
+  footer{border-top:1px solid var(--rule);padding-top:22px;color:var(--faint);font-size:13px}
+  @media (prefers-reduced-motion:no-preference){a{transition:color .15s ease}}
+</style>
+
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">Architecture note</div>
+    <h1>The Rally Protocol</h1>
+    <p class="lede">Two coding agents from different model families carry one task to completion by writing email to each other. A person commissions the run. The checklist decides when it ends.</p>
+    <div class="meta">
+      <span>v1</span><span>2026-08-28</span><span>Claude CLI &nbsp;/&nbsp; Antigravity CLI</span><span>transport: Resend</span>
+    </div>
+  </header>
+
+  <section>
+    <div class="eyebrow">Figure 1</div>
+    <h2>Decisions travel in the message, artifacts live in git</h2>
+    <p>The hardest thing to see from prose is how state is split. Rally runs on <strong>two planes</strong>. Progress and reasoning move as email. The work itself accumulates on a branch. Every message names the commit it describes, so any single message is enough to reconstruct both what an agent believed and exactly which tree it believed it about.</p>
+    <figure>
+      <svg viewBox="0 0 760 384" role="img" aria-label="Two horizontal planes. On top, three email envelopes passing between Agent A and Agent B. Below, a git branch with one commit per turn. Dashed lines join each message to its commit, labelled commit SHA.">
+        <defs>
+          <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="ah" points="0,1 10,5 0,9"/>
+          </marker>
+        </defs>
+
+        <text class="t-sm" x="0" y="14">CONTROL PLANE &#183; EMAIL</text>
+
+        <rect class="n-box" x="34" y="34" width="176" height="72" rx="2"/>
+        <text class="t-lbl" x="50" y="58">turn 6</text>
+        <text class="t" x="50" y="78">Agent A</text>
+        <text class="t-sm" x="50" y="95">checklist + narrative</text>
+
+        <rect class="n-box" x="292" y="34" width="176" height="72" rx="2"/>
+        <text class="t-lbl" x="308" y="58">turn 7</text>
+        <text class="t" x="308" y="78">Agent B</text>
+        <text class="t-sm" x="308" y="95">checklist + narrative</text>
+
+        <rect class="n-box" x="550" y="34" width="176" height="72" rx="2"/>
+        <text class="t-lbl" x="566" y="58">turn 8</text>
+        <text class="t" x="566" y="78">Agent A</text>
+        <text class="t-sm" x="566" y="95">checklist + narrative</text>
+
+        <line class="ln" x1="210" y1="70" x2="286" y2="70" marker-end="url(#a1)"/>
+        <text class="t-sm" x="248" y="60" text-anchor="middle">mails</text>
+        <line class="ln" x1="468" y1="70" x2="544" y2="70" marker-end="url(#a1)"/>
+        <text class="t-sm" x="506" y="60" text-anchor="middle">mails</text>
+
+        <line class="ln-dash" x1="122" y1="106" x2="122" y2="296"/>
+        <line class="ln-dash" x1="380" y1="106" x2="380" y2="296"/>
+        <line class="ln-dash" x1="638" y1="106" x2="638" y2="296"/>
+        <text class="t-sm" x="132" y="205">commit SHA</text>
+        <text class="t-sm" x="132" y="221">joins the planes</text>
+
+        <text class="t-sm" x="0" y="272">DATA PLANE &#183; GIT</text>
+
+        <line class="ln" x1="34" y1="304" x2="726" y2="304"/>
+        <circle cx="122" cy="304" r="6.5" fill="var(--card)" stroke="var(--soft)" stroke-width="1.6"/>
+        <circle cx="380" cy="304" r="6.5" fill="var(--card)" stroke="var(--soft)" stroke-width="1.6"/>
+        <circle cx="638" cy="304" r="6.5" fill="var(--card)" stroke="var(--soft)" stroke-width="1.6"/>
+        <text class="t-sm" x="122" y="330" text-anchor="middle">3d4fa99</text>
+        <text class="t-sm" x="380" y="330" text-anchor="middle">2181b94</text>
+        <text class="t-sm" x="638" y="330" text-anchor="middle">a7c0e12</text>
+        <text class="t-lbl" x="34" y="360">branch  rally/&lt;run_id&gt;</text>
+      </svg>
+      <figcaption><b>One turn produces one message and one commit.</b> The envelope carries the checklist, the branch carries the work, and the SHA is the join. This is also why a lost message costs a turn rather than the run.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <div class="eyebrow">Figure 2</div>
+    <h2>The human commissions once, then reads</h2>
+    <p>Agreement on what "done" means comes before any work. Scoping and negotiation are cheap; discovering a disagreement at the end is not. After that the agents alternate until every item is verified, and there are only two ways out.</p>
+    <figure>
+      <svg viewBox="0 0 820 292" role="img" aria-label="Left to right: commission, scope, negotiate, then an alternating work-turn loop, then a report to the human. A second arrow drops from the work loop to a halt state.">
+        <defs>
+          <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="ah" points="0,1 10,5 0,9"/>
+          </marker>
+          <marker id="a2r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="ah-r" points="0,1 10,5 0,9"/>
+          </marker>
+          <marker id="a2b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="ah-b" points="0,1 10,5 0,9"/>
+          </marker>
+        </defs>
+
+        <path class="ln" d="M 512 118 C 512 52, 632 52, 632 118" marker-end="url(#a2)"/>
+        <text class="t-sm" x="572" y="44" text-anchor="middle">alternate: verify theirs, then advance yours</text>
+
+        <rect class="n-box" x="8" y="118" width="120" height="58" rx="2"/>
+        <text class="t" x="68" y="145" text-anchor="middle">Commission</text>
+        <text class="t-sm" x="68" y="163" text-anchor="middle">human</text>
+
+        <rect class="n-box" x="168" y="118" width="120" height="58" rx="2"/>
+        <text class="t" x="228" y="145" text-anchor="middle">Scope</text>
+        <text class="t-sm" x="228" y="163" text-anchor="middle">agent A</text>
+
+        <rect class="n-box" x="328" y="118" width="120" height="58" rx="2"/>
+        <text class="t" x="388" y="145" text-anchor="middle">Negotiate</text>
+        <text class="t-sm" x="388" y="163" text-anchor="middle">agent B</text>
+
+        <rect class="n-box" x="488" y="118" width="156" height="58" rx="2"/>
+        <text class="t" x="566" y="145" text-anchor="middle">Work turns</text>
+        <text class="t-sm" x="566" y="163" text-anchor="middle">A and B</text>
+
+        <rect class="n-box-blue" x="684" y="118" width="128" height="58" rx="2"/>
+        <text class="t t-blue" x="748" y="145" text-anchor="middle">Report</text>
+        <text class="t-sm" x="748" y="163" text-anchor="middle">to human</text>
+
+        <line class="ln" x1="128" y1="147" x2="162" y2="147" marker-end="url(#a2)"/>
+        <line class="ln" x1="288" y1="147" x2="322" y2="147" marker-end="url(#a2)"/>
+        <line class="ln" x1="448" y1="147" x2="482" y2="147" marker-end="url(#a2)"/>
+        <line class="ln-blue" x1="644" y1="147" x2="678" y2="147" marker-end="url(#a2b)"/>
+        <text class="t-sm t-blue" x="661" y="137" text-anchor="middle">all verified</text>
+
+        <line class="ln-red" x1="566" y1="176" x2="566" y2="222" marker-end="url(#a2r)"/>
+        <rect class="n-box-red" x="488" y="222" width="156" height="52" rx="2"/>
+        <text class="t t-red" x="566" y="244" text-anchor="middle">Halt</text>
+        <text class="t-sm" x="566" y="262" text-anchor="middle">budget / dispute / blocked</text>
+        <text class="t-sm" x="656" y="204">reports state as it stands</text>
+      </svg>
+      <figcaption><b>A halt is a reported outcome, not a crash.</b> Running out of budget, deadlocking, or needing a credential all end the same way: the run stops and writes to the person with the checklist as it stands. Stopping and asking counts as success.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <div class="eyebrow">Figure 3</div>
+    <h2>An item cannot be marked done by the agent that did it</h2>
+    <p>This is the rule that earns the second model its cost, and the state machine is where it is enforced rather than merely encouraged. The back edge is bounded, which is what makes the loop terminate instead of two agents disagreeing politely forever.</p>
+    <figure>
+      <svg viewBox="0 0 820 312" role="img" aria-label="States left to right: open, claimed, awaiting verification, done. A bounded rejection edge arcs back from awaiting verification to claimed. Two exits drop to blocked and disputed.">
+        <defs>
+          <marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="ah" points="0,1 10,5 0,9"/>
+          </marker>
+          <marker id="a3r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="ah-r" points="0,1 10,5 0,9"/>
+          </marker>
+          <marker id="a3b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="ah-b" points="0,1 10,5 0,9"/>
+          </marker>
+        </defs>
+
+        <path class="ln-red" d="M 494 92 C 470 26, 300 26, 276 92" marker-end="url(#a3r)"/>
+        <text class="t-sm t-red" x="385" y="22" text-anchor="middle">rejected, at most twice &#183; author fixes</text>
+
+        <rect class="n-box" x="8" y="92" width="150" height="52" rx="2"/>
+        <text class="t" x="83" y="123" text-anchor="middle">open</text>
+
+        <rect class="n-box" x="206" y="92" width="150" height="52" rx="2"/>
+        <text class="t" x="281" y="123" text-anchor="middle">claimed</text>
+
+        <rect class="n-box" x="424" y="92" width="150" height="52" rx="2"/>
+        <text class="t" x="499" y="117" text-anchor="middle">awaiting</text>
+        <text class="t" x="499" y="134" text-anchor="middle">verification</text>
+
+        <rect class="n-box-blue" x="662" y="92" width="150" height="52" rx="2"/>
+        <text class="t t-blue" x="737" y="123" text-anchor="middle">done</text>
+
+        <line class="ln" x1="158" y1="118" x2="200" y2="118" marker-end="url(#a3)"/>
+        <line class="ln" x1="356" y1="118" x2="418" y2="118" marker-end="url(#a3)"/>
+        <text class="t-sm" x="387" y="108" text-anchor="middle">worked</text>
+        <line class="ln-blue" x1="574" y1="118" x2="656" y2="118" marker-end="url(#a3b)"/>
+        <text class="t-sm t-blue" x="615" y="108" text-anchor="middle">verified by</text>
+        <text class="t-sm t-blue" x="615" y="140" text-anchor="middle">the other agent</text>
+
+        <line class="ln" x1="281" y1="144" x2="281" y2="206" marker-end="url(#a3)"/>
+        <rect class="n-box" x="206" y="206" width="150" height="50" rx="2"/>
+        <text class="t" x="281" y="236" text-anchor="middle">blocked</text>
+        <text class="t-sm" x="292" y="182">needs a human</text>
+
+        <line class="ln-red" x1="499" y1="144" x2="499" y2="206" marker-end="url(#a3r)"/>
+        <rect class="n-box-red" x="424" y="206" width="150" height="50" rx="2"/>
+        <text class="t t-red" x="499" y="236" text-anchor="middle">disputed</text>
+        <text class="t-sm" x="510" y="182">3rd disagreement</text>
+
+        <text class="t-sm" x="8" y="292">2nd failure of the same item: the verifier may repair it, and ownership flips so the original author must verify the repair.</text>
+      </svg>
+      <figcaption><b>Two bounds guarantee termination.</b> An agent may reject a given item twice; the third disagreement escalates to a person with both positions stated. Without that bound, the characteristic failure of this design is not a crash but an infinite, courteous exchange that burns budget.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <div class="eyebrow">Figure 4</div>
+    <h2>Ingress is a swap point, not a rewrite</h2>
+    <p>The one part of the system genuinely worth deciding late. Whatever delivers inbound mail sits behind a thin interface, so the choice between an always-on edge queue and an existing self-hosted workflow host is reversible. One is faster to trust, the other is faster to first run.</p>
+    <figure>
+      <svg viewBox="0 0 800 300" role="img" aria-label="Inbound mail enters a dashed boundary labelled ingress interface containing two interchangeable implementations, which both feed a single runner that drives the Claude CLI and the Antigravity CLI.">
+        <defs>
+          <marker id="a4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="ah" points="0,1 10,5 0,9"/>
+          </marker>
+        </defs>
+
+        <rect class="n-box" x="8" y="106" width="128" height="58" rx="2"/>
+        <text class="t" x="72" y="130" text-anchor="middle">inbound mail</text>
+        <text class="t-sm" x="72" y="149" text-anchor="middle">Resend</text>
+
+        <rect class="n-band" x="184" y="34" width="266" height="220" rx="3"/>
+        <text class="t-sm" x="196" y="26">INGRESS INTERFACE &#183; PICK ONE</text>
+
+        <rect class="n-box" x="206" y="62" width="222" height="66" rx="2"/>
+        <text class="t" x="317" y="88" text-anchor="middle">edge queue</text>
+        <text class="t-sm" x="317" y="108" text-anchor="middle">durable, always on</text>
+
+        <rect class="n-box" x="206" y="162" width="222" height="66" rx="2"/>
+        <text class="t" x="317" y="188" text-anchor="middle">existing workflow host</text>
+        <text class="t-sm" x="317" y="208" text-anchor="middle">fastest to first run</text>
+
+        <line class="ln" x1="136" y1="135" x2="200" y2="135" marker-end="url(#a4)"/>
+
+        <line class="ln" x1="428" y1="95" x2="512" y2="128" marker-end="url(#a4)"/>
+        <line class="ln" x1="428" y1="195" x2="512" y2="162" marker-end="url(#a4)"/>
+
+        <rect class="n-box" x="518" y="112" width="112" height="66" rx="2"/>
+        <text class="t" x="574" y="140" text-anchor="middle">runner</text>
+        <text class="t-sm" x="574" y="159" text-anchor="middle">turns, budget</text>
+
+        <line class="ln" x1="630" y1="130" x2="686" y2="98" marker-end="url(#a4)"/>
+        <line class="ln" x1="630" y1="160" x2="686" y2="192" marker-end="url(#a4)"/>
+
+        <rect class="n-box" x="690" y="70" width="104" height="52" rx="2"/>
+        <text class="t-lbl" x="742" y="93" text-anchor="middle">claude -p</text>
+        <text class="t-sm" x="742" y="110" text-anchor="middle">opus</text>
+
+        <rect class="n-box" x="690" y="168" width="104" height="52" rx="2"/>
+        <text class="t-lbl" x="742" y="191" text-anchor="middle">agy -p</text>
+        <text class="t-sm" x="742" y="208" text-anchor="middle">gemini pinned</text>
+
+        <text class="t-sm" x="518" y="272">the runner holds authoritative state; an envelope is evidence, never authority</text>
+      </svg>
+      <figcaption><b>Model pinning belongs here, not in config.</b> The Antigravity CLI also serves Claude models, so an unpinned run can quietly become one family reviewing itself while everything still appears to work. The runner refuses a turn unless the two models come from different families.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <div class="eyebrow">Enforced outside the agents</div>
+    <h2>Limits</h2>
+    <p>Every ceiling is checked by the runner, because the failure being defended against is an agent behaving unexpectedly. The hourly and daily caps are global rather than per run, since the sending quota is shared with unrelated projects.</p>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th scope="col">Guard</th><th scope="col">Default</th><th scope="col">On breach</th></tr></thead>
+        <tbody>
+          <tr><td>Turn budget</td><td>24 / run</td><td>halt, report state as it stands</td></tr>
+          <tr><td>No-progress halt</td><td>4 turns</td><td>halt, the run is not converging</td></tr>
+          <tr><td>Rejections per item</td><td>2</td><td>mark disputed, escalate</td></tr>
+          <tr><td>Sends per run</td><td>60</td><td>halt, refuse to send</td></tr>
+          <tr><td>Sends per hour</td><td>30 global</td><td>queue, do not send</td></tr>
+          <tr><td>Sends per day</td><td>200 global</td><td>halt every run</td></tr>
+          <tr><td>Turn wall clock</td><td>25 min</td><td>fail turn, one retry, then halt</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>The counter store fails closed. If it cannot be read, nothing sends. A Rally outage is acceptable; taking the shared sending domain down with it is not.</p>
+  </section>
+
+  <footer>Companion to the founding document and specification. The founding document is the authority on intent.</footer>
+
+</div>
