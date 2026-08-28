@@ -1,0 +1,30 @@
+{
+  "agents": {
+    "claude": {
+      "bin": "claude",
+      "model": "opus",
+      "effort": "high",
+      "family": "anthropic",
+      "address": "claude@updates.agent9.dev"
+    },
+    "agy": {
+      "bin": "agy",
+      "model": "gemini-3.1-pro-high",
+      "effort": "high",
+      "family": "google",
+      "address": "agy@updates.agent9.dev"
+    }
+  },
+  "limits": {
+    "turns_max": 24,
+    "sends_per_run": 60,
+    "no_progress_halt": 4,
+    "rejections_max": 2,
+    "turn_timeout_sec": 1500
+  },
+  "mail": {
+    "enabled": true,
+    "cc_human": "exposelocal@gmail.com",
+    "keychain_service": "rally-resend"
+  }
+}

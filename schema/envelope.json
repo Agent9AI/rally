@@ -1,0 +1,43 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Rally envelope",
+  "type": "object",
+  "required": ["rally_version", "run_id", "turn", "from_agent", "checklist", "narrative"],
+  "properties": {
+    "rally_version": { "type": "integer", "const": 1 },
+    "run_id": { "type": "string" },
+    "turn": { "type": "integer", "minimum": 0 },
+    "from_agent": { "type": "string", "enum": ["claude", "agy"] },
+    "commit": { "type": ["string", "null"] },
+    "narrative": { "type": "string" },
+    "checklist": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "description", "state"],
+        "properties": {
+          "id": { "type": "string" },
+          "description": { "type": "string" },
+          "state": {
+            "type": "string",
+            "enum": ["open", "claimed", "awaiting-verification", "done", "blocked", "disputed"]
+          },
+          "owner": { "type": ["string", "null"], "enum": ["claude", "agy", null] },
+          "verified_by": { "type": ["string", "null"], "enum": ["claude", "agy", null] },
+          "evidence": { "type": ["string", "null"] },
+          "rejections": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "halt": {
+      "type": ["object", "null"],
+      "properties": {
+        "reason": {
+          "type": "string",
+          "enum": ["complete", "turn_budget", "no_progress", "disputed", "blocked", "stopped_by_human"]
+        },
+        "detail": { "type": "string" }
+      }
+    }
+  }
+}
