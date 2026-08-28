@@ -495,6 +495,38 @@ def cmd_check(cfg: Dict) -> int:
     except transport.SendBlocked as exc:
         print("  resend key: MISSING (%s)" % str(exc)[:70])
         print("              mail is optional; run with --no-mail to loop without it")
+    ing = cfg.get("ingress", {})
+    base = (ing.get("worker_url") or "").rstrip("/")
+    print("  commission address: %s" % ing.get("commission_address", "(unset)"))
+    print("  owners: %s" % ", ".join(ing.get("owners", [])) or "(none)")
+    if base:
+        try:
+            import urllib.request
+            hreq = urllib.request.Request(
+                base + "/health", headers={"User-Agent": transport.USER_AGENT})
+            with urllib.request.urlopen(hreq, timeout=10) as r:
+                json.load(r)
+            print("  ingress worker: reachable (%s)" % base)
+        except Exception as exc:
+            print("  ingress worker: UNREACHABLE %s" % str(exc)[:60])
+            ok = False
+        try:
+            tok = transport.get_key(ing.get("poll_token_keychain", "rally-poll-token"))
+            req = urllib.request.Request(
+                base + "/pending",
+                headers={"Authorization": "Bearer " + tok,
+                         "User-Agent": transport.USER_AGENT})
+            with urllib.request.urlopen(req, timeout=10) as r:
+                n = len(json.load(r).get("messages", []))
+            print("  ingress queue: %d message(s) waiting" % n)
+            if n == 0:
+                print("            if you sent mail and this is 0, Resend is not")
+                print("            routing %s to the Worker yet"
+                      % ing.get("commission_address"))
+        except transport.SendBlocked:
+            print("  ingress queue: no poll token in the keychain")
+        except Exception as exc:
+            print("  ingress queue: %s" % str(exc)[:60])
     print("  limits: %s" % json.dumps(cfg["limits"]))
     return 0 if ok else 1
 

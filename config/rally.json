@@ -41,6 +41,7 @@
     "poll_token_keychain": "rally-poll-token",
     "commission_address": "rally@updates.agent9.dev",
     "owners": [
+      "terry@agent9.dev",
       "exposelocal@gmail.com"
     ]
   }

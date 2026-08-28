@@ -15,6 +15,7 @@ import urllib.request
 from typing import Dict, List, Optional
 
 API = "https://api.resend.com/emails"
+USER_AGENT = "rally/1.0 (+https://github.com/Agent9AI/rally)"
 
 
 class SendBlocked(RuntimeError):
@@ -89,7 +90,9 @@ def send(key: str, sender: str, to: str, subject: str, text: str,
         payload["reply_to"] = reply_to
     req = urllib.request.Request(
         API, data=json.dumps(payload).encode(),
-        headers={"Authorization": "Bearer " + key, "Content-Type": "application/json"},
+        headers={"Authorization": "Bearer " + key,
+                 "Content-Type": "application/json",
+                 "User-Agent": USER_AGENT},
     )
     try:
         with urllib.request.urlopen(req, timeout=30) as r:

@@ -17,11 +17,16 @@ from typing import Dict, List, Optional, Tuple
 import transport
 
 RESEND_INBOUND = "https://api.resend.com/emails/inbound/%s"
+# Cloudflare answers urllib's default User-Agent with a 403. Every request Rally
+# makes therefore identifies itself. Found the hard way: curl worked, the poller
+# did not, and the failure looked like a credential problem.
+USER_AGENT = "rally/1.0 (+https://github.com/Agent9AI/rally)"
 RUN_TAG = re.compile(r"\[rally\s+#(r-[0-9a-z-]+)", re.IGNORECASE)
 
 
 def _get(url: str, token: str, timeout: int = 25) -> Dict:
-    req = urllib.request.Request(url, headers={"Authorization": "Bearer " + token})
+    req = urllib.request.Request(url, headers={"Authorization": "Bearer " + token,
+                                               "User-Agent": USER_AGENT})
     with urllib.request.urlopen(req, timeout=timeout) as r:
         return json.load(r)
 
@@ -30,7 +35,8 @@ def _post(url: str, token: str, body: Dict, timeout: int = 25) -> Dict:
     req = urllib.request.Request(
         url, data=json.dumps(body).encode(),
         headers={"Authorization": "Bearer " + token,
-                 "Content-Type": "application/json"})
+                 "Content-Type": "application/json",
+                 "User-Agent": USER_AGENT})
     with urllib.request.urlopen(req, timeout=timeout) as r:
         return json.load(r)
 

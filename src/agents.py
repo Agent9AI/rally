@@ -87,9 +87,13 @@ def run_claude(prompt: str, workdir: str, cfg: Dict, timeout: int) -> str:
     """
     cmd = [cfg.get("bin", "claude"), "-p",
            "--model", cfg["model"],
-           "--effort", cfg.get("effort", "high"),
-           "--dangerously-skip-permissions",
-           prompt]
+           "--effort", cfg.get("effort", "high")]
+    # Read from config exactly as run_agy does. Hardcoding the flag here made
+    # config/rally.json able to lie: assert_pins decides symmetry from exec_flags,
+    # so removing claude's entry would abort the run as "asymmetric" while this
+    # function still passed the flag. One source, and the assertion means what it says.
+    cmd += list(cfg.get("exec_flags") or [])
+    cmd.append(prompt)
     return _run(cmd, workdir, timeout)
 
 
