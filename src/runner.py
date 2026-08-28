@@ -269,11 +269,18 @@ def take_turn(run: Run, cfg: Dict, dry: bool = False) -> Optional[str]:
     if not dry and os.path.abspath(s["workdir"]) != ROOT:
         after = repo_fingerprint()
         if after != before:
-            msg = ("containment: %s wrote outside its workdir into the Rally repo. "
-                   "Work only inside %s." % (actor, s["workdir"]))
+            # Report the paths, not just "something changed". This check cannot
+            # distinguish an agent's write from an operator editing the repo in
+            # another window during the same turn, so the paths are what make it
+            # actionable rather than alarming. Advisory, not authoritative.
+            changed = sorted(set(after.splitlines()) - set(before.splitlines()))
+            paths = [ln[3:] for ln in changed] or ["(unknown)"]
+            msg = ("containment: repo tree changed during %s's turn: %s. "
+                   "If that was not you editing, the agent wrote outside %s."
+                   % (actor, ", ".join(paths[:6]), s["workdir"]))
             run.note(msg)
             s.setdefault("containment", []).append(
-                {"turn": s["turn"], "actor": actor, "diff": after[:2000]})
+                {"turn": s["turn"], "actor": actor, "paths": paths})
             s["violations"] = (s.get("violations") or []) + [msg]
 
     env = E.extract(raw)
@@ -493,7 +500,8 @@ def main(argv: List[str]) -> int:
     ap.add_argument("--check", action="store_true", help="preflight and exit")
     ap.add_argument("--run", metavar="TASK", help="commission a run")
     ap.add_argument("--resume", metavar="RUN_ID")
-    ap.add_argument("--workdir", default=".", help="where the agents work")
+    ap.add_argument("--workdir", default=None,
+                    help="where the agents work (default: an isolated workspace)")
     ap.add_argument("--dry", action="store_true", help="stub agents, no tokens spent")
     ap.add_argument("--no-mail", action="store_true")
     ap.add_argument("--max-turns", type=int, default=0)
@@ -504,6 +512,9 @@ def main(argv: List[str]) -> int:
                     help="inject guidance into the next turn; STOP halts the run")
     a = ap.parse_args(argv)
 
+    a.workdir_given = a.workdir is not None
+    if a.workdir is None:
+        a.workdir = "."
     cfg = load_config()
     if a.no_mail:
         cfg["mail"]["enabled"] = False
@@ -518,7 +529,15 @@ def main(argv: List[str]) -> int:
 
     agents.assert_pins(cfg["agents"])
     os.makedirs(RUNS, exist_ok=True)
-    run = Run.load(a.resume) if a.resume else Run.create(a.run, a.workdir, cfg)
+    if a.resume:
+        run = Run.load(a.resume)
+    else:
+        run = Run.create(a.run, a.workdir, cfg)
+        if not a.workdir_given:
+            # Default to an isolated, git-initialised workspace. Isolation is what
+            # makes the containment check meaningful and the per-turn commit real.
+            run.s["workdir"] = new_workspace(run.s["run_id"])
+            run.save()
     if a.note:
         run.s["human_note"] = a.note
         run.save()

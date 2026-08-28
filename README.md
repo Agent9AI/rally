@@ -23,6 +23,51 @@ you ──email──▶ rally@updates.agent9.dev
 you ◀──── one report, when it is done or stuck
 ```
 
+## Why
+
+**Give your team one shared, on-demand agent, configured to your stack, at an
+address anyone can email.**
+
+Right now every engineer on a team runs their own assistant. Each one is
+configured differently, primed with different context, and knows a different
+subset of your conventions. The quality of what people get back depends on how
+well they personally set their tooling up. None of that work is shared, and none
+of it is visible.
+
+Rally is the opposite shape. You configure it **once**, against your repo, your
+conventions, your limits. Then it lives at an address:
+
+```
+rally@updates.agent9.dev
+```
+
+That changes a few things at once.
+
+**No install, no seat, no onboarding.** If you can send an email, you can use it.
+Nobody needs a license, a CLI, a plugin, or a laptop that can run any of it. A
+product manager on a phone has exactly the same access as the staff engineer who
+set it up.
+
+**It is configured once and correct for everyone.** The stack, the conventions,
+the model pins, the spend limits, the repo it works in. One person gets that
+right and the whole team inherits it, instead of fifteen people each half-solving
+it.
+
+**The work is checked before you see it.** Two different model families work the
+same checklist, and nothing is marked done until the agent that *didn't* do it
+verifies it. What lands in your inbox has already survived a second opinion from
+a model that doesn't share the first one's blind spots. That is a materially
+different artifact from one model's confident first answer.
+
+**It is asynchronous by nature.** You send a task and close your laptop. Email is
+already the queue, the audit log, and the notification system. The whole
+deliberation sits in a thread you can read, forward, or search months later.
+
+**It stops instead of spinning.** Every run has a turn budget, a no-progress
+halt, and a send ceiling enforced outside the agents' reach. If it cannot finish,
+it tells you exactly where it stopped and why, rather than burning budget being
+agreeable.
+
 ## The two rules everything else protects
 
 1. **An item reaches `done` only when the agent that did _not_ do the work
@@ -69,6 +114,7 @@ See [docs/RUNBOOK.md](docs/RUNBOOK.md) to operate it, including how to stop a ru
 | [docs/DIAGRAMS.md](docs/DIAGRAMS.md) | The system in four figures. |
 | [docs/RUNBOOK.md](docs/RUNBOOK.md) | Operating it. Setup, intervention, failure modes. |
 | [docs/FINDINGS.md](docs/FINDINGS.md) | What the first live run exposed. The most useful page here. |
+| [docs/DEMO.md](docs/DEMO.md) | **Start here to see it work.** Numbered steps, two paths. |
 | [docs/BUILD-1HR.md](docs/BUILD-1HR.md) | The cut-to-the-bone first hour. |
 
 ## Layout
