@@ -80,8 +80,10 @@ class Ledger:
 
 def send(key: str, sender: str, to: str, subject: str, text: str,
          cc: Optional[str] = None, headers: Optional[Dict[str, str]] = None,
-         reply_to: Optional[str] = None) -> str:
+         reply_to: Optional[str] = None, html: Optional[str] = None) -> str:
     payload: Dict = {"from": sender, "to": [to], "subject": subject, "text": text}
+    if html:
+        payload["html"] = html
     if cc:
         payload["cc"] = [cc]
     if headers:

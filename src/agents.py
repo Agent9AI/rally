@@ -85,6 +85,10 @@ def run_claude(prompt: str, workdir: str, cfg: Dict, timeout: int) -> str:
     here is what makes the two sides equally capable; the asymmetry, not the
     permission, was the bug. Both agents are pointed at a scratch workdir.
     """
+    if cfg.get("adapter") == "agy":
+        agy_cfg = dict(cfg)
+        agy_cfg.pop("effort", None)
+        return run_agy(prompt, workdir, agy_cfg, timeout)
     cmd = [cfg.get("bin", "claude"), "-p",
            "--model", cfg["model"],
            "--effort", cfg.get("effort", "high")]
@@ -105,13 +109,11 @@ def run_agy(prompt: str, workdir: str, cfg: Dict, timeout: int, schema_path: str
     silently discards the real one. The prompt must be attached as -p=... and
     must come last. Verified 2026-08-28.
     """
-    effort = cfg.get("effort", "high")
-    if effort not in ("low", "medium", "high"):
-        effort = "high"  # agy has no rungs above high
-    cmd = [cfg.get("bin", "agy"),
-           "--model", cfg["model"],
-           "--effort", effort,
-           "--print-timeout", "%ds" % max(60, timeout - 30)]
+    cmd = [cfg.get("bin", "agy"), "--model", cfg["model"]]
+    effort = cfg.get("effort")
+    if effort in ("low", "medium", "high"):
+        cmd += ["--effort", effort]
+    cmd += ["--print-timeout", "%ds" % max(60, timeout - 30)]
     cmd += list(cfg.get("exec_flags") or [])
     # `--json-schema` is refused unless --output-format is json/stream-json, which
     # changes the whole reply shape. The runner's reconcile() is the real

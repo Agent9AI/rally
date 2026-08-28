@@ -31,7 +31,7 @@
   },
   "mail": {
     "enabled": true,
-    "cc_human": "exposelocal@gmail.com",
+    "cc_human": "terry@agent9.dev",
     "keychain_service": "rally-resend",
     "from_name": "Rally"
   },
@@ -41,8 +41,7 @@
     "poll_token_keychain": "rally-poll-token",
     "commission_address": "rally@updates.agent9.dev",
     "owners": [
-      "terry@agent9.dev",
-      "exposelocal@gmail.com"
+      "terry@agent9.dev"
     ]
   },
   "_note": "Demo profile. Fast models and low effort so a live run finishes in minutes rather than tens of minutes. Same rules, same guards, same invariant: only the speed changes. Use config/rally.json for real work."

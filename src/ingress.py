@@ -55,6 +55,20 @@ def find_email_id(payload: Dict) -> Optional[str]:
     return payload.get("id")
 
 
+def find_message_id(msg: Dict) -> Optional[str]:
+    """Return the RFC message id when Resend includes it in the received mail."""
+    if not isinstance(msg, dict):
+        return None
+    if msg.get("message_id"):
+        return msg["message_id"]
+    headers = msg.get("headers")
+    if isinstance(headers, dict):
+        for key, value in headers.items():
+            if key.lower() == "message-id" and value:
+                return value
+    return None
+
+
 def fetch_message(email_id: str, resend_key: str) -> Dict:
     return _get(RESEND_INBOUND % email_id, resend_key)
 
@@ -105,12 +119,14 @@ def classify(msg: Dict, cfg: Dict) -> Tuple[str, Dict]:
 
     tagged = RUN_TAG.search(subject)
     if tagged:
-        return "note", {"run_id": tagged.group(1), "text": body, "sender": sender}
+        return "note", {"run_id": tagged.group(1), "text": body, "sender": sender,
+                         "message_id": find_message_id(msg)}
 
     if ing["commission_address"].lower() in to:
         if not body:
             return "ignored", {"why": "empty commission body"}
-        return "commission", {"task": body, "subject": subject, "sender": sender}
+        return "commission", {"task": body, "subject": subject, "sender": sender,
+                               "message_id": find_message_id(msg)}
 
     return "ignored", {"why": "not addressed to the commission address"}
 

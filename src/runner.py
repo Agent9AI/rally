@@ -13,6 +13,7 @@ import os
 import subprocess
 import sys
 import uuid
+import html as html_lib
 from typing import Dict, List, Optional
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -27,6 +28,7 @@ CONFIG = os.path.join(ROOT, "config", "rally.json")
 SCHEMA = os.path.join(ROOT, "schema", "envelope.json")
 RUNS = os.path.join(ROOT, "runs")
 LEDGER = os.path.join(RUNS, "send-ledger.json")
+MAIL_DOMAIN = "updates.agent9.dev"
 
 RULES = """You are one of two agents in a Rally run. The other agent is from a
 different model family. You correspond by email and share one checklist.
@@ -42,7 +44,11 @@ The rules, which the runner enforces whether or not you follow them:
 5. Evidence means something checkable: a command that passes, a file and line,
    an observed output. Not "looks good".
 
-Reply with a short paragraph to your counterpart, then a single fenced json block
+Write a concise, executive-quality update: lead with the outcome, then state
+evidence, risk or decision needed, and the next action. Use short paragraphs or
+labeled lines, no greeting, sign-off, filler, tool trace, or speculation. Address
+the counterpart as a senior operator who needs a clear decision record. Then a
+single fenced json block
 containing the FULL updated checklist. Nothing after the block.
 
 The envelope:
@@ -63,6 +69,50 @@ def now() -> str:
     return dt.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+def watermark(run_id: str, turn: str, sender: str, recipient: str) -> str:
+    return ("RALLY WATERMARK | run %s | turn %s | %s -> %s"
+            % (run_id, turn, sender, recipient))
+
+
+def subject_fragment(task: str) -> str:
+    return " ".join((task or "").split())[:60]
+
+
+def executive_html(title: str, run_id: str, turn: str, sender: str,
+                   recipient: str, status: str, prose: str,
+                   technical: str = "") -> str:
+    esc = html_lib.escape
+    paragraphs = "".join(
+        "<p>%s</p>" % esc(part.strip()).replace("\n", "<br>")
+        for part in prose.split("\n\n") if part.strip()
+    )
+    record = ("<details style=\"margin-top:24px\"><summary style=\"color:#5b6470;"
+              "cursor:pointer;font-size:12px;letter-spacing:.04em;text-transform:uppercase\">"
+              "Technical record</summary><pre style=\"white-space:pre-wrap;overflow-wrap:anywhere;"
+              "background:#f3f1ee;border:1px solid #e4e2df;border-radius:8px;padding:14px;"
+              "font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;color:#1f2328\">%s</pre></details>"
+              % esc(technical)) if technical else ""
+    return """<!doctype html><html><body style="margin:0;background:#f5f4f2;color:#1f2328;
+font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+<div style="padding:32px 14px"><div style="max-width:600px;margin:auto;background:#fffefc;
+border:1px solid #e4e2df;border-radius:12px;overflow:hidden;box-shadow:0 3px 14px rgba(31,35,40,.06)">
+<div style="padding:24px 28px 18px;border-bottom:1px solid #e4e2df">
+<div style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#0b57d0;font-weight:700">Rally</div>
+<div style="font-size:24px;line-height:1.25;font-weight:650;margin-top:8px">%s</div>
+<div style="display:inline-block;margin-top:14px;padding:5px 10px;border-radius:999px;background:#e9f2ff;color:#0b57d0;font-size:12px;font-weight:650">%s</div>
+</div><div style="padding:24px 28px"><table style="width:100%%;font-size:12px;color:#5b6470;border-collapse:collapse">
+<tr><td style="padding:0 0 8px">RUN</td><td style="padding:0 0 8px;text-align:right;color:#1f2328">%s</td></tr>
+<tr><td style="padding:0 0 8px">TURN</td><td style="padding:0 0 8px;text-align:right;color:#1f2328">%s</td></tr>
+<tr><td style="padding:0">FROM</td><td style="padding:0;text-align:right;color:#1f2328">%s</td></tr>
+<tr><td style="padding:8px 0 0">TO</td><td style="padding:8px 0 0;text-align:right;color:#1f2328">%s</td></tr>
+</table><div style="height:1px;background:#e4e2df;margin:22px 0"> </div>
+<div style="font-size:15px;line-height:1.7">%s</div>%s</div>
+<div style="padding:16px 28px;background:#f8f7f5;color:#8b949e;font-size:11px;line-height:1.5">
+%s</div></div></div></body></html>""" % (
+        esc(title), esc(status), esc(run_id), esc(turn), esc(sender), esc(recipient),
+        paragraphs, record, esc(watermark(run_id, turn, sender, recipient)))
+
+
 class Run:
     def __init__(self, state: Dict, path: str):
         self.s = state
@@ -78,6 +128,7 @@ class Run:
             "turn": 0, "actor": "claude", "checklist": [], "halt": None,
             "violations": [], "human_note": None, "digest_streak": 0,
             "last_digest": "", "created": now(), "log": [],
+            "thread_message_id": None, "thread_references": [],
         }
         r = cls(state, os.path.join(d, "state.json"))
         r.save()
@@ -180,6 +231,7 @@ def mail_turn(run: Run, cfg: Dict, actor: str, narrative: str, commit: Optional[
     s = run.s
     other = "agy" if actor == "claude" else "claude"
     addrs = {k: v["address"] for k, v in cfg["agents"].items()}
+    human = s.get("commissioned_by") or mail.get("cc_human")
     limits = cfg["limits"]
     ledger = transport.Ledger(LEDGER)
     ledger.check_and_reserve(s["run_id"], limits["sends_per_run"])
@@ -189,14 +241,40 @@ def mail_turn(run: Run, cfg: Dict, actor: str, narrative: str, commit: Optional[
         json.dumps({"rally_version": 1, "run_id": s["run_id"], "turn": s["turn"],
                     "from_agent": actor, "commit": commit,
                     "checklist": s["checklist"]}, indent=2))
+    sender_address = addrs[actor]
+    recipient_address = addrs[other]
+    body = ("RALLY EXECUTIVE UPDATE\n"
+            "Run: %s\nTurn: %s\nFrom: %s\nTo: %s\nStatus: In progress\n\n"
+            "%s\n\n"
+            "TECHNICAL RECORD\n%s\n\n%s\n" %
+            (s["run_id"], s["turn"], sender_address, recipient_address,
+             narrative.strip(), body, watermark(s["run_id"], str(s["turn"]),
+                                                 sender_address, recipient_address)))
+    html = executive_html("Executive update", s["run_id"], str(s["turn"]),
+                          sender_address, recipient_address, "In progress",
+                          narrative.strip(), body)
+    message_id = "<%s-%s-%s@%s>" % (s["run_id"], s["turn"], actor, MAIL_DOMAIN)
+    prior = s.get("thread_message_id")
+    references = list(s.get("thread_references") or [])
+    if prior and prior not in references:
+        references.append(prior)
+    headers = {"X-Rally-Run": s["run_id"], "X-Rally-Turn": str(s["turn"]),
+               "X-Rally-From": actor, "Auto-Submitted": "auto-generated",
+               "Message-ID": message_id}
+    if prior:
+        headers["In-Reply-To"] = prior
+    if references:
+        headers["References"] = " ".join(references)
     transport.send(
-        key=key, sender="Rally %s <%s>" % (actor, addrs[actor]),
-        to=addrs[other], cc=mail.get("cc_human"),
-        subject="[rally #%s t%s] %s" % (s["run_id"], s["turn"], s["task"][:60]),
+        key=key, sender="Rally %s <%s>" % (actor, sender_address),
+        to=recipient_address, cc=human,
+        subject="[rally #%s] %s" % (s["run_id"], subject_fragment(s["task"])),
         text=body,
-        headers={"X-Rally-Run": s["run_id"], "X-Rally-Turn": str(s["turn"]),
-                 "X-Rally-From": actor, "Auto-Submitted": "auto-generated"},
+        html=html,
+        headers=headers,
     )
+    s["thread_message_id"] = message_id
+    s["thread_references"] = references + [message_id]
     run.note("mailed turn %s to %s" % (s["turn"], other))
 
 
@@ -221,7 +299,7 @@ def write_report(run: Run, cfg: Dict, halt: str, dry: bool = False) -> str:
 
 def mail_report(run: Run, cfg: Dict, text: str, halt: str) -> None:
     mail = cfg.get("mail", {})
-    human = mail.get("cc_human")
+    human = run.s.get("commissioned_by") or mail.get("cc_human")
     if not mail.get("enabled", True) or not human:
         return
     s = run.s
@@ -230,16 +308,37 @@ def mail_report(run: Run, cfg: Dict, text: str, halt: str) -> None:
     ledger = transport.Ledger(LEDGER)
     ledger.check_and_reserve(s["run_id"], cfg["limits"]["sends_per_run"])
     key = transport.get_key(mail.get("keychain_service", "rally-resend"))
+    message_id = "<%s-report@%s>" % (s["run_id"], MAIL_DOMAIN)
+    prior = s.get("thread_message_id")
+    references = list(s.get("thread_references") or [])
+    if prior and prior not in references:
+        references.append(prior)
+    headers = {"X-Rally-Run": s["run_id"], "X-Rally-Report": status,
+               "Auto-Submitted": "auto-generated", "Message-ID": message_id}
+    if prior:
+        headers["In-Reply-To"] = prior
+    if references:
+        headers["References"] = " ".join(references)
     transport.send(
         key=key,
         sender="Rally %s <%s>" % (actor, cfg["agents"][actor]["address"]),
         to=human,
-        subject="[rally #%s %s] %s" % (s["run_id"], status, s["task"][:60]),
-        text=text + "\n\n---\nrun %s, %d turns, workdir %s\n" % (
-            s["run_id"], s["turn"], s["workdir"]),
-        headers={"X-Rally-Run": s["run_id"], "X-Rally-Report": status,
-                 "Auto-Submitted": "auto-generated"},
+        subject="[rally #%s] %s" % (s["run_id"], subject_fragment(s["task"])),
+        text=("RALLY EXECUTIVE REPORT\n"
+              "Run: %s\nFrom: %s\nStatus: %s\n\n%s\n\n%s\n"
+              "Workdir: %s\n" %
+              (s["run_id"], cfg["agents"][actor]["address"], status,
+               text.strip(), watermark(s["run_id"], "report",
+                                       cfg["agents"][actor]["address"], human),
+               s["workdir"])),
+        html=executive_html("Executive report", s["run_id"], "report",
+                            cfg["agents"][actor]["address"], human, status,
+                            text.strip()),
+        headers=headers,
     )
+    s["thread_message_id"] = message_id
+    s["thread_references"] = references + [message_id]
+    run.save()
     run.note("report mailed to %s" % human)
 
 
@@ -263,8 +362,15 @@ def take_turn(run: Run, cfg: Dict, dry: bool = False) -> Optional[str]:
         raw = _stub_reply(run, actor)
     else:
         schema = SCHEMA if cfg["agents"][actor].get("use_schema") else ""
-        raw = agents.run_agent(actor, prompt, s["workdir"], cfg["agents"][actor],
-                               limits["turn_timeout_sec"], schema)
+        try:
+            raw = agents.run_agent(actor, prompt, s["workdir"], cfg["agents"][actor],
+                                   limits["turn_timeout_sec"], schema)
+        except agents.AgentError as exc:
+            detail = "%s turn failed: %s" % (actor, exc)
+            s["halt"] = {"reason": "agent_error", "detail": detail}
+            run.note("AGENT FAILED: %s" % detail)
+            run.save()
+            return "agent_error"
 
     if not dry and os.path.abspath(s["workdir"]) != ROOT:
         after = repo_fingerprint()
@@ -390,10 +496,13 @@ def new_workspace(run_id: str) -> str:
     return ws
 
 
-def handle_commission(cfg: Dict, task: str, sender: str) -> str:
+def handle_commission(cfg: Dict, task: str, sender: str, message_id: Optional[str] = None) -> str:
     run = Run.create(task, ".", cfg)
     run.s["workdir"] = new_workspace(run.s["run_id"])
     run.s["commissioned_by"] = sender
+    if message_id:
+        run.s["thread_message_id"] = message_id
+        run.s["thread_references"] = [message_id]
     run.save()
     print("commissioned %s by %s" % (run.s["run_id"], sender))
     halt = loop(run, cfg)
@@ -407,13 +516,20 @@ def handle_commission(cfg: Dict, task: str, sender: str) -> str:
     return run.s["run_id"]
 
 
-def handle_note(cfg: Dict, run_id: str, text: str) -> None:
+def handle_note(cfg: Dict, run_id: str, text: str, message_id: Optional[str] = None) -> None:
     try:
         run = Run.load(run_id)
     except IOError:
         print("note for unknown run %s, dropped" % run_id)
         return
     run.s["human_note"] = text
+    if message_id:
+        prior = run.s.get("thread_message_id")
+        refs = list(run.s.get("thread_references") or [])
+        if prior and prior not in refs:
+            refs.append(prior)
+        run.s["thread_message_id"] = message_id
+        run.s["thread_references"] = refs + [message_id]
     run.save()
     if text.strip().upper().startswith("STOP"):
         run.s["halt"] = {"reason": "stopped_by_human", "detail": text}
@@ -459,9 +575,9 @@ def serve(cfg: Dict, once: bool = False) -> int:
             detail = m.get("detail") or {}
             try:
                 if kind == "commission":
-                    handle_commission(cfg, detail["task"], detail["sender"])
+                    handle_commission(cfg, detail["task"], detail["sender"], detail.get("message_id"))
                 elif kind == "note":
-                    handle_note(cfg, detail["run_id"], detail["text"])
+                    handle_note(cfg, detail["run_id"], detail["text"], detail.get("message_id"))
                 else:
                     print("ignored: %s" % (detail.get("why") or m.get("error")))
             except Exception as exc:
@@ -473,7 +589,31 @@ def serve(cfg: Dict, once: bool = False) -> int:
         time.sleep(interval)
 
 
-def cmd_check(cfg: Dict) -> int:
+def smoke_agents(cfg: Dict) -> bool:
+    """Actually invoke both agents with a trivial prompt.
+
+    A config can name a model the CLI cannot serve, and every static check still
+    passes: the binary exists, the pins differ, the families differ. The run then
+    dies on turn 0 with "Agent execution terminated due to error." Found the hard
+    way when a Claude model routed through the Antigravity CLI stopped being
+    served. The only honest preflight is to make each agent answer.
+    """
+    ok = True
+    for name, a in cfg["agents"].items():
+        try:
+            out = agents.run_agent(name, "Reply with only: OK", "/tmp", a, 120, "")
+            good = "OK" in (out or "")
+            print("  %-7s live probe: %s (%s)"
+                  % (name, "responds" if good else "ODD REPLY", a["model"]))
+            ok = ok and good
+        except agents.AgentError as exc:
+            print("  %-7s live probe: FAILED (%s) %s"
+                  % (name, a["model"], str(exc)[:70]))
+            ok = False
+    return ok
+
+
+def cmd_check(cfg: Dict, smoke: bool = False) -> int:
     print("Rally preflight")
     ok = True
     try:
@@ -528,12 +668,16 @@ def cmd_check(cfg: Dict) -> int:
         except Exception as exc:
             print("  ingress queue: %s" % str(exc)[:60])
     print("  limits: %s" % json.dumps(cfg["limits"]))
+    if smoke:
+        ok = smoke_agents(cfg) and ok
     return 0 if ok else 1
 
 
 def main(argv: List[str]) -> int:
     ap = argparse.ArgumentParser(prog="rally")
     ap.add_argument("--check", action="store_true", help="preflight and exit")
+    ap.add_argument("--smoke", action="store_true",
+                    help="with --check, actually invoke both agents (slower, definitive)")
     ap.add_argument("--config", default=CONFIG,
                     help="config file (use config/rally.demo.json for fast live demos)")
     ap.add_argument("--run", metavar="TASK", help="commission a run")
@@ -557,7 +701,7 @@ def main(argv: List[str]) -> int:
     if a.no_mail:
         cfg["mail"]["enabled"] = False
     if a.check:
-        return cmd_check(cfg)
+        return cmd_check(cfg, a.smoke)
     if a.serve:
         agents.assert_pins(cfg["agents"])
         return serve(cfg, a.once)

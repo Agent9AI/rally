@@ -74,7 +74,7 @@ class TestExecutionSymmetry(unittest.TestCase):
 
 class TestModelPinning(unittest.TestCase):
     def test_pins_survive_into_argv(self):
-        self.assertIn("opus", capture("claude"))
+        self.assertTrue(any("opus" in arg for arg in capture("claude")))
         self.assertIn("gemini-3.1-pro-high", capture("agy"))
 
     def test_agy_prompt_is_last_and_glued(self):

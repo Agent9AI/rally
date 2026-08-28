@@ -76,7 +76,7 @@ WHAT THEY ASKED FOR:
 THE FINAL CHECKLIST, as the runner recorded it (authoritative):
 %s
 
-Write it the way a good colleague reports back:
+Write it as an executive brief:
 - Lead with the outcome in one sentence. If this is a HALT, say so plainly in
   that sentence. Never describe a halt as a completion.
 - What was built, and where it is.
@@ -84,6 +84,8 @@ Write it the way a good colleague reports back:
   since the cross-check is the point of the system.
 - What to look at first.
 - What is still open, and what you would do next.
+- Use decisive language, short sections, and only material detail. Avoid
+  greetings, sign-offs, internal process commentary, and tool-by-tool narration.
 
 Plain prose and short headings. No transcript, no tool traces, no JSON, no
 checklist dump, no progress narration. Under 400 words. Output only the report
