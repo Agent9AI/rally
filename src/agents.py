@@ -80,8 +80,11 @@ def run_agy(prompt: str, workdir: str, cfg: Dict, timeout: int, schema_path: str
            "--effort", effort,
            "--print-timeout", "%ds" % max(60, timeout - 30),
            "--dangerously-skip-permissions"]
+    # `--json-schema` is refused unless --output-format is json/stream-json, which
+    # changes the whole reply shape. The runner's reconcile() is the real
+    # enforcement, so the schema stays opt-in rather than on by default.
     if schema_path:
-        cmd += ["--json-schema", schema_path]
+        cmd += ["--output-format", "json", "--json-schema", schema_path]
     cmd.append("-p=" + prompt)
     return _run(cmd, workdir, timeout)
 

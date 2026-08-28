@@ -91,6 +91,7 @@ def reconcile(
     proposed: List[Dict[str, Any]],
     actor: str,
     rejections_max: int = 2,
+    allow_new: bool = True,
 ) -> Tuple[List[Dict[str, Any]], List[str]]:
     """Apply only the legal transitions from `proposed`, keeping `prev` otherwise.
 
@@ -113,8 +114,16 @@ def reconcile(
         seen.add(iid)
         old = by_id.get(iid)
 
-        # A brand-new item is allowed: the checklist can grow during negotiation.
+        # New items belong to the negotiation phase. Observed on the first live
+        # run: once work is under way, agents invent verification-of-verification
+        # items ("independent re-execution", "byte-level check") and the
+        # checklist regresses infinitely. Scope is agreed up front or not at all.
         if old is None:
+            if not allow_new:
+                violations.append(
+                    "%s: scope is closed, new items are only allowed during "
+                    "negotiation. Raise it in your narrative instead." % iid)
+                continue
             if it["state"] not in ("open", "claimed"):
                 violations.append(
                     "new item %s must start as open or claimed, not %s" % (iid, it["state"])
@@ -178,7 +187,10 @@ def reconcile(
             out.append(merged)
             continue
 
-        if now == "awaiting-verification" and was == "claimed":
+        if now == "awaiting-verification" and was in ("claimed", "open"):
+            # Claiming and working in the same turn is legal and expected. Only
+            # reaching "done" requires the other agent; forcing a separate claim
+            # turn would double the turn count and spend sends for nothing.
             if owner not in (None, actor):
                 violations.append(
                     "%s: owned by %s, %s may not advance it" % (iid, owner, actor)

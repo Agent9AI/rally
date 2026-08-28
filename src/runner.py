@@ -189,8 +189,9 @@ def take_turn(run: Run, cfg: Dict, dry: bool = False) -> Optional[str]:
     if dry:
         raw = _stub_reply(run, actor)
     else:
+        schema = SCHEMA if cfg["agents"][actor].get("use_schema") else ""
         raw = agents.run_agent(actor, prompt, s["workdir"], cfg["agents"][actor],
-                               limits["turn_timeout_sec"], SCHEMA)
+                               limits["turn_timeout_sec"], schema)
 
     env = E.extract(raw)
     if env is None:
@@ -201,8 +202,10 @@ def take_turn(run: Run, cfg: Dict, dry: bool = False) -> Optional[str]:
         return None
 
     problems = E.validate_shape(env)
+    # Scope closes after negotiation: turn 0 scopes, turn 1 negotiates.
     accepted, violations = E.reconcile(
-        s["checklist"], env.get("checklist", []), actor, limits["rejections_max"])
+        s["checklist"], env.get("checklist", []), actor, limits["rejections_max"],
+        allow_new=(s["turn"] <= 1))
     s["checklist"] = accepted
     s["violations"] = problems + violations
     if violations:

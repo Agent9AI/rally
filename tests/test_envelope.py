@@ -109,3 +109,35 @@ class TestCompletion(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
+
+class TestClaimAndWorkSameTurn(unittest.TestCase):
+    """Regression: agy legitimately claimed and worked five items in one turn."""
+
+    def test_open_to_awaiting_in_one_turn(self):
+        out, viol = E.reconcile([item("c1")], [item("c1", state="awaiting-verification", owner="agy")],
+                                actor="agy")
+        self.assertEqual(out[0]["state"], "awaiting-verification")
+        self.assertEqual(out[0]["owner"], "agy")
+        self.assertEqual(viol, [])
+
+    def test_open_to_done_still_illegal(self):
+        out, viol = E.reconcile([item("c1")], [item("c1", state="done")], actor="agy")
+        self.assertEqual(out[0]["state"], "open", "verification cannot be skipped")
+        self.assertTrue(viol)
+
+
+class TestScopeClosure(unittest.TestCase):
+    """Regression: the first live run grew 5 items into 8 by inventing
+    verification-of-verification items. Scope closes after negotiation."""
+
+    def test_new_items_rejected_once_scope_closed(self):
+        out, viol = E.reconcile([item("c1")], [item("c1"), item("c9")],
+                                actor="agy", allow_new=False)
+        self.assertEqual({i["id"] for i in out}, {"c1"})
+        self.assertTrue(any("scope is closed" in v for v in viol))
+
+    def test_new_items_allowed_while_open(self):
+        out, viol = E.reconcile([item("c1")], [item("c1"), item("c9")],
+                                actor="agy", allow_new=True)
+        self.assertEqual({i["id"] for i in out}, {"c1", "c9"})
