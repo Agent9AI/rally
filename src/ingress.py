@@ -150,7 +150,11 @@ def collect(cfg: Dict) -> List[Dict]:
         try:
             msg = fetch_message(eid, resend_key)
         except urllib.error.HTTPError as exc:
-            out.append({"id": rec["id"], "error": "resend %d" % exc.code})
+            out.append({
+                "id": rec["id"],
+                "error": "resend %d" % exc.code,
+                "retryable": exc.code == 429 or 500 <= exc.code < 600,
+            })
             continue
         kind, detail = classify(msg, cfg)
         out.append({"id": rec["id"], "kind": kind, "detail": detail,

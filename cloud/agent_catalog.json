@@ -1,0 +1,54 @@
+{
+  "schema_version": "rally.agent-catalog/v1",
+  "catalog_version": "2026.08.29",
+  "product": "Rally",
+  "owner": "Agent9",
+  "discovery_scope": "cross-department engineering operations",
+  "agents": [
+    {
+      "id": "rally-intake-coordinator",
+      "display_name": "Rally Intake Coordinator",
+      "family": "google",
+      "model": "gemini-3.7-flash",
+      "framework": "Google ADK",
+      "runtime": "Google Cloud Run",
+      "capabilities": [
+        "preserve commissioned intent",
+        "create a bounded handoff",
+        "record durable intake state"
+      ],
+      "authority": ["accept authenticated commissions", "invoke the Rally handoff tool"],
+      "prohibited": ["modify repositories", "approve completed work", "change policy"],
+      "departments": ["engineering", "product", "operations", "security"],
+      "status": "release-candidate"
+    },
+    {
+      "id": "rally-claude-worker",
+      "display_name": "Claude Worker",
+      "family": "anthropic",
+      "runtime": "licensed workstation CLI",
+      "capabilities": ["scope", "implement", "test", "review"],
+      "authority": ["claim checklist work", "submit evidence", "verify Gemini-owned work"],
+      "prohibited": ["verify Claude-owned work", "change budgets", "send outside Rally"],
+      "departments": ["engineering", "product", "operations", "security"],
+      "status": "active"
+    },
+    {
+      "id": "rally-gemini-worker",
+      "display_name": "Gemini Worker",
+      "family": "google",
+      "runtime": "licensed Antigravity CLI",
+      "capabilities": ["scope", "implement", "test", "review"],
+      "authority": ["claim checklist work", "submit evidence", "verify Claude-owned work"],
+      "prohibited": ["verify Gemini-owned work", "change budgets", "send outside Rally"],
+      "departments": ["engineering", "product", "operations", "security"],
+      "status": "active"
+    }
+  ],
+  "policy": {
+    "completion_invariant": "Every done item names a verifier from a different model family than its owner.",
+    "state_authority": "deterministic Rally runner",
+    "retention_days": 30,
+    "human_controls": ["commissioner allowlist", "STOP", "steering reply", "turn and send ceilings"]
+  }
+}

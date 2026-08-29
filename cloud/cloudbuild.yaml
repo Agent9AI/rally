@@ -1,0 +1,8 @@
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args: ["build", "-t", "${_IMAGE}", "."]
+  - name: gcr.io/cloud-builders/docker
+    args: ["push", "${_IMAGE}"]
+images: ["${_IMAGE}"]
+substitutions:
+  _IMAGE: us-east1-docker.pkg.dev/$PROJECT_ID/rally/rally-coordinator:$BUILD_ID

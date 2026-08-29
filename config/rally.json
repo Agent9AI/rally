@@ -25,6 +25,7 @@
     "turns_max": 24,
     "sends_per_run": 60,
     "no_progress_halt": 4,
+    "reprompts_max": 1,
     "rejections_max": 2,
     "turn_timeout_sec": 1500,
     "require_execution_symmetry": true
@@ -43,5 +44,13 @@
     "owners": [
       "terry@agent9.dev"
     ]
+  },
+  "google_cloud": {
+    "enabled": false,
+    "required": true,
+    "url": "",
+    "token_keychain": "rally-cloud-token",
+    "google_identity": true,
+    "timeout_sec": 180
   }
 }

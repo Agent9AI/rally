@@ -14,7 +14,10 @@ this one has a bug.
 | Transport, both directions | Resend (inbound webhook, outbound API) |
 | Agent A | Claude CLI (`claude -p`) |
 | Agent B | Antigravity CLI (`agy -p`) |
-| Durable ingress | Cloudflare Worker |
+| Durable ingress | Cloudflare Worker + D1 |
+| Intake coordinator | Google ADK + Gemini 3.7 on Cloud Run |
+| Coordinator state | Firestore, atomically idempotent by mail message ID |
+| Secrets and telemetry | Secret Manager, Cloud Logging, Cloud Trace |
 | Turn execution | Local runner on a machine hosting both CLIs |
 | Work product | Git checkout, one branch per run |
 
@@ -28,6 +31,7 @@ CLIs happen to expose the same shape (`-p`, `--model`, `--effort`,
 
 ```
 updates.agent9.dev
+  rally@updates.agent9.dev      Human commission address
   claude@updates.agent9.dev     Agent A mailbox
   agy@updates.agent9.dev        Agent B mailbox
 ```
@@ -146,8 +150,9 @@ rebuild it. That is the recovery path, used deliberately, not automatically.
 
 ## 6. Turn lifecycle
 
-1. **Commission.** A verified human sends a task to `claude@`. The runner creates
-   the run, allocates `run_id`, cuts branch `rally/<run_id>`, and sets turn 0.
+1. **Commission.** A verified human sends a task to `rally@`. The runner creates
+   the run, allocates `run_id`, sends an authenticated and idempotent handoff to
+   the Google ADK coordinator, cuts the workspace, and sets turn 0.
 2. **Scoping.** Claude converts the goal into a checklist and mails `agy@`. No
    work yet.
 3. **Negotiation.** Antigravity accepts, splits, adds, or challenges items.
@@ -251,7 +256,7 @@ not.
 verified sender identity, never from the body of a message asking to be trusted.
 
 **Visibility.** The human is CC'd on every agent-to-agent message. The subject tag
-`[rally #<run_id> t<n>]` makes that one filter rule, so the thread can be as loud
+`[rally #<run_id>]` and standard reply headers make that one thread, so it can be as loud
 or as quiet as they choose without Rally needing a dashboard. This answers the
 founding document's fifth open question.
 
@@ -276,6 +281,12 @@ what remains open. Not a transcript.
   before handing them to Resend.
 - **Commission authority** comes from verified sender identity only.
 - **Blast radius is accepted and bounded** by section 9's fail-closed ceilings.
+- **Cloud Run is dual authenticated.** Google IAM admits the configured operator
+  and the application independently checks a Secret Manager-backed token.
+- **Retries do not duplicate work.** The edge deduplicates provider events and
+  Firestore atomically claims the original mail message ID before Gemini runs.
+- **Telemetry excludes content.** Trace and structured logs carry execution
+  metadata, IDs, status, and latency, never prompts or responses.
 
 ## 12. Repository layout
 
@@ -285,8 +296,13 @@ rally/
   docs/SPEC.md              this document
   schema/envelope.json      canonical envelope schema
   src/worker/               Cloudflare Worker: inbound webhook, durable queue
-  src/runner/               run store, turn dispatch, budget enforcement
-  src/agents/               claude and agy adapters
+  src/runner.py             run store, turn dispatch, budget enforcement
+  src/agents.py             claude and agy adapters
+  src/cloud_coordinator.py  authenticated Cloud Run bridge
+  cloud/rally_adk/          ADK + Gemini intake agent
+  cloud/service.py          Cloud Run HTTP service
+  cloud/store.py            Firestore idempotency and run records
+  cloud/infra/              production Terraform
   config/                   defaults, model pinning, limits
   tests/                    envelope validation, state machine, guard breaches
   scripts/                  operational helpers

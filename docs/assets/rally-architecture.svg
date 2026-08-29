@@ -1,0 +1,145 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">Rally governed multi-agent architecture</title>
+  <desc id="desc">A human commissions work by email. A signed durable ingress and deterministic Rally runner pass an authenticated, idempotent handoff to a Gemini 3.7 Google ADK coordinator on Cloud Run. Firestore, an agent catalog, and metadata-only telemetry govern the fleet. Claude and Gemini coding agents implement and independently verify work before an executive report returns.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#06100d"/>
+      <stop offset="0.58" stop-color="#0a1813"/>
+      <stop offset="1" stop-color="#07110e"/>
+    </linearGradient>
+    <linearGradient id="google" x1="0" x2="1">
+      <stop offset="0" stop-color="#10253a"/>
+      <stop offset="1" stop-color="#0c211c"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="16" stdDeviation="18" flood-color="#000000" flood-opacity="0.34"/>
+    </filter>
+    <marker id="arrowMint" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M1 1 11 6 1 11Z" fill="#7cf7bd"/>
+    </marker>
+    <marker id="arrowBlue" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M1 1 11 6 1 11Z" fill="#72a8ff"/>
+    </marker>
+    <style>
+      .sans{font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+      .mono{font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace}
+      .eyebrow{font-size:15px;font-weight:800;letter-spacing:2.8px;fill:#7cf7bd}
+      .title{font-size:48px;font-weight:780;letter-spacing:-1.8px;fill:#eff8f4}
+      .subtitle{font-size:20px;font-weight:450;fill:#96aca3}
+      .lane{font-size:13px;font-weight:850;letter-spacing:2.2px;fill:#71877e}
+      .nodeTitle{font-size:21px;font-weight:760;fill:#edf6f2}
+      .nodeText{font-size:15px;font-weight:470;fill:#9db0a8}
+      .nodeMeta{font-size:12px;font-weight:700;letter-spacing:1px;fill:#7cf7bd}
+      .label{font-size:12px;font-weight:760;letter-spacing:1.1px;fill:#91a69d}
+      .small{font-size:12px;font-weight:520;fill:#71877e}
+    </style>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <circle cx="1350" cy="40" r="360" fill="#72a8ff" opacity="0.035"/>
+  <circle cx="170" cy="850" r="320" fill="#7cf7bd" opacity="0.03"/>
+
+  <g class="sans">
+    <text class="eyebrow" x="80" y="72">RALLY / FORTIFIED ENTERPRISE FLEET</text>
+    <text class="title" x="80" y="126">One request. Two model families. Zero self-approval.</text>
+    <text class="subtitle" x="80" y="162">Durable Google governance, deterministic authority, and visible cross-family engineering work.</text>
+
+    <line x1="80" y1="202" x2="1520" y2="202" stroke="#233a31"/>
+
+    <text class="lane" x="80" y="253">COMMISSION</text>
+    <text class="lane" x="80" y="432">GOOGLE GOVERNANCE PLANE</text>
+    <text class="lane" x="80" y="682">LICENSED EXECUTION PLANE</text>
+
+    <!-- commission lane -->
+    <g filter="url(#shadow)">
+      <rect x="80" y="278" width="250" height="112" rx="16" fill="#102019" stroke="#2a4138"/>
+      <rect x="370" y="278" width="300" height="112" rx="16" fill="#102019" stroke="#2a4138"/>
+      <rect x="710" y="278" width="330" height="112" rx="16" fill="#11211b" stroke="#3a5d4e"/>
+    </g>
+    <text class="nodeMeta mono" x="105" y="308">UNLIKELY HERO</text>
+    <text class="nodeTitle" x="105" y="341">Human commissioner</text>
+    <text class="nodeText" x="105" y="367">Email from any device</text>
+
+    <text class="nodeMeta mono" x="395" y="308">DURABLE EDGE</text>
+    <text class="nodeTitle" x="395" y="341">Signed ingress + D1</text>
+    <text class="nodeText" x="395" y="367">Resend · dedupe · retry-safe ack</text>
+
+    <text class="nodeMeta mono" x="735" y="308">POLICY AUTHORITY</text>
+    <text class="nodeTitle" x="735" y="341">Deterministic Rally runner</text>
+    <text class="nodeText" x="735" y="367">Identity · budgets · state machine</text>
+
+    <line x1="330" y1="334" x2="356" y2="334" stroke="#7cf7bd" stroke-width="2.5" marker-end="url(#arrowMint)"/>
+    <line x1="670" y1="334" x2="696" y2="334" stroke="#7cf7bd" stroke-width="2.5" marker-end="url(#arrowMint)"/>
+    <text class="small mono" x="1100" y="372">stable request key · resumable coordination</text>
+
+    <!-- Google trust boundary -->
+    <rect x="70" y="452" width="1460" height="186" rx="22" fill="url(#google)" stroke="#72a8ff" stroke-width="1.5" stroke-dasharray="9 8" opacity="0.98"/>
+    <rect x="91" y="470" width="210" height="25" rx="12.5" fill="#72a8ff" opacity="0.14"/>
+    <text class="label" x="110" y="488" fill="#9dc0ff">IAM + SERVICE TOKEN</text>
+
+    <g filter="url(#shadow)">
+      <rect x="110" y="514" width="340" height="94" rx="14" fill="#102336" stroke="#3e6695"/>
+      <rect x="490" y="514" width="260" height="94" rx="14" fill="#10231e" stroke="#335b4a"/>
+      <rect x="790" y="514" width="260" height="94" rx="14" fill="#10231e" stroke="#335b4a"/>
+      <rect x="1090" y="514" width="330" height="94" rx="14" fill="#10231e" stroke="#335b4a"/>
+    </g>
+
+    <text class="nodeMeta mono" x="134" y="541" fill="#9dc0ff">CLOUD RUN / VERTEX AI</text>
+    <text class="nodeTitle" x="134" y="570">Gemini 3.7 + Google ADK</text>
+    <text class="nodeText" x="134" y="592">Verbatim, bounded handoff</text>
+
+    <text class="nodeMeta mono" x="514" y="541">MEMORY</text>
+    <text class="nodeTitle" x="514" y="570">Firestore</text>
+    <text class="nodeText" x="514" y="592">Atomic claim · lease · fencing</text>
+
+    <text class="nodeMeta mono" x="814" y="541">DISCOVERY</text>
+    <text class="nodeTitle" x="814" y="570">Fleet catalog</text>
+    <text class="nodeText" x="814" y="592">Capability · authority · lifecycle</text>
+
+    <text class="nodeMeta mono" x="1114" y="541">TELEMETRY</text>
+    <text class="nodeTitle" x="1114" y="570">Cloud Trace + Logging</text>
+    <text class="nodeText" x="1114" y="592">Metadata only · prompt content off</text>
+
+    <line x1="1040" y1="334" x2="1068" y2="334" stroke="#72a8ff" stroke-width="2.5"/>
+    <path d="M1068 334 H1447 V500 H450" fill="none" stroke="#72a8ff" stroke-width="2.5" marker-end="url(#arrowBlue)"/>
+    <text class="label" x="1100" y="309">AUTHENTICATED + IDEMPOTENT HANDOFF</text>
+
+    <line x1="450" y1="561" x2="476" y2="561" stroke="#72a8ff" stroke-width="2.3" marker-end="url(#arrowBlue)"/>
+    <line x1="750" y1="561" x2="776" y2="561" stroke="#72a8ff" stroke-width="2.3" marker-end="url(#arrowBlue)"/>
+    <line x1="1050" y1="561" x2="1076" y2="561" stroke="#72a8ff" stroke-width="2.3" marker-end="url(#arrowBlue)"/>
+
+    <!-- execution plane -->
+    <g filter="url(#shadow)">
+      <rect x="180" y="710" width="350" height="116" rx="16" fill="#231817" stroke="#7f4d45"/>
+      <rect x="680" y="710" width="350" height="116" rx="16" fill="#121e32" stroke="#3e6695"/>
+      <rect x="1190" y="710" width="300" height="116" rx="16" fill="#102019" stroke="#3a5d4e"/>
+    </g>
+
+    <text class="nodeMeta mono" x="205" y="741" fill="#ffb4a8">ANTHROPIC FAMILY</text>
+    <text class="nodeTitle" x="205" y="775">Claude coding worker</text>
+    <text class="nodeText" x="205" y="800">Scope · implement · test · review</text>
+
+    <text class="nodeMeta mono" x="705" y="741" fill="#9dc0ff">GEMINI FAMILY</text>
+    <text class="nodeTitle" x="705" y="775">Antigravity coding worker</text>
+    <text class="nodeText" x="705" y="800">Scope · implement · test · review</text>
+
+    <text class="nodeMeta mono" x="1215" y="741">AUDIT SURFACE</text>
+    <text class="nodeTitle" x="1215" y="775">Executive thread</text>
+    <text class="nodeText" x="1215" y="800">Every turn + final evidence</text>
+
+    <line x1="530" y1="755" x2="666" y2="755" stroke="#7cf7bd" stroke-width="2.5" marker-end="url(#arrowMint)"/>
+    <line x1="680" y1="792" x2="544" y2="792" stroke="#7cf7bd" stroke-width="2.5" marker-end="url(#arrowMint)"/>
+    <text class="label" x="557" y="741">IMPLEMENT</text>
+    <text class="label" x="558" y="817">VERIFY</text>
+
+    <path d="M710 390 V674 H355 V696" fill="none" stroke="#7cf7bd" stroke-width="2.5" marker-end="url(#arrowMint)"/>
+    <path d="M885 390 V696" fill="none" stroke="#7cf7bd" stroke-width="2.5" marker-end="url(#arrowMint)"/>
+    <line x1="1030" y1="768" x2="1176" y2="768" stroke="#7cf7bd" stroke-width="2.5" marker-end="url(#arrowMint)"/>
+    <path d="M180 768 H128 V334 H66" fill="none" stroke="#7cf7bd" stroke-width="2.5" marker-end="url(#arrowMint)"/>
+    <text class="label" x="1070" y="751">VERIFIED REPORT</text>
+
+    <line x1="80" y1="858" x2="1520" y2="858" stroke="#233a31"/>
+    <text class="small mono" x="80" y="883">LOAD-BEARING INVARIANT  ·  DONE REQUIRES owner ≠ verified_by  ·  ENFORCED OUTSIDE EVERY MODEL</text>
+    <text class="small mono" x="1520" y="883" text-anchor="end">RALLY BY AGENT9</text>
+  </g>
+</svg>

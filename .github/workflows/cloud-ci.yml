@@ -1,0 +1,26 @@
+name: cloud-coordinator-ci
+
+on:
+  push:
+    branches: [main]
+    paths: ["cloud/**", ".github/workflows/cloud-ci.yml"]
+  pull_request:
+    paths: ["cloud/**", ".github/workflows/cloud-ci.yml"]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v6
+      - uses: hashicorp/setup-terraform@v3
+      - run: uv sync --project cloud --frozen
+      - run: uv run --project cloud ruff check cloud
+      - run: uv run --project cloud pytest cloud/tests
+      - run: terraform -chdir=cloud/infra fmt -check -recursive
+      - run: terraform -chdir=cloud/infra init -backend=false
+      - run: terraform -chdir=cloud/infra validate
+      - run: docker build -t rally-google-coordinator:test cloud

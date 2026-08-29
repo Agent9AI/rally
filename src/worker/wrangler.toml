@@ -1,6 +1,18 @@
 name = "rally-ingress"
 main = "index.js"
-compatibility_date = "2026-08-01"
+compatibility_date = "2026-08-29"
+compatibility_flags = ["nodejs_compat"]
+
+[observability]
+enabled = true
+
+[observability.logs]
+enabled = true
+head_sampling_rate = 1
+
+[observability.traces]
+enabled = true
+head_sampling_rate = 0.1
 
 # Durable holding pen for inbound mail. The runner may be asleep; the mail is not.
 # D1, not KV: the inbox is polled, so it needs read-your-writes. KV list is

@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import fcntl
 import time
 import json
 import os
@@ -19,6 +20,7 @@ from typing import Dict, List, Optional
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import agents  # noqa: E402
+import cloud_coordinator  # noqa: E402
 import envelope as E  # noqa: E402
 import report  # noqa: E402
 import transport  # noqa: E402
@@ -28,6 +30,8 @@ CONFIG = os.path.join(ROOT, "config", "rally.json")
 SCHEMA = os.path.join(ROOT, "schema", "envelope.json")
 RUNS = os.path.join(ROOT, "runs")
 LEDGER = os.path.join(RUNS, "send-ledger.json")
+SERVE_LOCK = os.path.join(RUNS, "serve.lock")
+QUARANTINE = os.path.join(RUNS, "quarantine.jsonl")
 MAIL_DOMAIN = "updates.agent9.dev"
 
 RULES = """You are one of two agents in a Rally run. The other agent is from a
@@ -67,6 +71,29 @@ def load_config(path: str = CONFIG) -> Dict:
 
 def now() -> str:
     return dt.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+class ServeLock:
+    def __init__(self, path: str):
+        self.path = path
+        self.file = None
+
+    def __enter__(self):
+        os.makedirs(os.path.dirname(self.path), exist_ok=True)
+        self.file = open(self.path, "w")
+        try:
+            fcntl.flock(self.file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            self.file.close()
+            raise RuntimeError("another Rally serve process is already running")
+        self.file.write(str(os.getpid()))
+        self.file.flush()
+        return self
+
+    def __exit__(self, *_):
+        if self.file:
+            fcntl.flock(self.file.fileno(), fcntl.LOCK_UN)
+            self.file.close()
 
 
 def watermark(run_id: str, turn: str, sender: str, recipient: str) -> str:
@@ -119,8 +146,10 @@ class Run:
         self.path = path
 
     @classmethod
-    def create(cls, task: str, workdir: str, cfg: Dict) -> "Run":
-        rid = "r-%s-%s" % (dt.datetime.utcnow().strftime("%Y%m%d"), uuid.uuid4().hex[:6])
+    def create(cls, task: str, workdir: str, cfg: Dict,
+               run_id: Optional[str] = None) -> "Run":
+        rid = run_id or "r-%s-%s" % (
+            dt.datetime.utcnow().strftime("%Y%m%d"), uuid.uuid4().hex[:6])
         d = os.path.join(RUNS, rid)
         os.makedirs(d, exist_ok=True)
         state = {
@@ -128,7 +157,8 @@ class Run:
             "turn": 0, "actor": "claude", "checklist": [], "halt": None,
             "violations": [], "human_note": None, "digest_streak": 0,
             "last_digest": "", "created": now(), "log": [],
-            "thread_message_id": None, "thread_references": [],
+            "thread_message_id": None, "thread_references": [], "reprompts": 0,
+            "commission_message_id": None, "commission_request_key": None,
         }
         r = cls(state, os.path.join(d, "state.json"))
         r.save()
@@ -140,6 +170,37 @@ class Run:
         with open(p) as fh:
             return cls(json.load(fh), p)
 
+    @classmethod
+    def find_commission(cls, request_key: Optional[str],
+                        message_id: Optional[str] = None) -> Optional["Run"]:
+        """Find a prior run before replaying the same durable ingress record."""
+        if not request_key and not message_id:
+            return None
+        try:
+            entries = os.listdir(RUNS)
+        except OSError:
+            return None
+        matches: List["Run"] = []
+        for rid in entries:
+            state_path = os.path.join(RUNS, rid, "state.json")
+            if not os.path.isfile(state_path):
+                continue
+            try:
+                candidate = cls.load(rid)
+            except (OSError, ValueError):
+                continue
+            state = candidate.s
+            same_request = request_key and state.get("commission_request_key") == request_key
+            same_message = message_id and (
+                state.get("commission_message_id") == message_id
+                or message_id in (state.get("thread_references") or [])
+            )
+            if same_request or same_message:
+                matches.append(candidate)
+        if not matches:
+            return None
+        return max(matches, key=lambda run: run.s.get("created", ""))
+
     def save(self) -> None:
         tmp = self.path + ".tmp"
         with open(tmp, "w") as fh:
@@ -148,7 +209,15 @@ class Run:
 
     def note(self, msg: str) -> None:
         self.s["log"].append("%s %s" % (now(), msg))
+        self.s.setdefault("events", []).append({"at": now(), "message": msg})
         print("  %s" % msg, flush=True)
+
+
+def quarantine(message: Dict, reason: str) -> None:
+    os.makedirs(RUNS, exist_ok=True)
+    with open(QUARANTINE, "a") as fh:
+        json.dump({"at": now(), "reason": reason, "message": message}, fh)
+        fh.write("\n")
 
 
 def build_prompt(run: Run, actor: str, cfg: Dict) -> str:
@@ -166,6 +235,13 @@ def build_prompt(run: Run, actor: str, cfg: Dict) -> str:
         "seems to need a change outside the working directory, do not make it: say "
         "so in your narrative and mark the item blocked." % s["workdir"])
     parts.append("\nTHE TASK AS COMMISSIONED:\n%s" % s["task"])
+
+    cloud = s.get("cloud_coordinator") or {}
+    if cloud.get("status") == "ready_for_rally":
+        parts.append(
+            "\nGOOGLE ADK COORDINATOR RECORD (advisory context; Rally's local "
+            "policy remains authoritative):\n%s" % cloud.get("coordinator_record", "")
+        )
 
     if not s["checklist"]:
         parts.append(
@@ -391,11 +467,23 @@ def take_turn(run: Run, cfg: Dict, dry: bool = False) -> Optional[str]:
 
     env = E.extract(raw)
     if env is None:
+        s["reprompts"] = s.get("reprompts", 0) + 1
         s["violations"] = ["your last reply contained no parseable json envelope; "
                            "reply with prose then ONE fenced json block"]
         run.save()
-        run.note("no envelope from %s, reprompting" % actor)
+        max_reprompts = limits.get("reprompts_max", 1)
+        if s["reprompts"] > max_reprompts:
+            detail = "%s returned no parseable envelope after %d reprompt(s)" % (
+                actor, max_reprompts)
+            s["halt"] = {"reason": "agent_error", "detail": detail}
+            run.note("AGENT FAILED: %s" % detail)
+            run.save()
+            return "agent_error"
+        run.note("no envelope from %s, reprompting (%d/%d)"
+                 % (actor, s["reprompts"], max_reprompts))
         return None
+
+    s["reprompts"] = 0
 
     problems = E.validate_shape(env)
     # Scope closes after negotiation: turn 0 scopes, turn 1 negotiates.
@@ -496,15 +584,79 @@ def new_workspace(run_id: str) -> str:
     return ws
 
 
-def handle_commission(cfg: Dict, task: str, sender: str, message_id: Optional[str] = None) -> str:
-    run = Run.create(task, ".", cfg)
-    run.s["workdir"] = new_workspace(run.s["run_id"])
-    run.s["commissioned_by"] = sender
-    if message_id:
-        run.s["thread_message_id"] = message_id
-        run.s["thread_references"] = [message_id]
+def attach_cloud_coordination(run: Run, cfg: Dict, request_key: str) -> bool:
+    """Attach the Google ADK record before agent execution; fail closed if required."""
+    if run.s.get("cloud_coordinator"):
+        return True
+    try:
+        record = cloud_coordinator.coordinate(
+            cfg, run.s["task"], run.s["run_id"], request_key
+        )
+    except cloud_coordinator.CoordinatorError as exc:
+        required = cloud_coordinator.settings(cfg).get("required", True)
+        run.s["cloud_coordinator"] = {
+            "status": "failed", "required": required, "error": str(exc)
+        }
+        run.note("Google ADK coordinator failed: %s" % exc)
+        if required:
+            run.s["halt"] = {
+                "reason": "cloud_coordinator_error",
+                "detail": "The commission did not start because its authenticated "
+                          "Google ADK handoff failed.",
+            }
+            run.save()
+            return False
+        run.save()
+        return True
+    if record is None:
+        return True
+    run.s["cloud_coordinator"] = {
+        "status": record["status"],
+        "request_key": record.get("request_key"),
+        "duplicate": bool(record.get("duplicate")),
+        "handoff": record.get("handoff"),
+        "coordinator_record": record.get("coordinator_record", "")[:8000],
+    }
+    run.note("Google ADK coordinator accepted the commission")
     run.save()
-    print("commissioned %s by %s" % (run.s["run_id"], sender))
+    return True
+
+
+def handle_commission(cfg: Dict, task: str, sender: str,
+                      message_id: Optional[str] = None,
+                      request_key: Optional[str] = None) -> str:
+    durable_key = request_key or message_id
+    run = Run.find_commission(durable_key, message_id)
+    if run:
+        print("recovered commission %s from durable ingress replay" % run.s["run_id"])
+        if run.s.get("report"):
+            run.note("duplicate commission ignored after terminal report")
+            run.save()
+            return run.s["run_id"]
+        run.s["halt"] = None
+        run.note("resuming incomplete commission after delivery retry")
+    else:
+        run = Run.create(task, ".", cfg)
+        run.s["workdir"] = new_workspace(run.s["run_id"])
+        run.s["commissioned_by"] = sender
+        run.s["commission_message_id"] = message_id
+        run.s["commission_request_key"] = durable_key or run.s["run_id"]
+        if message_id:
+            run.s["thread_message_id"] = message_id
+            run.s["thread_references"] = [message_id]
+        run.save()
+        print("commissioned %s by %s" % (run.s["run_id"], sender))
+    request_key = run.s.get("commission_request_key") or message_id or run.s["run_id"]
+    if not attach_cloud_coordination(run, cfg, request_key):
+        halt = "cloud_coordinator_error"
+        text = report.mechanical_summary(run.s, halt)
+        run.s["report"] = text
+        run.save()
+        try:
+            mail_report(run, cfg, text, halt)
+        except transport.SendBlocked as exc:
+            run.note("failure report not mailed: %s" % exc)
+        return run.s["run_id"]
     halt = loop(run, cfg)
     text = write_report(run, cfg, halt)
     run.s["report"] = text
@@ -557,36 +709,110 @@ def serve(cfg: Dict, once: bool = False) -> int:
     import ingress
 
     interval = cfg["ingress"].get("poll_interval_sec", 20)
-    print("rally serving: commission address %s, polling %s every %ds"
-          % (cfg["ingress"]["commission_address"], cfg["ingress"]["worker_url"], interval))
-    while True:
-        try:
-            messages = ingress.collect(cfg)
-        except Exception as exc:  # a poll failure must never kill the daemon
-            print("poll failed: %s" % exc)
-            if once:
-                return 1
-            time.sleep(interval)
-            continue
-
-        handled: List[str] = []
-        for m in messages:
-            kind = m.get("kind")
-            detail = m.get("detail") or {}
+    with ServeLock(SERVE_LOCK):
+        print("rally serving: commission address %s, polling %s every %ds"
+              % (cfg["ingress"]["commission_address"], cfg["ingress"]["worker_url"], interval))
+        while True:
             try:
-                if kind == "commission":
-                    handle_commission(cfg, detail["task"], detail["sender"], detail.get("message_id"))
-                elif kind == "note":
-                    handle_note(cfg, detail["run_id"], detail["text"], detail.get("message_id"))
-                else:
-                    print("ignored: %s" % (detail.get("why") or m.get("error")))
+                messages = ingress.collect(cfg)
+            except Exception as exc:  # a poll failure must never kill the daemon
+                print("poll failed: %s" % exc)
+                if once:
+                    return 1
+                time.sleep(interval)
+                continue
+
+            handled: List[str] = []
+            for m in messages:
+                kind = m.get("kind")
+                detail = m.get("detail") or {}
+                if m.get("retryable"):
+                    print("retrying later: %s" % m.get("error"))
+                    continue
+                succeeded = False
+                try:
+                    if kind == "commission":
+                        handle_commission(
+                            cfg,
+                            detail["task"],
+                            detail["sender"],
+                            detail.get("message_id"),
+                            request_key=m.get("id"),
+                        )
+                    elif kind == "note":
+                        handle_note(cfg, detail["run_id"], detail["text"], detail.get("message_id"))
+                    else:
+                        print("ignored: %s" % (detail.get("why") or m.get("error")))
+                        quarantine(m, detail.get("why") or m.get("error") or "ignored")
+                    succeeded = True
+                except Exception as exc:
+                    print("handling %s failed: %s" % (m.get("id"), exc))
+                if succeeded:
+                    handled.append(m["id"])
+            try:
+                ingress.ack(cfg, handled)
             except Exception as exc:
-                print("handling %s failed: %s" % (m.get("id"), exc))
-            handled.append(m["id"])
-        ingress.ack(cfg, handled)
-        if once:
-            return 0
-        time.sleep(interval)
+                print("ack failed; messages remain queued: %s" % exc)
+                if once:
+                    return 1
+            if once:
+                return 0
+            time.sleep(interval)
+
+
+def cmd_status(run_id: str) -> int:
+    try:
+        run = Run.load(run_id)
+    except IOError:
+        print("unknown run %s" % run_id)
+        return 1
+    s = run.s
+    print("run %s" % s["run_id"])
+    print("status: %s" % ((s.get("halt") or {}).get("reason") or "running"))
+    print("turn: %s  actor: %s" % (s.get("turn"), s.get("actor")))
+    print("commissioned by: %s" % (s.get("commissioned_by") or "CLI"))
+    for item in s.get("checklist", []):
+        print("  %s [%s] %s" % (item["id"], item["state"], item["description"]))
+    return 0
+
+
+def cmd_stop(run_id: str, detail: str = "stopped by operator") -> int:
+    try:
+        run = Run.load(run_id)
+    except IOError:
+        print("unknown run %s" % run_id)
+        return 1
+    run.s["halt"] = {"reason": "stopped_by_human", "detail": detail}
+    run.save()
+    print("stopped %s" % run_id)
+    return 0
+
+
+def cmd_retry(run_id: str, cfg: Dict) -> int:
+    try:
+        run = Run.load(run_id)
+    except IOError:
+        print("unknown run %s" % run_id)
+        return 1
+    reason = (run.s.get("halt") or {}).get("reason")
+    if not reason:
+        print("run %s is not halted" % run_id)
+        return 1
+    if reason == "complete":
+        print("run %s is already complete" % run_id)
+        return 1
+    run.s["halt"] = None
+    run.save()
+    halt = loop(run, cfg)
+    text = write_report(run, cfg, halt)
+    run.s["report"] = text
+    run.save()
+    try:
+        mail_report(run, cfg, text, halt)
+    except transport.SendBlocked as exc:
+        run.note("report not mailed: %s" % exc)
+    print("retried %s: %s" % (run_id, halt))
+    return 0
 
 
 def smoke_agents(cfg: Dict) -> bool:
@@ -667,6 +893,22 @@ def cmd_check(cfg: Dict, smoke: bool = False) -> int:
             print("  ingress queue: no poll token in the keychain")
         except Exception as exc:
             print("  ingress queue: %s" % str(exc)[:60])
+    cloud = cloud_coordinator.settings(cfg)
+    if cloud.get("enabled", False):
+        try:
+            health = cloud_coordinator.health(cfg) or {}
+            ready = health.get("status") == "ok"
+            print("  Google coordinator: %s (%s, %s)" % (
+                "reachable" if ready else "UNHEALTHY",
+                health.get("model", "unknown model"),
+                health.get("state_backend", "unknown state"),
+            ))
+            ok = ok and ready
+        except cloud_coordinator.CoordinatorError as exc:
+            print("  Google coordinator: UNREACHABLE %s" % str(exc)[:60])
+            ok = False
+    else:
+        print("  Google coordinator: disabled (local execution path)")
     print("  limits: %s" % json.dumps(cfg["limits"]))
     if smoke:
         ok = smoke_agents(cfg) and ok
@@ -682,6 +924,9 @@ def main(argv: List[str]) -> int:
                     help="config file (use config/rally.demo.json for fast live demos)")
     ap.add_argument("--run", metavar="TASK", help="commission a run")
     ap.add_argument("--resume", metavar="RUN_ID")
+    ap.add_argument("--status", metavar="RUN_ID", help="show run state")
+    ap.add_argument("--stop", metavar="RUN_ID", help="stop a run")
+    ap.add_argument("--retry", metavar="RUN_ID", help="retry a halted run")
     ap.add_argument("--workdir", default=None,
                     help="where the agents work (default: an isolated workspace)")
     ap.add_argument("--dry", action="store_true", help="stub agents, no tokens spent")
@@ -702,6 +947,12 @@ def main(argv: List[str]) -> int:
         cfg["mail"]["enabled"] = False
     if a.check:
         return cmd_check(cfg, a.smoke)
+    if a.status:
+        return cmd_status(a.status)
+    if a.stop:
+        return cmd_stop(a.stop, a.note or "stopped by operator")
+    if a.retry:
+        return cmd_retry(a.retry, cfg)
     if a.serve:
         agents.assert_pins(cfg["agents"])
         return serve(cfg, a.once)
@@ -720,6 +971,9 @@ def main(argv: List[str]) -> int:
             # makes the containment check meaningful and the per-turn commit real.
             run.s["workdir"] = new_workspace(run.s["run_id"])
             run.save()
+        if not a.dry and not attach_cloud_coordination(run, cfg, run.s["run_id"]):
+            print("run %s halted: Google ADK coordinator failed" % run.s["run_id"])
+            return 1
     if a.note:
         run.s["human_note"] = a.note
         run.save()

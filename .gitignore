@@ -1,3 +1,12 @@
 runs/
 *.pyc
 __pycache__/
+.venv/
+.adk/
+*.tfstate
+*.tfstate.*
+.terraform/
+.pytest_cache/
+.ruff_cache/
+.wrangler/
+demo-run/

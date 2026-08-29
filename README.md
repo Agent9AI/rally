@@ -5,22 +5,28 @@ completion by writing email to each other. A person commissions the run. The
 checklist decides when it ends.
 
 Agent A is the **Claude CLI** (`claude -p`). Agent B is the **Antigravity CLI**
-(`agy -p`), pinned to Gemini. Transport is **Resend**. Inbound mail is held by a
-**Cloudflare Worker** so a sleeping runner costs latency, never a lost task.
+(`agy -p`), pinned to Gemini. A Google ADK coordinator on **Cloud Run** preserves
+the commission and records it durably in **Firestore** before execution.
+Transport is **Resend**; a **Cloudflare Worker + D1** holds inbound mail so a
+sleeping runner costs latency, never a lost task.
 
 ```
 you ──email──▶ rally@updates.agent9.dev
                       │
-              Worker holds it durably (D1)
+              Worker + D1 queue
                       │
-                 runner collects
+                 Rally runner
+                      │ authenticated, idempotent handoff
+          Google ADK + Gemini on Cloud Run
+                      │
+                  Firestore
                       │
         ┌─────────────┴─────────────┐
    claude -p                     agy -p
-   (opus)      ◀── verify ──▶    (gemini-3.1-pro)
+   (Anthropic)   ◀── verify ──▶   (Gemini)
         └─────────────┬─────────────┘
-                      │
-you ◀──── one report, when it is done or stuck
+                      │ every turn + final report
+you ◀─────────────────┘
 ```
 
 ## Why
@@ -80,24 +86,44 @@ agreeable.
 
 | Piece | State |
 |---|---|
-| Turn loop, state machine, guards | working, 35 tests |
-| Both CLI adapters | working, verified against live CLIs |
-| Human report | working |
-| Ingress Worker (D1) | deployed, auth and round trip verified |
-| Outbound mail via Resend | code complete, needs the API key in the keychain |
-| Resend inbound route for `rally@` | needs configuring in the Resend dashboard |
-| Agent-to-agent email leg | designed, not yet the transport (runner dispatches locally) |
+| Turn loop, state machine, guards | working, 53 core/product tests |
+| Claude + Gemini CLI execution | working, live multi-turn runs completed |
+| Executive turn emails + report | working through Resend |
+| Ingress Worker (D1) | deployed, signed webhook and round trip verified |
+| `rally@updates.agent9.dev` route | working; replies return to the commissioner |
+| Product + Cloud test suite | 63 automated tests passing |
+| Google ADK coordinator | implemented; live eval 3/3, both metrics 1.00 |
+| Cloud Run + Firestore + Trace | Terraform validated; deployment approval pending |
 
-Honest naming: today the loop is **email-attested**, not yet email-driven. The
-report is real mail. The turn handoff is still in process. Swapping it is one
-module, which is the point of the ingress interface.
+The current release candidate has **63 automated tests**: 53 deterministic
+runner, ingress, policy, bridge, and site tests plus 10 Cloud service tests.
+The separate live ADK scorecard remains 3/3 at 1.00 trajectory and 1.00 quality.
+
+### Why the models have different jobs
+
+Gemini 3.7 Flash is the load-bearing Google ADK coordinator on Vertex AI. It
+preserves the human's request, invokes one bounded handoff tool, and creates the
+durable governance record. The two licensed coding workers then operate in the
+repository: Claude and Antigravity/Gemini can both implement and review, but the
+runner rotates item ownership so neither family can approve its own work. The
+standard profile keeps its deliberate high-reasoning worker pin; the filmed
+profile uses Gemini 3.7 Flash for speed. The required Gemini 3.5+ path is never
+decorative or confined to the presentation layer.
+
+Honest boundary: email starts the real run and mirrors every turn, but the next
+agent is dispatched by the authoritative runner rather than by re-delivering the
+email. The local host remains necessary because the two coding subscriptions are
+accessed through desktop CLIs. Google Cloud is the durable intake, governance,
+identity, and observability plane—not a decorative API call.
 
 ## Quickstart
 
 ```bash
 make check                    # pins, binaries, credentials, limits
 make dry                      # exercise the loop, no tokens spent
-make test                     # 35 tests
+make test                     # 53 local policy, ingress, bridge, recovery, and site tests
+make cloud-test               # Cloud coordinator tests + lint
+make cloud-eval               # live ADK eval; exact trajectory + quality gates
 
 ./bin/rally --run "your task" --workdir /path/to/repo --no-mail
 make serve                    # poll for commissions and run them
@@ -115,6 +141,17 @@ See [docs/RUNBOOK.md](docs/RUNBOOK.md) to operate it, including how to stop a ru
 | [docs/RUNBOOK.md](docs/RUNBOOK.md) | Operating it. Setup, intervention, failure modes. |
 | [docs/FINDINGS.md](docs/FINDINGS.md) | What the first live run exposed. The most useful page here. |
 | [docs/DEMO.md](docs/DEMO.md) | **Start here to see it work.** Numbered steps, two paths. |
+| [docs/DEMO-SCRIPT.md](docs/DEMO-SCRIPT.md) | The four-minute recording script and shot list. |
+| [docs/VIDEO-PRODUCTION.md](docs/VIDEO-PRODUCTION.md) | Short-film and unedited-run capture package. |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Google Cloud topology, trust boundaries, and failure behavior. |
+| [docs/assets/rally-architecture.svg](docs/assets/rally-architecture.svg) | Presentation-ready architecture diagram. |
+| [docs/EVALUATION.md](docs/EVALUATION.md) | Live ADK eval design, scores, and the behavior it improved. |
+| [docs/HACKATHON.md](docs/HACKATHON.md) | Judge-facing positioning and submission checklist. |
+| [docs/JUDGE-PACKET.md](docs/JUDGE-PACKET.md) | Four-minute proof order and claim-to-receipt index. |
+| [docs/SUBMISSION-CHECKLIST.md](docs/SUBMISSION-CHECKLIST.md) | Final operator checklist with explicit deployment gate. |
+| [docs/PUBLIC-LAUNCH-DRAFT.md](docs/PUBLIC-LAUNCH-DRAFT.md) | Bonus-content and social-copy drafts. |
+| [docs/SECURITY.md](docs/SECURITY.md) | Threats, controls, and demo-safe evidence. |
+| [docs/ONBOARDING.md](docs/ONBOARDING.md) | Managed no-key launch and secure self-host strategy. |
 | [docs/BUILD-1HR.md](docs/BUILD-1HR.md) | The cut-to-the-bone first hour. |
 
 ## Layout
@@ -126,8 +163,13 @@ src/envelope.py        parsing and state-machine enforcement
 src/agents.py          the two CLI adapters, pin and symmetry checks
 src/transport.py       Resend send, fail-closed ceilings
 src/ingress.py         collect inbound, classify, authorise
+src/cloud_coordinator.py authenticated Google Cloud handoff
 src/report.py          the one message the human reads
 src/worker/            Cloudflare ingress Worker
+cloud/rally_adk/       Google ADK + Gemini coordinator
+cloud/service.py       authenticated Cloud Run API
+cloud/store.py         atomic Firestore idempotency and run records
+cloud/infra/           validated production Terraform
 config/rally.json      pins, limits, addresses, owners
 runs/<id>/             state.json and the agents' workspace
 ```

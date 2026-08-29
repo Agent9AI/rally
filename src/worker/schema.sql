@@ -4,6 +4,7 @@
 -- invisible to the runner for up to a minute. Measured, not assumed.
 CREATE TABLE IF NOT EXISTS messages (
   id          TEXT PRIMARY KEY,
+  event_id    TEXT UNIQUE NOT NULL,
   received_at TEXT NOT NULL,
   payload     TEXT NOT NULL
 );

@@ -26,6 +26,11 @@ security add-generic-password -U -s rally-resend -a rally -w '<resend key>'
 # Ingress: bearer token the runner uses to collect from the Worker
 # (already stored if you deployed the Worker from this machine)
 security find-generic-password -s rally-poll-token -w
+
+# Google coordinator: installed after the approved Terraform deployment
+gcloud secrets versions access latest --secret=rally-cloud-service-token \
+  --project=rally-agent9-2026 \
+| security add-generic-password -U -s rally-cloud-token -a rally -w
 ```
 
 **2. Point Resend's inbound webhook at the Worker.** In the Resend dashboard,
@@ -54,8 +59,8 @@ make serve                    # poll the Worker, run whatever arrives
 ./bin/rally --serve --once    # a single pass, for testing
 ```
 
-Then email a task to `rally@updates.agent9.dev`. You get one report back when the
-run finishes or halts.
+Then email a task to `rally@updates.agent9.dev`. You see each Claude/Gemini turn
+in one thread, followed by an executive report when the run finishes or halts.
 
 ## Running without email
 
@@ -124,6 +129,11 @@ curl -s -H "Authorization: Bearer $(security find-generic-password -s rally-poll
 
 Health failing means the Worker; empty pending with mail sent means Resend's
 route is not pointing at the ingest URL.
+
+**"Google coordinator: UNREACHABLE" in preflight.** Confirm that the active
+`gcloud` identity is `imterryim@gmail.com`, the Cloud Run URL is current, and
+the `rally-cloud-token` keychain entry exists. Rally deliberately refuses to
+start agent work when Cloud coordination is enabled and required but unavailable.
 
 ## Limits, and why they are not optional
 
