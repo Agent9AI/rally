@@ -33,14 +33,18 @@ class TestProductSite(unittest.TestCase):
 
     def test_product_proof_and_honest_boundary_are_visible(self):
         for phrase in (
-            "Zero self-approval",
+            "Meet the operator that",
+            "owner ≠ verifier",
             "Gemini 3.7 + ADK",
-            "No API keys",
+            "Honest boundary:",
+            "Rally runs one model at a time",
             "The authoritative runner dispatches the next model locally",
         ):
             self.assertIn(phrase, self.html)
+        self.assertIn('src="rally-mark.svg"', self.html)
         self.assertIn('name="rally-console-api"', self.html)
         self.assertIn("Loading authoritative runs", self.html)
+        self.assertNotIn("Request a managed pilot", self.html)
         self.assertNotIn("Webhook launch", self.html)
 
     def test_local_assets_exist_and_no_dead_hash_links(self):

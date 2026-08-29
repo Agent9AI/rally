@@ -1,8 +1,16 @@
 # Rally
 
-Two AI coding agents, from **different model families**, carry one task to
-completion by writing email to each other. A person commissions the run. The
-checklist decides when it ends.
+**Rally is the digital operator that cannot approve its own work.** A company
+gets one persistent agent identity, deterministic limits outside every prompt,
+and a second model family that must verify consequential work before it is
+complete.
+
+The current release proves that contract on engineering operations. Two AI
+coding agents, from **different model families**, carry one task to completion
+by writing email to each other. A person commissions the run. The checklist
+decides when it ends. The next product layer is least-privilege access to
+customer-approved systems such as Cloudflare, n8n, Google Workspace, and GitHub;
+those connectors are documented as roadmap, not represented as shipped.
 
 Agent A is the **Claude CLI** (`claude -p`). Agent B is the **Antigravity CLI**
 (`agy -p`), pinned to Gemini. A Google ADK coordinator on **Cloud Run** preserves
@@ -137,6 +145,7 @@ See [docs/RUNBOOK.md](docs/RUNBOOK.md) to operate it, including how to stop a ru
 | Document | What it is |
 |---|---|
 | [docs/FOUNDING.md](docs/FOUNDING.md) | The charter. Intent, principles, guardrails. Authority on why. |
+| [docs/PRODUCT-DIRECTION.md](docs/PRODUCT-DIRECTION.md) | The governed-operator position and researched connector sequence. |
 | [docs/SPEC.md](docs/SPEC.md) | The build. Envelope, state machine, limits, invocation. |
 | [docs/DIAGRAMS.md](docs/DIAGRAMS.md) | The system in four figures. |
 | [docs/RUNBOOK.md](docs/RUNBOOK.md) | Operating it. Setup, intervention, failure modes. |

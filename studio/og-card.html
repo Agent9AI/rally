@@ -7,56 +7,53 @@
     <style>
       * { box-sizing: border-box; }
       html, body { width: 1200px; height: 630px; margin: 0; overflow: hidden; }
-      body { position: relative; padding: 58px 62px; color: #202124; background: #fff; font-family: Arial, system-ui, sans-serif; }
-      body::before { position: absolute; inset: 0 0 auto; height: 10px; background: linear-gradient(90deg, #4285f4 0 25%, #ea4335 25% 50%, #fbbc04 50% 75%, #34a853 75%); content: ""; }
-      .copy { width: 650px; }
-      .eyebrow { margin: 0 0 38px; color: #0b57d0; font-size: 15px; font-weight: 700; letter-spacing: .13em; }
-      h1 { margin: 0; font-size: 67px; font-weight: 500; line-height: 1; letter-spacing: -.055em; }
-      h1 em { color: #0b57d0; font-style: normal; }
-      .lede { max-width: 610px; margin: 26px 0 0; color: #5f6368; font-size: 20px; line-height: 1.42; }
-      .proof { position: absolute; left: 62px; bottom: 54px; display: flex; gap: 27px; color: #80868b; font: 600 12px/1 Arial, sans-serif; letter-spacing: .055em; }
-      .proof b { color: #202124; }
-      .brand { position: absolute; right: 62px; bottom: 46px; display: flex; align-items: center; gap: 10px; color: #3c4043; font-size: 16px; font-weight: 600; }
-      .mark { position: relative; display: grid; width: 38px; height: 38px; overflow: hidden; place-items: center; color: #fff; border-radius: 11px; background: #0b57d0; box-shadow: inset -9px -9px #4285f4; }
-      .mark::before { position: absolute; top: -8px; right: -5px; width: 18px; height: 18px; border-radius: 50%; background: #fbbc04; content: ""; }
-      .mark::after { position: absolute; bottom: -9px; left: -5px; width: 18px; height: 18px; border-radius: 50%; background: #34a853; content: ""; }
-      .mark b { position: relative; z-index: 1; }
-      .app { position: absolute; top: 76px; right: 52px; width: 410px; height: 438px; overflow: hidden; border: 1px solid #dadce0; border-radius: 22px; background: #fff; box-shadow: 0 18px 45px rgba(60,64,67,.18); }
-      .bar { height: 52px; display: flex; align-items: center; gap: 9px; padding: 0 15px; border-bottom: 1px solid #e8eaed; }
-      .mini { width: 23px; height: 23px; display: grid; place-items: center; color: #fff; border-radius: 7px; background: #0b57d0; font-size: 10px; font-weight: 700; }
-      .search { height: 32px; flex: 1; display: flex; align-items: center; margin-left: 8px; padding: 0 12px; color: #80868b; border-radius: 8px; background: #f1f3f4; font-size: 10px; }
-      .avatar { width: 26px; height: 26px; display: grid; place-items: center; color: #fff; border-radius: 50%; background: #7e57c2; font-size: 9px; }
-      .app-body { height: 386px; display: grid; grid-template-columns: 112px 1fr; }
-      .list { border-right: 1px solid #e8eaed; background: #f8fafd; }
-      .list-title { padding: 15px 13px; font-size: 12px; font-weight: 600; }
-      .row { margin: 0 7px 7px; padding: 10px 8px; border-radius: 9px; background: #fff; font-size: 8px; }
-      .row.active { background: #e8f0fe; box-shadow: inset 2px 0 #0b57d0; }
-      .row b, .row span { display: block; }
-      .row span { margin-top: 4px; color: #80868b; line-height: 1.3; }
-      .thread { padding: 16px; }
-      .thread-title { margin-bottom: 15px; font-size: 11px; font-weight: 600; }
-      .message { margin: 0 0 10px 20px; padding: 10px; border: 1px solid #e8eaed; border-radius: 3px 11px 11px; font-size: 8px; line-height: 1.45; }
-      .message.blue { border-color: #d2e3fc; background: #f8faff; }
-      .message.green { border-color: #ceead6; background: #f7fcf8; }
-      .message b { display: block; margin-bottom: 4px; }
-      .receipt { display: flex; align-items: center; gap: 6px; margin-top: 7px; padding: 6px; color: #188038; border-radius: 6px; background: #e6f4ea; font-weight: 600; }
-      .check { width: 14px; height: 14px; display: grid; place-items: center; color: #fff; border-radius: 50%; background: #188038; font-size: 7px; }
+      body { position: relative; padding: 58px 62px; color: #10233f; background: #fff; font-family: Arial, system-ui, sans-serif; }
+      body::before { position: absolute; inset: 0 0 auto; height: 10px; background: #246bfd; content: ""; }
+      .copy { width: 660px; }
+      .eyebrow { margin: 0 0 38px; color: #246bfd; font-size: 15px; font-weight: 700; letter-spacing: .13em; }
+      h1 { margin: 0; font-size: 66px; font-weight: 500; line-height: 1; letter-spacing: -.055em; }
+      h1 em { color: #246bfd; font-style: normal; }
+      .lede { max-width: 620px; margin: 26px 0 0; color: #526178; font-size: 20px; line-height: 1.42; }
+      .proof { position: absolute; left: 62px; bottom: 54px; display: flex; gap: 27px; color: #758196; font: 600 12px/1 Arial, sans-serif; letter-spacing: .055em; }
+      .proof b { color: #10233f; }
+      .brand { position: absolute; right: 62px; bottom: 42px; display: flex; align-items: center; gap: 10px; color: #10233f; font-size: 16px; font-weight: 700; }
+      .mark { width: 42px; height: 42px; object-fit: contain; }
+      .app { position: absolute; top: 62px; right: 52px; width: 410px; height: 466px; overflow: hidden; color: #fff; border: 1px solid #233a5b; border-radius: 26px; background: #10233f; box-shadow: 0 22px 54px rgba(16,35,63,.24); }
+      .bar { height: 68px; display: flex; align-items: center; gap: 11px; padding: 0 20px; border-bottom: 1px solid rgba(255,255,255,.1); }
+      .bar b { font-size: 15px; }
+      .mini { width: 34px; height: 34px; padding: 4px; border-radius: 10px; background: #fff; }
+      .status { display: flex; align-items: center; gap: 7px; margin-left: auto; padding: 7px 9px; color: #aef0d2; border-radius: 999px; background: rgba(22,163,106,.14); font-size: 9px; font-weight: 700; letter-spacing: .05em; }
+      .status i { width: 7px; height: 7px; border-radius: 50%; background: #50dc9b; }
+      .profile { padding: 28px; }
+      .profile > span { color: #79a5ff; font-size: 10px; font-weight: 700; letter-spacing: .12em; }
+      .profile h2 { max-width: 320px; margin: 12px 0 23px; font-size: 26px; line-height: 1.08; letter-spacing: -.035em; }
+      .capabilities { overflow: hidden; border: 1px solid rgba(255,255,255,.1); border-radius: 15px; }
+      .capabilities div { min-height: 58px; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 4px 12px; padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,.08); }
+      .capabilities div:last-child { border-bottom: 0; }
+      .capabilities span { color: #8999b1; font-size: 9px; }
+      .capabilities b { grid-column: 1; font-size: 11px; }
+      .capabilities small { grid-column: 2; grid-row: 1 / 3; color: #aef0d2; font-size: 8px; font-weight: 700; }
+      .rule { display: flex; align-items: center; justify-content: space-between; margin-top: 20px; padding: 16px; border-radius: 13px; background: rgba(255,255,255,.06); }
+      .rule span { color: #9dacbf; font-size: 9px; }
+      .rule code { color: #fff; font: 700 13px ui-monospace, SFMono-Regular, Menlo, monospace; }
     </style>
   </head>
   <body>
     <div class="copy">
-      <p class="eyebrow">THE ENGINEERING AGENT YOUR WHOLE COMPANY CAN EMAIL</p>
-      <h1>One request.<br>Two model families.<br><em>Zero self-approval.</em></h1>
-      <p class="lede">Gemini governs the handoff. Claude and Gemini build, challenge, and independently verify.</p>
+      <p class="eyebrow">YOUR GOVERNED DIGITAL OPERATOR</p>
+      <h1>The operator that<br><em>cannot approve</em><br>its own work.</h1>
+      <p class="lede">One company identity. Only approved systems. Every consequential action independently verified.</p>
     </div>
     <div class="app">
-      <div class="bar"><span class="mini">R</span><b>Rally</b><span class="search">Search runs and evidence</span><span class="avatar">T</span></div>
-      <div class="app-body">
-        <div class="list"><div class="list-title">Runs</div><div class="row active"><b>Webhook launch</b><span>Replay-safe receiver</span></div><div class="row"><b>Rate-limit review</b><span>Awaiting verification</span></div><div class="row"><b>Invoice export</b><span>Blocked safely</span></div></div>
-        <div class="thread"><div class="thread-title">Prepare webhook service for launch</div><div class="message blue"><b>Gemini coordinator</b>Commission governed with independent verification required.</div><div class="message"><b>Claude worker</b>Implemented replay handling. Eight tests pass.</div><div class="message green"><b>Gemini worker</b>Conflicting replay returns 409.<div class="receipt"><span class="check">✓</span> Independently verified</div></div></div>
+      <div class="bar"><img class="mini" src="../site/rally-mark.svg" alt=""><b>Rally</b><span class="status"><i></i> ALWAYS ON</span></div>
+      <div class="profile">
+        <span>COMPANY OPERATOR</span>
+        <h2>One persistent identity for trusted work.</h2>
+        <div class="capabilities"><div><span>How work arrives</span><b>Company email</b><small>LIVE</small></div><div><span>Where it works</span><b>Governed repository</b><small>LIVE</small></div><div><span>Who governs access</span><b>Gemini + Google ADK</b><small>LIVE</small></div></div>
+        <div class="rule"><span>Completion rule</span><code>owner ≠ verifier</code></div>
       </div>
     </div>
     <div class="proof"><span><b>72</b> TESTS</span><span><b>3/3</b> LIVE ADK EVALS</span><span><b>1.00</b> TRAJECTORY + QUALITY</span></div>
-    <div class="brand"><span class="mark"><b>R</b></span><span>Rally by Agent9</span></div>
+    <div class="brand"><img class="mark" src="../site/rally-mark.svg" alt=""><span>Rally by Agent9</span></div>
   </body>
 </html>
