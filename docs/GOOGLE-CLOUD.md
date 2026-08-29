@@ -18,7 +18,7 @@ RALLY_ALLOW_INSECURE_DEV=1 RALLY_STATE_BACKEND=memory \
 In another terminal:
 
 ```bash
-curl -s http://127.0.0.1:8080/healthz | python3 -m json.tool
+curl -s http://127.0.0.1:8080/health | python3 -m json.tool
 curl -s -X POST http://127.0.0.1:8080/v1/commissions \
   -H 'content-type: application/json' \
   -H 'idempotency-key: local-demo-1' \
@@ -85,8 +85,10 @@ operator path.
 
 The deployed service also checks the Secret Manager token. The local runner
 impersonates the dedicated invoker to mint a token whose audience is the exact
-Cloud Run URL, then reads the application token from macOS Keychain. The
-boundary therefore requires two independent credentials.
+Cloud Run URL and whose identity claim is available to IAM, then reads the
+application token from macOS Keychain. The boundary therefore requires two
+independent credentials. `/health` is the external operator check; `/healthz`
+is reserved for Cloud Run's internal startup probe.
 
 After the approved service apply, mirror the token locally without printing it:
 

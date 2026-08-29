@@ -154,7 +154,8 @@ async def finish_coordination(record: dict[str, Any], task: str) -> dict[str, An
     return record
 
 
-@app.get("/healthz")
+@app.get("/health")
+@app.get("/healthz", include_in_schema=False)
 def healthz() -> dict[str, str]:
     return {
         "status": "ok",

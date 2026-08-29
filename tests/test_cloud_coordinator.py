@@ -99,6 +99,7 @@ class CoordinatorTests(unittest.TestCase):
                 "rally-invoker@example.iam.gserviceaccount.com",
                 "--audiences",
                 "https://coordinator.example",
+                "--include-email",
             ],
         )
 

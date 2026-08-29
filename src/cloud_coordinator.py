@@ -66,6 +66,7 @@ def _identity_token(cloud: Dict) -> Optional[str]:
             service_account,
             "--audiences",
             audience.rstrip("/"),
+            "--include-email",
         ])
     try:
         proc = subprocess.run(
@@ -142,7 +143,7 @@ def health(cfg: Dict) -> Optional[Dict]:
         raise CoordinatorError("Google Cloud coordination is enabled but its URL is unset")
     headers = {"User-Agent": "rally/1.0 (+https://github.com/Agent9AI/rally)"}
     headers.update(_identity_headers(cloud))
-    req = urllib.request.Request(base + "/healthz", headers=headers)
+    req = urllib.request.Request(base + "/health", headers=headers)
     try:
         with urllib.request.urlopen(req, timeout=10) as response:
             return json.load(response)
