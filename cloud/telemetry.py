@@ -58,6 +58,11 @@ def configure_logging() -> logging.Logger:
 
 def configure_tracing() -> None:
     """Export request and Gemini spans to Cloud Trace when explicitly enabled."""
+    # ADK and the GenAI SDK use separate content-capture controls. Set both
+    # before either instrumentor is configured so spans retain execution proof
+    # (model, token counts, tools, timing) without prompt, response, or tool
+    # payloads.
+    os.environ.setdefault("ADK_CAPTURE_MESSAGE_CONTENT_IN_SPANS", "false")
     os.environ.setdefault(
         "OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT", "NO_CONTENT"
     )

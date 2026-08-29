@@ -165,6 +165,10 @@ resource "google_cloud_run_v2_service" "coordinator" {
         value = "1"
       }
       env {
+        name  = "ADK_CAPTURE_MESSAGE_CONTENT_IN_SPANS"
+        value = "false"
+      }
+      env {
         name  = "OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT"
         value = "NO_CONTENT"
       }

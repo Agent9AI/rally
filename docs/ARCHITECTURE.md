@@ -87,7 +87,8 @@ git.
 
 Cloud Trace captures request and Gemini spans. Structured Cloud Logging records
 request ID, run ID, event, status, duplicate flag, latency, and trace linkage.
-`OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=NO_CONTENT` is set in both
+`ADK_CAPTURE_MESSAGE_CONTENT_IN_SPANS=false` and
+`OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=NO_CONTENT` are set in both
 code and infrastructure, so telemetry proves execution without retaining the
 commission or model response.
 
