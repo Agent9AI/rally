@@ -138,6 +138,14 @@ expensively. These are not optional.
 commission time. On exhaustion the run stops and reports to the human with the
 checklist as it stands. It does not silently continue.
 
+**Second Wind.** An administrator may enable a bounded recovery handoff. When a
+model process fails or an accepted turn reports a blocker, the runner preserves
+the last accepted checklist, records the failed attempt, and gives the other
+model family one chance to diagnose or take ownership. Partial workspace edits
+are treated as untrusted work to inspect, not accepted state. A takeover never
+transfers approval authority: the repairing model still needs the other family
+to verify its work.
+
 **Progress requirement.** If N consecutive turns pass with no checklist item
 changing state, the run is not converging. It halts and escalates. Two agents
 politely agreeing with each other forever is the characteristic failure of this

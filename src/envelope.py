@@ -92,6 +92,7 @@ def reconcile(
     actor: str,
     rejections_max: int = 2,
     allow_new: bool = True,
+    recovery_items: Optional[List[str]] = None,
 ) -> Tuple[List[Dict[str, Any]], List[str]]:
     """Apply only the legal transitions from `proposed`, keeping `prev` otherwise.
 
@@ -101,6 +102,7 @@ def reconcile(
     `done` when the agent that does NOT own it says so.
     """
     other = "agy" if actor == "claude" else "claude"
+    recoverable = set(recovery_items or [])
     by_id = {it["id"]: _norm(it) for it in (prev or []) if it.get("id")}
     violations: List[str] = []
     out: List[Dict[str, Any]] = []
@@ -135,6 +137,23 @@ def reconcile(
 
         was, now = old["state"], it["state"]
         owner = old["owner"]
+
+        # Second Wind is runner-granted authority, never something a model may
+        # award itself. During one explicit recovery handoff, the backup may
+        # take custody of a claimed or blocked item and either claim it or finish
+        # the repair in the same turn. It still cannot mark the item done; the
+        # original model must independently verify the backup's work later.
+        if iid in recoverable and was in ("claimed", "blocked") \
+                and now in ("claimed", "awaiting-verification"):
+            merged = dict(old)
+            merged.update(
+                state=now,
+                owner=actor,
+                verified_by=None,
+                evidence=it["evidence"] or old["evidence"],
+            )
+            out.append(merged)
+            continue
 
         if was == now and owner == it["owner"]:
             merged = dict(old)

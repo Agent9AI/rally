@@ -20,6 +20,11 @@ The product's distinctive contract is:
 
 > The model that performs consequential work cannot approve that work.
 
+Its continuity promise is **Second Wind**: when one model hits a recoverable
+failure, Rally preserves accepted state and gives its teammate a bounded chance
+to diagnose or take over. This is recovery without auto-approval; the backup's
+repair still requires independent verification.
+
 That contract combines five things competitors often present separately:
 
 1. one shared team identity instead of isolated assistants per employee;

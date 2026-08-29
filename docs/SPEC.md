@@ -162,8 +162,11 @@ rebuild it. That is the recovery path, used deliberately, not automatically.
    mail the envelope.
 5. **Completion.** When every item is `done`, the agent holding the turn writes
    the human report.
-6. **Halt.** Any budget breach, dispute, or block ends the run with `halt` set and
-   a message to the human.
+6. **Recover or halt.** With Second Wind enabled, the first model-process failure
+   or newly reported blocker creates a bounded recovery event and hands the last
+   accepted state to the other family. A human stop, authority boundary, hard
+   budget, repeated dispute, exhausted recovery allowance, or unresolved backup
+   review ends the run with `halt` set and a message to the human.
 
 The invariant that makes the second agent worth its cost: **an item may only move
 to `done` by the agent that does not own it.**
@@ -179,6 +182,15 @@ ownership and fixes it.
 **Verifier repair.** On the second failure of the same item, the verifier may fix
 it directly. Ownership then flips: the original author must verify the repair.
 The "never verify your own work" invariant holds, and the reject loop terminates.
+
+**Second Wind recovery.** A process timeout, non-zero exit, repeated malformed
+envelope, or `blocked` item is recoverable only when the run's captured
+`continuity.second_wind` policy is enabled and its recovery allowance remains.
+The runner—not either model—authorizes a one-turn custody transfer for named
+`claimed` or `blocked` items. The backup may move them to `claimed` or
+`awaiting-verification`; it may not move them to `done`. The full recovery event
+is persisted and sanitized into the public console timeline. A block the backup
+confirms is escalated rather than bounced back indefinitely.
 
 **Dispute.** An agent may reject a given item at most twice. A third disagreement
 sets the item to `disputed` and halts the run. The human receives one message
@@ -241,7 +253,8 @@ unexpectedly.
 | Sends per run | 60 | halt, refuse to send |
 | Sends per hour, all runs | 30 | queue, do not send |
 | Sends per day, all runs | 200 | halt all runs |
-| Turn wall clock | 25 minutes | fail the turn, retry once, then halt |
+| Second Wind | 2 recovery handoffs | switch model family, then halt when exhausted |
+| Turn wall clock | 25 minutes | preserve accepted state, invoke Second Wind if enabled, then halt |
 
 The hourly and daily ceilings are global rather than per run, because the quota
 being protected is shared with unrelated projects. They are checked in the runner

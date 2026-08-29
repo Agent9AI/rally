@@ -4,6 +4,8 @@ const openButtons = document.querySelectorAll("[data-open-setup]");
 const closeButton = document.querySelector("[data-close-setup]");
 const tabs = document.querySelectorAll("[data-setup-tab]");
 const panels = document.querySelectorAll("[data-setup-panel]");
+const secondWindToggle = document.querySelector("[data-second-wind]");
+const managedSetupLink = document.querySelector("[data-managed-setup-link]");
 
 const updateHeader = () => header?.classList.toggle("is-scrolled", window.scrollY > 18);
 updateHeader();
@@ -30,6 +32,21 @@ tabs.forEach((tab) => {
     });
   });
 });
+
+const updateManagedSetupLink = () => {
+  if (!managedSetupLink || !secondWindToggle) return;
+  const target = new URL(managedSetupLink.href);
+  target.searchParams.set("body", [
+    "Company:",
+    "Team:",
+    "First job for Rally:",
+    "Trusted systems involved:",
+    `Second Wind recovery: ${secondWindToggle.checked ? "On" : "Off"}`,
+  ].join("\n"));
+  managedSetupLink.href = target.href;
+};
+secondWindToggle?.addEventListener("change", updateManagedSetupLink);
+updateManagedSetupLink();
 
 const apiRoot = document.querySelector('meta[name="rally-console-api"]')?.content?.replace(/\/$/, "");
 const runList = document.querySelector("[data-run-list]");
@@ -171,12 +188,14 @@ function renderRunList() {
 function avatarFor(entry) {
   if (entry.kind === "commission") return { letter: "T", className: "human" };
   if (entry.kind === "coordination") return { letter: "G", className: "coordinator" };
+  if (entry.kind === "recovery") return { letter: "R", className: "recovery" };
   if (entry.actor === "claude") return { letter: "C", className: "claude" };
   return { letter: "G", className: "gemini" };
 }
 
 function messageBadge(entry) {
   if (entry.kind === "coordination") return "Governed";
+  if (entry.kind === "recovery") return "Second Wind";
   if (entry.kind === "report") return "Final report";
   if ((entry.changes || []).some((change) => change.verified_by)) return "Verifier";
   return entry.kind === "turn" ? "Worker" : "Commissioner";
@@ -238,6 +257,7 @@ function renderMessage(entry, run) {
   const cardClasses = ["message-card"];
   if (entry.kind === "commission") cardClasses.push("human-message");
   if (entry.kind === "coordination") cardClasses.push("coordinator-message");
+  if (entry.kind === "recovery") cardClasses.push("recovery-message");
   if ((entry.changes || []).some((change) => change.verified_by)) cardClasses.push("verification-message");
   if (entry.kind === "report") cardClasses.push("report-message");
   const card = element("div", cardClasses.join(" "));
@@ -327,6 +347,14 @@ function renderDetail(run) {
     element("code", "", "owner ≠ verified_by"),
     element("small", "", run.policy?.enforced_by || "Rally deterministic runner"),
   );
+  if (run.policy?.continuity?.mode === "second_wind") {
+    const continuity = run.policy.continuity;
+    invariant.append(element(
+      "small",
+      "continuity-proof",
+      `Second Wind · ${continuity.recoveries_used || 0}/${continuity.max_recoveries_per_run || 0} recovery handoffs used`,
+    ));
+  }
   fragment.append(invariant);
 
   const checklistGroup = element("div", "detail-group checklist-group");

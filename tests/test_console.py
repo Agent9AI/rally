@@ -112,6 +112,31 @@ class ConsoleSnapshotTests(unittest.TestCase):
         self.assertEqual(turn["model"], "gemini-3.7-flash-low")
         self.assertEqual(turn["changes"][0]["verified_by"], "agy")
 
+    def test_second_wind_recovery_is_public_proof_without_raw_error_output(self):
+        continuity = {
+            "mode": "second_wind",
+            "second_wind": True,
+            "recoveries_used": 1,
+            "max_recoveries_per_run": 2,
+            "active": None,
+            "history": [{
+                "id": "sw-1", "at": "2026-08-29T12:00:20Z", "turn": 1,
+                "kind": "agent_error", "from_actor": "claude", "to_actor": "agy",
+                "items": ["c1"], "status": "recovered",
+                "detail": "secret raw CLI output from /private/sensitive/path",
+            }],
+        }
+        payload = rally_console.build_snapshot(state(continuity=continuity), config())
+        recovery = next(item for item in payload["timeline"] if item["kind"] == "recovery")
+        self.assertEqual(recovery["model"], "Second Wind")
+        self.assertIn("Claude to Gemini", recovery["narrative"])
+        self.assertNotIn("secret raw CLI output", json.dumps(payload))
+        self.assertEqual(payload["policy"]["continuity"], {
+            "mode": "second_wind",
+            "recoveries_used": 1,
+            "max_recoveries_per_run": 2,
+        })
+
     def test_cloud_claims_appear_only_for_an_actual_adk_record(self):
         local = rally_console.build_snapshot(state(), config())
         coordinated = rally_console.build_snapshot(state(cloud_coordinator={

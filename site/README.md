@@ -1,6 +1,6 @@
 # Rally website
 
-The public site at `https://agent9-rally.pages.dev` is deployed from this
+The public site at `https://rally.agent9.dev` is deployed from this
 directory. It is intentionally static: it collects no credentials, stores no
 form data, and never pretends an external account is connected before a complete
 OAuth integration exists.

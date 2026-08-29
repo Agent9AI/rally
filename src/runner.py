@@ -74,6 +74,25 @@ def now() -> str:
     return dt.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+def continuity_policy(cfg: Dict) -> Dict:
+    """Capture the bounded recovery setting at commission time."""
+    configured = cfg.get("continuity") or {}
+    try:
+        maximum = int(configured.get("max_recoveries_per_run", 2))
+    except (TypeError, ValueError):
+        maximum = 0
+    maximum = max(0, min(maximum, 8))
+    enabled = bool(configured.get("second_wind", False)) and maximum > 0
+    return {
+        "mode": "second_wind" if enabled else "halt",
+        "second_wind": enabled,
+        "max_recoveries_per_run": maximum,
+        "recoveries_used": 0,
+        "active": None,
+        "history": [],
+    }
+
+
 class ServeLock:
     def __init__(self, path: str):
         self.path = path
@@ -161,6 +180,7 @@ class Run:
             "turns": [],
             "thread_message_id": None, "thread_references": [], "reprompts": 0,
             "commission_message_id": None, "commission_request_key": None,
+            "continuity": continuity_policy(cfg),
         }
         r = cls(state, os.path.join(d, "state.json"))
         r.save()
@@ -277,10 +297,123 @@ def build_prompt(run: Run, actor: str, cfg: Dict) -> str:
         parts.append("\nTHE RUNNER REJECTED THESE CHANGES FROM THE LAST TURN:\n- %s\n"
                      "They were reverted. Do not repeat them."
                      % "\n- ".join(s["violations"]))
+    continuity = s.get("continuity") or {}
+    recovery = continuity.get("active") or {}
+    if recovery.get("to_actor") == actor:
+        item_ids = recovery.get("items") or []
+        parts.append(
+            "\nSECOND WIND RECOVERY (runner-authorized and bounded):\n"
+            "The previous %s turn did not produce a safe continuation. The last "
+            "accepted checklist above remains authoritative. Inspect the workspace "
+            "because a failed process may have left uncommitted edits; trust no "
+            "partial claim without checking it. %sDo not waive approvals, budgets, "
+            "or evidence. You may repair and take ownership, but you may not verify "
+            "your own repair." % (
+                recovery.get("from_actor", "model"),
+                ("You may take over these items: %s. " % ", ".join(item_ids))
+                if item_ids else "Continue from the saved state. ",
+            )
+        )
     if s.get("human_note"):
         parts.append("\nA MESSAGE FROM THE HUMAN, which takes precedence:\n%s"
                      % s["human_note"])
     return "\n".join(parts)
+
+
+def _continuity(run: Run, cfg: Dict) -> Dict:
+    current = run.s.get("continuity")
+    if not isinstance(current, dict):
+        current = continuity_policy(cfg)
+        run.s["continuity"] = current
+    return current
+
+
+def _set_recovery_status(continuity: Dict, recovery_id: str,
+                         status: str, outcome: str = "") -> None:
+    for record in reversed(continuity.get("history") or []):
+        if record.get("id") == recovery_id:
+            record["status"] = status
+            record["outcome"] = outcome[:800]
+            break
+
+
+def start_second_wind(run: Run, cfg: Dict, kind: str, from_actor: str,
+                      detail: str, items: Optional[List[str]] = None) -> bool:
+    """Hand one recoverable failure to the other family without weakening policy."""
+    continuity = _continuity(run, cfg)
+    maximum = int(continuity.get("max_recoveries_per_run") or 0)
+    used = int(continuity.get("recoveries_used") or 0)
+    if not continuity.get("second_wind") or used >= maximum:
+        return False
+
+    prior = continuity.get("active") or {}
+    if prior.get("id"):
+        _set_recovery_status(
+            continuity, prior["id"], "failed",
+            "The recovery model also failed before an accepted continuation.",
+        )
+
+    to_actor = "agy" if from_actor == "claude" else "claude"
+    recovery_id = "sw-%d" % (used + 1)
+    record = {
+        "id": recovery_id,
+        "at": now(),
+        "turn": int(run.s.get("turn") or 0),
+        "kind": kind,
+        "from_actor": from_actor,
+        "to_actor": to_actor,
+        "items": sorted(set(items or [])),
+        "detail": str(detail)[:1200],
+        "status": "active",
+        "outcome": "",
+    }
+    continuity["recoveries_used"] = used + 1
+    continuity["active"] = dict(record)
+    continuity.setdefault("history", []).append(record)
+    run.s["actor"] = to_actor
+    run.s["halt"] = None
+    run.s["reprompts"] = 0
+    run.note(
+        "SECOND WIND %d/%d: %s handed recovery to %s%s" % (
+            used + 1, maximum, from_actor, to_actor,
+            " for " + ", ".join(record["items"]) if record["items"] else "",
+        )
+    )
+    run.save()
+    return True
+
+
+def finish_second_wind(run: Run, actor: str) -> None:
+    continuity = run.s.get("continuity") or {}
+    recovery = continuity.get("active") or {}
+    if recovery.get("to_actor") != actor:
+        return
+    by_id = {item.get("id"): item for item in run.s.get("checklist") or []}
+    unresolved = [iid for iid in recovery.get("items") or []
+                  if (by_id.get(iid) or {}).get("state") in ("blocked", "disputed")]
+    if unresolved:
+        status = "unresolved"
+        outcome = "The backup confirmed that %s still requires escalation." % ", ".join(unresolved)
+    else:
+        status = "recovered"
+        outcome = "%s accepted the recovery handoff without bypassing verification." % actor
+    _set_recovery_status(continuity, recovery.get("id", ""), status, outcome)
+    continuity["active"] = None
+    run.note("SECOND WIND %s: %s" % (status.upper(), outcome))
+
+
+def unrecovered_block_ids(run: Run) -> List[str]:
+    continuity = run.s.get("continuity") or {}
+    attempted = {
+        iid
+        for record in continuity.get("history") or []
+        if record.get("kind") == "blocked"
+        for iid in record.get("items") or []
+    }
+    return [
+        item["id"] for item in run.s.get("checklist") or []
+        if item.get("state") == "blocked" and item.get("id") not in attempted
+    ]
 
 
 def repo_fingerprint(path: str = ROOT) -> str:
@@ -458,6 +591,13 @@ def take_turn(run: Run, cfg: Dict, dry: bool = False) -> Optional[str]:
                                    limits["turn_timeout_sec"], schema)
         except agents.AgentError as exc:
             detail = "%s turn failed: %s" % (actor, exc)
+            recoverable = [
+                item["id"] for item in s.get("checklist") or []
+                if item.get("state") == "claimed" and item.get("owner") == actor
+            ]
+            if start_second_wind(run, cfg, "agent_error", actor, detail, recoverable):
+                sync_console(run, cfg)
+                return None
             s["halt"] = {"reason": "agent_error", "detail": detail}
             run.note("AGENT FAILED: %s" % detail)
             run.save()
@@ -491,6 +631,13 @@ def take_turn(run: Run, cfg: Dict, dry: bool = False) -> Optional[str]:
         if s["reprompts"] > max_reprompts:
             detail = "%s returned no parseable envelope after %d reprompt(s)" % (
                 actor, max_reprompts)
+            recoverable = [
+                item["id"] for item in s.get("checklist") or []
+                if item.get("state") == "claimed" and item.get("owner") == actor
+            ]
+            if start_second_wind(run, cfg, "agent_error", actor, detail, recoverable):
+                sync_console(run, cfg)
+                return None
             s["halt"] = {"reason": "agent_error", "detail": detail}
             run.note("AGENT FAILED: %s" % detail)
             run.save()
@@ -506,9 +653,12 @@ def take_turn(run: Run, cfg: Dict, dry: bool = False) -> Optional[str]:
     before_items = {item.get("id"): json.loads(json.dumps(item))
                     for item in s["checklist"]}
     # Scope closes after negotiation: turn 0 scopes, turn 1 negotiates.
+    recovery = ((_continuity(run, cfg).get("active") or {}))
+    recovery_items = (recovery.get("items") or []) \
+        if recovery.get("to_actor") == actor else []
     accepted, violations = E.reconcile(
         s["checklist"], env.get("checklist", []), actor, limits["rejections_max"],
-        allow_new=(s["turn"] <= 1))
+        allow_new=(s["turn"] <= 1), recovery_items=recovery_items)
     s["checklist"] = accepted
     carried = [v for v in (s.get("violations") or []) if v.startswith("containment:")]
     s["violations"] = carried + problems + violations
@@ -551,6 +701,7 @@ def take_turn(run: Run, cfg: Dict, dry: bool = False) -> Optional[str]:
     s["last_digest"] = d
     s["turn"] += 1
     s["actor"] = "agy" if actor == "claude" else "claude"
+    finish_second_wind(run, actor)
     run.save()
     sync_console(run, cfg)
 
@@ -558,6 +709,12 @@ def take_turn(run: Run, cfg: Dict, dry: bool = False) -> Optional[str]:
         return "complete"
     stuck = E.blocking(s["checklist"])
     if stuck:
+        recoverable = unrecovered_block_ids(run)
+        if recoverable and start_second_wind(
+                run, cfg, "blocked", actor,
+                "The accepted turn reported a blocked item.", recoverable):
+            sync_console(run, cfg)
+            return None
         return "%s: %s" % (stuck[0]["state"], ", ".join(i["id"] for i in stuck))
     if s["turn"] >= limits["turns_max"]:
         return "turn_budget"

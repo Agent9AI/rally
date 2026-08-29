@@ -184,11 +184,12 @@ def build_snapshot(state: Dict, cfg: Dict, published_at: Optional[str] = None) -
             "changes": [],
         })
 
+    execution = []
     for record in (state.get("turns") or [])[-100:]:
         if not isinstance(record, dict):
             continue
         actor = _text(record.get("actor"), 40)
-        timeline.append({
+        execution.append({
             "id": "turn-%s-%s" % (record.get("turn", 0), actor),
             "kind": "turn",
             "at": _text(record.get("at"), 40),
@@ -201,6 +202,48 @@ def build_snapshot(state: Dict, cfg: Dict, published_at: Optional[str] = None) -
             "commit": _text(record.get("commit"), 64) or None,
             "changes": _changes(record.get("changes") or [], redactions),
         })
+
+    continuity = state.get("continuity") or {}
+    for record in (continuity.get("history") or [])[-20:]:
+        if not isinstance(record, dict):
+            continue
+        source = _text(record.get("from_actor"), 40)
+        target = _text(record.get("to_actor"), 40)
+        items = [_text(iid, 48) for iid in (record.get("items") or [])[:20]]
+        cause = (
+            "a failed model turn"
+            if record.get("kind") == "agent_error"
+            else "a reported blocker"
+        )
+        narrative = (
+            "Rally preserved the last accepted state after %s and handed one "
+            "bounded recovery attempt from %s to %s. Independent verification "
+            "remained required.%s" % (
+                cause,
+                "Claude" if source == "claude" else "Gemini",
+                "Claude" if target == "claude" else "Gemini",
+                " Recovery items: %s." % ", ".join(items) if items else "",
+            )
+        )
+        execution.append({
+            "id": _text(record.get("id"), 100),
+            "kind": "recovery",
+            "at": _text(record.get("at"), 40),
+            "turn": max(0, int(record.get("turn") or 0)),
+            "actor": "rally",
+            "label": "Rally continuity",
+            "family": "policy",
+            "model": "Second Wind",
+            "narrative": narrative,
+            "commit": None,
+            "changes": [],
+        })
+
+    execution.sort(key=lambda entry: (
+        entry.get("at", ""), entry.get("turn", 0),
+        0 if entry.get("kind") == "recovery" else 1,
+    ))
+    timeline.extend(execution)
 
     if state.get("report"):
         timeline.append({
@@ -238,6 +281,13 @@ def build_snapshot(state: Dict, cfg: Dict, published_at: Optional[str] = None) -
         "policy": {
             "invariant": "owner != verified_by",
             "enforced_by": "Rally deterministic runner",
+            "continuity": {
+                "mode": _text(continuity.get("mode"), 40) or "halt",
+                "recoveries_used": max(0, int(continuity.get("recoveries_used") or 0)),
+                "max_recoveries_per_run": max(
+                    0, int(continuity.get("max_recoveries_per_run") or 0)
+                ),
+            },
         },
         "coordination": {
             "status": cloud_status or "local",

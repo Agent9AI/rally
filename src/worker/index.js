@@ -134,6 +134,11 @@ function normalizeConsoleRun(value, expectedRunId) {
     policy: {
       invariant: "owner != verified_by",
       enforced_by: "Rally deterministic runner",
+      continuity: {
+        mode: text(value.policy?.continuity?.mode, 40) || "halt",
+        recoveries_used: integer(value.policy?.continuity?.recoveries_used, 8),
+        max_recoveries_per_run: integer(value.policy?.continuity?.max_recoveries_per_run, 8),
+      },
     },
     coordination: {
       status: text(value.coordination?.status, 60),

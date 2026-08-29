@@ -80,10 +80,12 @@ different artifact from one model's confident first answer.
 already the queue, the audit log, and the notification system. The whole
 deliberation sits in a thread you can read, forward, or search months later.
 
-**It stops instead of spinning.** Every run has a turn budget, a no-progress
-halt, and a send ceiling enforced outside the agents' reach. If it cannot finish,
-it tells you exactly where it stopped and why, rather than burning budget being
-agreeable.
+**It recovers before it stops.** With **Second Wind** enabled, a failed turn or
+reported blocker is handed once to the other model family from the last accepted
+state. The backup may inspect partial workspace edits, repair the work, and take
+ownership—but it still cannot approve its own repair. Hard turn, progress, send,
+authority, and recovery ceilings remain outside both agents' reach; if the team
+still cannot finish, Rally tells you exactly where and why.
 
 ## The two rules everything else protects
 
@@ -97,17 +99,17 @@ agreeable.
 
 | Piece | State |
 |---|---|
-| Turn loop, state machine, console projection, guards | working, 64 core/product tests |
+| Turn loop, state machine, console projection, guards | working, 69 core/product tests |
 | Claude + Gemini CLI execution | working, live multi-turn runs completed |
 | Executive turn emails + report | working through Resend |
 | Ingress Worker (D1) | deployed, signed webhook and round trip verified |
 | Judge console | live Pages UI backed by a double-sanitized D1 run projection; golden run `r-20260829-dbb5c0` is public |
 | `rally@updates.agent9.dev` route | working; replies return to the commissioner |
-| Product + Cloud test suite | 75 automated tests passing |
+| Product + Cloud test suite | 80 automated tests passing |
 | Google ADK coordinator | implemented; live eval 6/6, both metrics 1.00 |
 | Cloud Run + Firestore + Trace | deployed privately in `rally-agent9-2026`; authenticated commission, replay, Firestore, logs, and content-free trace verified |
 
-The current release candidate has **75 automated tests**: 64 deterministic
+The current release candidate has **80 automated tests**: 69 deterministic
 runner, ingress, policy, bridge, and site tests plus 11 Cloud service tests.
 The separate live ADK scorecard remains 6/6 at 1.00 trajectory and 1.00 quality.
 
@@ -133,7 +135,7 @@ identity, and observability plane—not a decorative API call.
 ```bash
 make check                    # pins, binaries, credentials, limits
 make dry                      # exercise the loop, no tokens spent
-make test                     # 64 local policy, ingress, bridge, recovery, and site tests
+make test                     # 69 local policy, ingress, bridge, recovery, and site tests
 make cloud-test               # Cloud coordinator tests + lint
 make cloud-eval               # live ADK eval; exact trajectory + quality gates
 

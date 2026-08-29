@@ -12,6 +12,35 @@ sys.path.insert(0, os.path.join(ROOT, "src"))
 import runner  # noqa: E402
 
 
+def runtime_config(second_wind=False):
+    return {
+        "agents": {
+            "claude": {"model": "sonnet", "family": "anthropic", "address": "c@example.com"},
+            "agy": {"model": "gemini-3.7-flash-low", "family": "google", "address": "g@example.com"},
+        },
+        "limits": {
+            "turns_max": 12, "sends_per_run": 60, "no_progress_halt": 3,
+            "reprompts_max": 1, "rejections_max": 2, "turn_timeout_sec": 30,
+        },
+        "continuity": {
+            "second_wind": second_wind,
+            "max_recoveries_per_run": 2,
+        },
+        "mail": {"enabled": False},
+    }
+
+
+def reply(run, actor, checklist, narrative="handled"):
+    return "```json\n%s\n```" % __import__("json").dumps({
+        "rally_version": 1,
+        "run_id": run.s["run_id"],
+        "turn": run.s["turn"],
+        "from_agent": actor,
+        "narrative": narrative,
+        "checklist": checklist,
+    })
+
+
 class DurableIngressTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
@@ -123,6 +152,72 @@ class DurableIngressTests(unittest.TestCase):
         ):
             self.assertFalse(runner.sync_console(run, {"console": {"enabled": True}}))
         self.assertIsNone(run.s["halt"])
+
+    def test_agent_failure_halts_when_second_wind_is_off(self):
+        cfg = runtime_config(second_wind=False)
+        run = runner.Run.create("ship it", self.tmp.name, cfg)
+
+        with mock.patch.object(
+            runner.agents, "run_agent", side_effect=runner.agents.AgentError("timeout")
+        ):
+            self.assertEqual(runner.take_turn(run, cfg), "agent_error")
+
+        self.assertEqual(run.s["actor"], "claude")
+        self.assertEqual(run.s["halt"]["reason"], "agent_error")
+        self.assertEqual(run.s["continuity"]["recoveries_used"], 0)
+
+    def test_agent_failure_hands_saved_state_to_backup_with_second_wind(self):
+        cfg = runtime_config(second_wind=True)
+        run = runner.Run.create("ship it", self.tmp.name, cfg)
+        run.s["checklist"] = [{
+            "id": "c1", "description": "Implement it", "state": "claimed",
+            "owner": "claude", "verified_by": None, "evidence": None, "rejections": 0,
+        }]
+        run.save()
+
+        with mock.patch.object(
+            runner.agents, "run_agent", side_effect=runner.agents.AgentError("timeout")
+        ):
+            self.assertIsNone(runner.take_turn(run, cfg))
+
+        self.assertEqual(run.s["actor"], "agy")
+        self.assertIsNone(run.s["halt"])
+        recovery = run.s["continuity"]
+        self.assertEqual(recovery["recoveries_used"], 1)
+        self.assertEqual(recovery["active"]["items"], ["c1"])
+        self.assertIn("SECOND WIND RECOVERY", runner.build_prompt(run, "agy", cfg))
+
+    def test_backup_can_repair_a_block_without_self_approving(self):
+        cfg = runtime_config(second_wind=True)
+        run = runner.Run.create("ship it", self.tmp.name, cfg)
+        run.s["turn"] = 2
+        run.s["checklist"] = [{
+            "id": "c1", "description": "Implement it", "state": "claimed",
+            "owner": "claude", "verified_by": None, "evidence": "first attempt",
+            "rejections": 0,
+        }]
+        run.save()
+        blocked = [{
+            **run.s["checklist"][0], "state": "blocked", "evidence": "tool path failed",
+        }]
+        repaired = [{
+            **run.s["checklist"][0], "state": "awaiting-verification",
+            "owner": "agy", "evidence": "backup path passes tests",
+        }]
+
+        with mock.patch.object(
+            runner.agents, "run_agent",
+            side_effect=[reply(run, "claude", blocked), reply(run, "agy", repaired)],
+        ):
+            self.assertIsNone(runner.take_turn(run, cfg))
+            self.assertEqual(run.s["continuity"]["active"]["to_actor"], "agy")
+            self.assertIsNone(runner.take_turn(run, cfg))
+
+        item = run.s["checklist"][0]
+        self.assertEqual(item["state"], "awaiting-verification")
+        self.assertEqual(item["owner"], "agy")
+        self.assertIsNone(item["verified_by"])
+        self.assertEqual(run.s["continuity"]["history"][0]["status"], "recovered")
 
 
 if __name__ == "__main__":

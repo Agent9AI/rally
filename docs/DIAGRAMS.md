@@ -32,12 +32,16 @@ flowchart LR
     S -->|proposed checklist| N["Negotiate<br/>agent B"]
     N --> W["Work turns<br/>A and B alternate"]
     W -->|every item verified| R["Report<br/>to human"]
-    W -->|budget · dispute · blocked| X["Halt<br/>reports state as it stands"]
+    W -->|recoverable failure| SW["Second Wind<br/>bounded backup handoff"]
+    SW -->|backup repairs; still needs verification| W
+    SW -->|backup confirms block| X["Halt<br/>reports state as it stands"]
+    W -->|budget · dispute · human stop| X
     W -->|verify theirs, then advance yours| W
 ```
 
-Agreement on what "done" means comes before any work. A halt is a reported
-outcome, not a crash: stopping and asking counts as success.
+Agreement on what "done" means comes before any work. Second Wind tries the
+other model family before a recoverable failure becomes a halt. A halt remains
+a reported outcome, not a crash: stopping and asking counts as success.
 
 ## 3. An item cannot be marked done by the agent that did it
 
@@ -49,9 +53,10 @@ stateDiagram-v2
     awaiting_verification --> done: verified by the OTHER agent
     awaiting_verification --> claimed: rejected, at most twice
     claimed --> blocked: needs a human
+    blocked --> claimed: Second Wind takeover, once
     awaiting_verification --> disputed: 3rd disagreement
     done --> [*]
-    blocked --> [*]
+    blocked --> [*]: backup confirms escalation
     disputed --> [*]
 ```
 

@@ -43,13 +43,13 @@ gate. Rally now passes six live cases—including policy bypass, hostile artifac
 instructions, and a production-shaped release workflow—at 1.00 trajectory and
 1.00 response quality.
 
-The current release has 75 deterministic automated tests plus that live
+The current release has 80 deterministic automated tests plus that live
 scorecard. More importantly, the demo shows the agents doing the work: editing
 the repository, running the tests, placing an item into
 `awaiting-verification`, and receiving a verdict from the other model family.
 The full unedited run is published beside the four-minute walkthrough.
 
-- Product: <https://agent9-rally.pages.dev/#demo>
+- Product: <https://rally.agent9.dev/#demo>
 - Source and reproducible setup: <https://github.com/Agent9AI/rally>
 - Four-minute walkthrough: [VIDEO LINK]
 - Full unedited agent run: [UNEDITED RUN LINK]
@@ -64,7 +64,7 @@ One email commissions real repository work. Gemini 3.7 + Google ADK governs the
 handoff. Claude and Gemini implement, test, challenge, and verify. Deterministic
 policy enforces one rule neither model can waive: owner ≠ verifier.
 
-75 tests. 6/6 live ADK evals at 1.00/1.00. Full unedited agent run included.
+80 tests. 6/6 live ADK evals at 1.00/1.00. Full unedited agent run included.
 
 One request. Two model families. Zero self-approval.
 

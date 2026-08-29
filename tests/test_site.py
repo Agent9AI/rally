@@ -38,6 +38,8 @@ class TestProductSite(unittest.TestCase):
             "One hard goal",
             "Watch the accountable team work",
             "No model approves its own work",
+            "Second Wind recovery",
+            "Bounded recovery, not auto-approval",
             "Gemini 3.7 + ADK",
             "Honest boundary:",
             "Rally runs one model at a time",
@@ -46,6 +48,8 @@ class TestProductSite(unittest.TestCase):
             self.assertIn(phrase, self.html)
         self.assertIn('src="rally-mark.svg"', self.html)
         self.assertIn('name="rally-console-api"', self.html)
+        self.assertIn('rel="canonical" href="https://rally.agent9.dev/"', self.html)
+        self.assertIn("data-second-wind", self.html)
         self.assertIn("Loading authoritative runs", self.html)
         for connector in ("Google Workspace", "Slack", "GitHub", "Cloudflare", "n8n", "Stripe"):
             self.assertIn(f"<h3>{connector}</h3>", self.html)
@@ -59,11 +63,15 @@ class TestProductSite(unittest.TestCase):
         self.assertIn("rally-mark-bounce", styles)
         self.assertIn("rally-handoff", styles)
         self.assertIn("prefers-reduced-motion", styles)
+        with open(os.path.join(SITE, "app.js")) as handle:
+            app = handle.read()
+        self.assertIn("Second Wind recovery:", app)
+        self.assertIn('entry.kind === "recovery"', app)
         with open(os.path.join(ROOT, "studio", "og-card.html")) as handle:
             card = handle.read()
-        for phrase in ("THE ACCOUNTABLE AI TEAM", "Your AIs, finally", "75", "6/6", "0"):
+        for phrase in ("THE ACCOUNTABLE AI TEAM", "Your AIs, finally", "80", "6/6", "0"):
             self.assertIn(phrase, card)
-        self.assertNotIn("72 TESTS", card)
+        self.assertNotIn("75 TESTS", card)
 
     def test_local_assets_exist_and_no_dead_hash_links(self):
         parser = LinkCollector()

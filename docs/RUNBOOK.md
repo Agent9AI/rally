@@ -99,6 +99,8 @@ runs/<run_id>/workspace/    the agents' git tree, one commit per turn
   work done shows up here.
 - `containment` — turns where an agent wrote outside its workspace.
 - `report` — the message the human received.
+- `continuity` — the captured Second Wind setting, active recovery, and bounded
+  recovery history.
 
 ## When it goes wrong
 
@@ -118,6 +120,25 @@ narrative and either split the item or `STOP`.
 **Run halts with `disputed`.** The agents disagreed three times on one item.
 Both positions are in the report. Decide, then re-commission with the decision
 stated in the task.
+
+**Run halts with `agent_error`.** Second Wind was disabled or both bounded model
+attempts failed. The last accepted checklist is intact. Inspect the recovery
+history and workspace diff, then retry only after the unavailable runtime or
+tool path is healthy.
+
+## Second Wind
+
+Second Wind is captured from config when a run is commissioned:
+
+```json
+"continuity": {
+  "second_wind": true,
+  "max_recoveries_per_run": 2
+}
+```
+
+Turn it off for strict fail-fast operation. It never overrides `STOP`, provider
+permissions, send/turn ceilings, a repeated dispute, or `owner != verified_by`.
 
 **Nothing arrives when you email.** Check in order:
 

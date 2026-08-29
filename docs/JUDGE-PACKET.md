@@ -38,6 +38,7 @@ owner-to-verifier transition continuous in the four-minute cut.
 | Distinct model families | `src/agents.py` | `tests/test_agents.py` | Claude and Gemini watermarks in one thread |
 | Durable email intake | `src/worker/index.js`, D1 schema | runner reliability tests | Queued D1 row before acknowledgement |
 | Retry-safe coordination | `cloud/store.py`, `cloud/service.py` | store/service recovery and fencing tests | Failed record resumes with incremented attempt |
+| Cross-model recovery | `src/runner.py`, `src/envelope.py` | Second Wind runner and custody-transfer tests | Backup repairs a blocker but cannot self-approve |
 | Governed discovery | `cloud/agent_catalog.json`, `cloud/catalog.py` | catalog schema and auth tests | Authenticated `/v1/agents` response |
 | Gemini is load-bearing | `cloud/rally_adk/agent.py` | live ADK eval set | Cloud trace from request through Gemini span |
 | Cloud is not decorative | Cloud Run, Firestore, Secret Manager, Trace Terraform | `make infra-check` | Revision, record, IAM policy, and trace waterfall |
@@ -87,7 +88,7 @@ stale owner from overwriting the new attempt.
 
 ## Judge-visible numbers
 
-- 75 automated deterministic tests: 64 product tests + 11 cloud tests
+- 80 automated deterministic tests: 69 product tests + 11 cloud tests
 - 6 live ADK evaluation cases
 - 1.00 tool trajectory score
 - 1.00 response-quality score
@@ -115,7 +116,7 @@ request keys, account menus, and raw prompt fields off screen.
 
 | Surface | Live anchor |
 |---|---|
-| Public product + golden run | <https://agent9-rally.pages.dev/#demo> — `r-20260829-dbb5c0` |
+| Public product + golden run | <https://rally.agent9.dev/#demo> — `r-20260829-dbb5c0` |
 | Cloud project | `rally-agent9-2026` |
 | Cloud Run | `rally-google-coordinator-00004-zxb` in `us-east1` |
 | Immutable container | `sha256:b51e64c4071da49f1b61b97f621c83249bb9b77be9470638a338d6a0125f562e` |

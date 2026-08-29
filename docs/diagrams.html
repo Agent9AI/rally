@@ -243,10 +243,10 @@
         <line class="ln-red" x1="566" y1="176" x2="566" y2="222" marker-end="url(#a2r)"/>
         <rect class="n-box-red" x="488" y="222" width="156" height="52" rx="2"/>
         <text class="t t-red" x="566" y="244" text-anchor="middle">Halt</text>
-        <text class="t-sm" x="566" y="262" text-anchor="middle">budget / dispute / blocked</text>
+        <text class="t-sm" x="566" y="262" text-anchor="middle">hard limit / unresolved block</text>
         <text class="t-sm" x="656" y="204">reports state as it stands</text>
       </svg>
-      <figcaption><b>A halt is a reported outcome, not a crash.</b> Running out of budget, deadlocking, or needing a credential all end the same way: the run stops and writes to the person with the checklist as it stands. Stopping and asking counts as success.</figcaption>
+      <figcaption><b>Second Wind recovers before Rally halts.</b> A failed turn or blocker first receives one bounded handoff to the other model family. Hard limits, a confirmed authority boundary, or an unresolved backup review stop the run and report the checklist as it stands.</figcaption>
     </figure>
   </section>
 
@@ -294,7 +294,7 @@
         <line class="ln" x1="281" y1="144" x2="281" y2="206" marker-end="url(#a3)"/>
         <rect class="n-box" x="206" y="206" width="150" height="50" rx="2"/>
         <text class="t" x="281" y="236" text-anchor="middle">blocked</text>
-        <text class="t-sm" x="292" y="182">needs a human</text>
+        <text class="t-sm" x="292" y="182">Second Wind review</text>
 
         <line class="ln-red" x1="499" y1="144" x2="499" y2="206" marker-end="url(#a3r)"/>
         <rect class="n-box-red" x="424" y="206" width="150" height="50" rx="2"/>
@@ -303,7 +303,7 @@
 
         <text class="t-sm" x="8" y="292">2nd failure of the same item: the verifier may repair it, and ownership flips so the original author must verify the repair.</text>
       </svg>
-      <figcaption><b>Two bounds guarantee termination.</b> An agent may reject a given item twice; the third disagreement escalates to a person with both positions stated. Without that bound, the characteristic failure of this design is not a crash but an infinite, courteous exchange that burns budget.</figcaption>
+      <figcaption><b>Recovery never becomes approval.</b> Second Wind may move a blocked item back into claimed work under the backup model, but that model cannot move its repair to done. The other family must still verify it, and repeated disagreement still escalates.</figcaption>
     </figure>
   </section>
 

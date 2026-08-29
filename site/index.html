@@ -8,14 +8,15 @@
     <meta property="og:title" content="Rally — Your AIs, finally on the same team.">
     <meta property="og:description" content="The accountable AI team: one goal, the right models, approved tools, and an independently verified result.">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://agent9-rally.pages.dev/">
-    <meta property="og:image" content="https://agent9-rally.pages.dev/og-card.png">
+    <meta property="og:url" content="https://rally.agent9.dev/">
+    <meta property="og:image" content="https://rally.agent9.dev/og-card.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:image:alt" content="Rally: your AIs, finally on the same team.">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="theme-color" content="#ffffff">
     <meta name="rally-console-api" content="https://rally-ingress.terry-c87.workers.dev/v1/console">
+    <link rel="canonical" href="https://rally.agent9.dev/">
     <link rel="icon" href="rally-mark.svg" type="image/svg+xml">
     <link rel="stylesheet" href="styles.css">
   </head>
@@ -264,7 +265,7 @@
             <pre><code>64  runner + ingress + policy + site
 11  Cloud service + recovery
 ──
-75  automated tests
+80  automated tests
 
 ✓ Terraform validated
 ✓ Worker bundle verified
@@ -279,9 +280,11 @@
           <article><span>⌁</span><div><h3>Dual authentication</h3><p>Cloud Run IAM plus a Secret Manager-backed application credential.</p></div></article>
           <article><span>↻</span><div><h3>Replay-safe runtime</h3><p>Atomic claims, retry leases, and attempt fencing prevent duplicate or stale work.</p></div></article>
           <article><span>⌾</span><div><h3>Deterministic authority</h3><p>Prompts cannot change budgets, model families, ownership, or verification rules.</p></div></article>
+          <article><span>↗</span><div><h3>Second Wind recovery</h3><p>A failed model can hand recoverable work to its teammate without transferring approval authority.</p></div></article>
           <article><span>◫</span><div><h3>Fleet discovery</h3><p>An authenticated catalog declares every agent’s capability, scope, and prohibitions.</p></div></article>
           <article><span>◌</span><div><h3>Private telemetry</h3><p>Trace and logs prove execution while prompt and response capture remains off.</p></div></article>
           <article><span>■</span><div><h3>Hard circuit breakers</h3><p>Turn, time, send, rejection, and stagnation ceilings stop runaway behavior.</p></div></article>
+          <article><span>◇</span><div><h3>Human control</h3><p>People can steer a live run, require approval for sensitive actions, or stop it immediately.</p></div></article>
         </div>
       </section>
 
@@ -290,9 +293,9 @@
         <div class="faq-grid">
           <details><summary>Is the console showing a mock run?</summary><p>No. It reads an explicitly public, allowlisted projection of Rally’s authoritative runner state from Cloudflare D1. If that service fails, the page shows the failure instead of sample data.</p></details>
           <details><summary>Are two agents just agreeing with each other?</summary><p>No. They execute separately, come from different model families, and cannot verify checklist work they own.</p></details>
-          <details><summary>Do the agents wait for each other?</summary><p>Yes. Rally runs one model at a time, waits for its turn to finish, validates and saves the accepted state, and only then dispatches the other model. A timeout or failed process stops the run instead of handing over partial state.</p></details>
+          <details><summary>Do the agents wait for each other?</summary><p>Yes. Rally runs one model at a time and saves only validated state before the next handoff. With Second Wind enabled, a timeout, failed process, or reported blocker gives the other model one bounded recovery attempt from that saved state—including inspection of partial workspace edits—without auto-approving anything.</p></details>
           <details><summary>Do emails literally trigger every model turn?</summary><p>The first email starts the real run and every turn is mirrored to the thread. The authoritative runner dispatches the next model locally.</p></details>
-          <details><summary>What happens when the agents cannot finish?</summary><p>Rally stops with a precise halt report when work is blocked, repeatedly rejected, stalled, timed out, or over budget.</p></details>
+          <details><summary>What happens when the agents cannot finish?</summary><p>Second Wind first asks the teammate to diagnose and take over a recoverable failure. Rally still stops with a precise report when both models remain blocked, disagree repeatedly, stop making progress, hit a hard budget, cross an authority boundary, or receive a human STOP.</p></details>
           <details><summary>Is Rally an official Google product?</summary><p>No. Rally is an independent Agent9 project built with Gemini, Google ADK, and Google Cloud for the All Things Agentic Hackathon.</p></details>
           <details><summary>What stays private?</summary><p>Commissioner identity, worktree paths, mail IDs, raw prompts, credentials, and cloud request keys never enter the public console record.</p></details>
           <details><summary>What does “give Rally a job” mean?</summary><p>Start with one bounded outcome Rally can own repeatedly—such as repository maintenance or release preparation—then grant only the access, limits, and approval rules that outcome needs.</p></details>
@@ -317,9 +320,13 @@
       <div class="setup-tabs" role="tablist" aria-label="Launch options"><button class="is-active" type="button" role="tab" aria-selected="true" data-setup-tab="managed">Managed setup</button><button type="button" role="tab" aria-selected="false" data-setup-tab="self">Self-hosted</button></div>
       <section class="setup-panel is-active" data-setup-panel="managed">
         <div class="setup-promise"><b>Connect the company once.</b><span>Your team gets one Rally identity; administrators keep control of every system, scope, and approval rule behind it.</span></div>
+        <div class="continuity-setting">
+          <label for="second-wind-toggle"><span class="toggle-copy"><b>Second Wind</b><span>Let the teammate diagnose and recover from a failed turn or reported blocker.</span></span><span class="switch"><input id="second-wind-toggle" type="checkbox" checked data-second-wind><span aria-hidden="true"></span></span></label>
+          <small>Bounded recovery, not auto-approval. Human stops, permissions, budgets, and independent verification remain enforced.</small>
+        </div>
         <ol><li><span>1</span><div><b>Choose one difficult outcome</b><p>Start with a real, repeatable job that crosses people, models, or systems—not an open-ended chatbot prompt.</p></div></li><li><span>2</span><div><b>Connect systems and define authority</b><p>Select what Rally may read, draft, execute, or execute only after human approval.</p></div></li><li><span>3</span><div><b>Watch the accountable team work</b><p>Review the model handoffs, tool actions, independent verification, evidence, and final result.</p></div></li></ol>
-        <a class="button button-primary full-width" href="mailto:terry@agent9.dev?subject=Give%20Rally%20its%20first%20job&body=Company%3A%0ATeam%3A%0AFirst%20job%20for%20Rally%3A%0ATrusted%20systems%20involved%3A">Tell us the first job</a>
-        <p class="setup-note">Opens a pre-filled email. No form data is stored on this site.</p>
+        <a class="button button-primary full-width" data-managed-setup-link href="mailto:terry@agent9.dev?subject=Give%20Rally%20its%20first%20job&body=Company%3A%0ATeam%3A%0AFirst%20job%20for%20Rally%3A%0ATrusted%20systems%20involved%3A">Tell us the first job</a>
+        <p class="setup-note">Your Second Wind preference is added to the pre-filled email. No form data is stored on this site.</p>
       </section>
       <section class="setup-panel" data-setup-panel="self" hidden>
         <div class="setup-promise"><b>Provider-native authorization.</b><span>Credentials stay in provider tooling and your operating-system keychain.</span></div>

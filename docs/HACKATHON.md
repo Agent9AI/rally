@@ -37,7 +37,7 @@ engineering leader can audit.
 |---|---|---|
 | Discovery and lifecycle | Authenticated `GET /v1/agents` catalog with version, owner, capabilities, departments, authority, prohibitions, and status | Catalog response and `cloud/agent_catalog.json` |
 | Long-running runtime and state | D1 retains unopened commissions; local state saves every turn; Firestore keeps the ADK handoff and 30-day retention metadata | D1 row, Firestore record, recovered run log |
-| Failure-tolerant routing | Edge records are acknowledged only after handling; transient hydration errors retry; Cloud coordination uses leases and fencing; exact replays reuse the run | Retry tests, duplicate response, resumed attempt counter |
+| Failure-tolerant routing | Edge records are acknowledged only after handling; transient hydration errors retry; Cloud coordination uses leases and fencing; exact replays reuse the run; Second Wind hands recoverable worker failures to the other model family | Retry tests, duplicate response, resumed attempt counter, bounded takeover test |
 | Security and governance | Signed webhook, commissioner allowlist, Cloud Run IAM plus service token, isolated worktree, hard budgets, no self-approval | IAM policy, security table, rejected illegal transition |
 | Telemetry | Structured Worker logs plus metadata-only Cloud Logging and Cloud Trace | Trace waterfall and redacted log query |
 
@@ -47,7 +47,7 @@ engineering leader can audit.
 |---|---|---|
 | Innovation & operational utility (40%) | Email-native access plus cross-family verification converts agents from personal copilots into a shared, accountable team service | Send one email; show alternating Claude/Gemini executive updates and final evidence |
 | Technical architecture (30%) | ADK + Gemini on IAM-protected Cloud Run, atomic Firestore idempotency, Secret Manager, Cloud Trace, signed edge webhook, deterministic state machine | Architecture diagram, Terraform, trace/log, verification state |
-| Demo & production readiness (30%) | Deployed path, live eval gate, bounded costs, polished emails, human stop/steer, reproducible repo | 6/6 eval, 75 tests, live Cloud Run health, complete email thread |
+| Demo & production readiness (30%) | Deployed path, live eval gate, bounded costs, polished emails, human stop/steer, reproducible repo | 6/6 eval, 80 tests, live Cloud Run health, complete email thread |
 
 ## Model assignment rationale
 
@@ -129,7 +129,7 @@ lowering a threshold.
 - Authenticated fleet catalog for cross-department discovery and governance
 - Dual-auth Cloud Run boundary and least-privilege runtime identity
 - Metadata-only GenAI observability
-- 75 automated tests plus six live ADK eval cases at 1.00/1.00
+- 80 automated tests plus six live ADK eval cases at 1.00/1.00
 - Validated Terraform and a demo-ready operator workflow
 
 ### What we learned

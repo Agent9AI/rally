@@ -30,6 +30,10 @@
     "turn_timeout_sec": 240,
     "require_execution_symmetry": true
   },
+  "continuity": {
+    "second_wind": true,
+    "max_recoveries_per_run": 2
+  },
   "mail": {
     "enabled": true,
     "cc_human": "terry@agent9.dev",

@@ -79,6 +79,20 @@ class TestChecklistIntegrity(unittest.TestCase):
         self.assertEqual(out[0]["state"], "claimed")
         self.assertTrue(any("may not advance" in v for v in viol))
 
+    def test_only_runner_granted_recovery_can_flip_blocked_ownership(self):
+        prev = [item(state="blocked", owner="claude")]
+        proposed = [item(state="awaiting-verification", owner="agy")]
+        denied, violations = E.reconcile(prev, proposed, actor="agy")
+        accepted, recovery_violations = E.reconcile(
+            prev, proposed, actor="agy", recovery_items=["c1"]
+        )
+        self.assertEqual(denied[0]["state"], "blocked")
+        self.assertTrue(violations)
+        self.assertEqual(accepted[0]["state"], "awaiting-verification")
+        self.assertEqual(accepted[0]["owner"], "agy")
+        self.assertIsNone(accepted[0]["verified_by"])
+        self.assertEqual(recovery_violations, [])
+
 
 class TestExtraction(unittest.TestCase):
     def test_last_fenced_block_wins(self):

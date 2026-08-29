@@ -29,7 +29,7 @@ flowchart LR
 |---|---|---|
 | Email edge | Verify webhook, queue, deduplicate delivery | Approve a sender or complete work |
 | Google ADK coordinator | Preserve the request verbatim and produce a bounded handoff | Modify files, invent evidence, waive review |
-| Rally runner | Authenticate commissioners, advance state, enforce budgets and verification | Change its own policy from model output |
+| Rally runner | Authenticate commissioners, advance state, authorize bounded Second Wind recovery, enforce budgets and verification | Change its own policy from model output |
 | Claude / Gemini workers | Scope, implement, test, reject, and repair work | Verify their own checklist items |
 | Firestore | Atomically claim request keys and retain coordinator state | Trigger unbounded retries |
 
@@ -54,6 +54,9 @@ never authoritative.
 - The edge deletes a commission only after the runner handles it. A transient
   Resend hydration error or local exception leaves the D1 row queued.
 - The local runner persists its complete state after every accepted transition.
+- With Second Wind enabled, a failed process never becomes accepted state. Rally
+  records the failure, preserves the checklist, and asks the other family to
+  inspect any partial workspace edits before taking custody.
 
 ## Fleet discovery and lifecycle
 

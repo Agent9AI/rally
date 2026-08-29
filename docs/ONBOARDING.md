@@ -57,6 +57,7 @@ the self-host flow.
 - Claude and Gemini entitlements verified
 - First task chosen with objective acceptance criteria
 - Turn, send, timeout, and spend ceilings accepted
+- Second Wind recovery toggled on or off, with its handoff ceiling accepted
 - Data retention and telemetry mode selected
 - One dry run and one live run reviewed by the customer
 - Human `STOP` and steering behavior rehearsed
