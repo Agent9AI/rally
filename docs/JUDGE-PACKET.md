@@ -107,6 +107,24 @@ turn plus the final report.
 
 ## Assets and tabs
 
+### Live proof anchors — August 29, 2026
+
+Use these identifiers to open the genuine records before recording. Keep tokens,
+request keys, account menus, and raw prompt fields off screen.
+
+| Surface | Live anchor |
+|---|---|
+| Public product + golden run | <https://agent9-rally.pages.dev/#demo> — `r-20260829-dbb5c0` |
+| Cloud project | `rally-agent9-2026` |
+| Cloud Run | `rally-google-coordinator-00004-zxb` in `us-east1` |
+| Immutable container | `sha256:b51e64c4071da49f1b61b97f621c83249bb9b77be9470638a338d6a0125f562e` |
+| Cloud Build | `aee66131-0ecc-4fbe-b5ca-cd4f920f9c6f` (`SUCCESS`) |
+| Firestore proof record | `r-cloud-redaction-20260829` in `(default)` |
+| Content-free Cloud Trace | `05b54fcc39e0f869fcb486ed62d5350f` — eight linked spans, all ADK payload attributes `{}` |
+| Cloudflare Worker | `rally-ingress` version `24630795-591a-4615-b127-43940f8bb977` |
+| Pages production release | deployment `08245618-24a9-4985-abcb-23eee750d919`, source `350ff05` |
+| Public source | <https://github.com/Agent9AI/rally> — public, Apache-2.0 |
+
 Prepare these in order before recording:
 
 1. Inbox compose window with the golden commission.
