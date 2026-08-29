@@ -46,11 +46,46 @@ Terraform creates:
 - an IAM-protected Cloud Run service with scale-to-zero
 - a single invoker grant for `imterryim@gmail.com`
 
+### Approved two-phase deployment
+
+The registry must exist before an image can be pushed, and the image must exist
+before Cloud Run can start. Rally encodes that dependency as an explicit safe
+gate instead of relying on a failing first apply.
+
+Phase 1 bootstraps the substrate. `deploy_service` defaults to false, so no
+Cloud Run revision is created:
+
+```bash
+terraform -chdir=cloud/infra apply \
+  -var='image_uri=bootstrap-not-used'
+```
+
+Phase 2 builds and pushes a commit-addressed image:
+
+```bash
+gcloud builds submit cloud \
+  --config=cloud/cloudbuild.yaml \
+  --project=rally-agent9-2026 \
+  --substitutions=_IMAGE=us-east1-docker.pkg.dev/rally-agent9-2026/rally/rally-google-coordinator:<commit-sha>
+```
+
+Phase 3 creates the private service and sole invoker grant from that immutable
+image:
+
+```bash
+terraform -chdir=cloud/infra apply \
+  -var='deploy_service=true' \
+  -var='image_uri=us-east1-docker.pkg.dev/rally-agent9-2026/rally/rally-google-coordinator:<commit-sha>'
+```
+
+Review each plan and approve it interactively. Never add `-auto-approve` to the
+operator path.
+
 The deployed service also checks the Secret Manager token. The local runner
 mints a Google identity token and reads the application token from macOS
 Keychain, giving the boundary two independent credentials.
 
-After an approved deployment, mirror the token locally without printing it:
+After the approved service apply, mirror the token locally without printing it:
 
 ```bash
 security add-generic-password -U -s rally-cloud-token -a rally \

@@ -1,6 +1,6 @@
 output "service_url" {
   description = "IAM-protected Rally coordinator URL."
-  value       = google_cloud_run_v2_service.coordinator.uri
+  value       = try(google_cloud_run_v2_service.coordinator[0].uri, null)
 }
 
 output "service_account" {

@@ -5,4 +5,4 @@ steps:
     args: ["push", "${_IMAGE}"]
 images: ["${_IMAGE}"]
 substitutions:
-  _IMAGE: us-east1-docker.pkg.dev/$PROJECT_ID/rally/rally-coordinator:$BUILD_ID
+  _IMAGE: us-east1-docker.pkg.dev/$PROJECT_ID/rally/rally-google-coordinator:$BUILD_ID

@@ -17,8 +17,14 @@ variable "service_name" {
 }
 
 variable "image_uri" {
-  description = "Immutable coordinator container image URI."
+  description = "Immutable coordinator image URI; unused during bootstrap."
   type        = string
+}
+
+variable "deploy_service" {
+  description = "Create Cloud Run only after the immutable image has been pushed."
+  type        = bool
+  default     = false
 }
 
 variable "invoker_member" {

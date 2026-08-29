@@ -25,10 +25,11 @@ this gate without the operator's explicit approval.
 
 ## 3. Provision and deploy
 
-- [ ] Terraform provisions Artifact Registry, Firestore, service accounts, IAM,
-      Secret Manager metadata, Cloud Run, and observability configuration.
-- [ ] Add the application token as a Secret Manager version without printing it.
-- [ ] Build in `us-east1` and deploy the exact Cloud Build image.
+- [ ] Phase 1 Terraform bootstrap provisions APIs, Artifact Registry, Firestore,
+      service account, IAM, and Secret Manager while `deploy_service=false`.
+- [ ] Confirm bootstrap created the application-token version without printing it.
+- [ ] Build and push the commit-addressed image in `us-east1`.
+- [ ] Phase 2 Terraform uses `deploy_service=true` and that exact immutable image.
 - [ ] Confirm Cloud Run has at most one instance and is not publicly invokable.
 - [ ] Install the service token in macOS Keychain using the documented command.
 - [ ] Configure the local bridge URL and audience without committing credentials.

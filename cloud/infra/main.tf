@@ -90,6 +90,8 @@ resource "google_secret_manager_secret_version" "service_token" {
 }
 
 resource "google_cloud_run_v2_service" "coordinator" {
+  count = var.deploy_service ? 1 : 0
+
   project             = var.project_id
   name                = var.service_name
   location            = var.region
@@ -187,9 +189,11 @@ resource "google_cloud_run_v2_service" "coordinator" {
 }
 
 resource "google_cloud_run_v2_service_iam_member" "invoker" {
+  count = var.deploy_service ? 1 : 0
+
   project  = var.project_id
   location = var.region
-  name     = google_cloud_run_v2_service.coordinator.name
+  name     = google_cloud_run_v2_service.coordinator[0].name
   role     = "roles/run.invoker"
   member   = var.invoker_member
 }

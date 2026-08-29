@@ -8,12 +8,17 @@ The service is not public. `imterryim@gmail.com` must pass Cloud Run IAM and the
 caller must also present the independent `X-Rally-Service-Token` application
 credential. Prompt and response bodies are excluded from telemetry.
 
-Deployment is deliberately gated. After tests and ADK evaluations pass:
+Deployment is deliberately gated and two-phase so Cloud Run never references an
+image before its Terraform-managed registry exists. After tests and ADK
+evaluations pass:
 
-1. Build and push an immutable image to the Terraform-managed repository.
-2. Apply with `-var image_uri=us-east1-docker.pkg.dev/rally-agent9-2026/rally/rally-google-coordinator:<sha>`.
-3. Run the sensitive `local_token_install_command` output locally.
-4. Put Terraform's `service_url` into Rally's `google_cloud.url`, enable the
+1. Apply the default bootstrap plan with a non-used placeholder `image_uri`.
+   `deploy_service` defaults to false, so this creates the registry, APIs,
+   identity, Firestore, IAM, and secret—but not Cloud Run.
+2. Build and push an immutable image to the new repository.
+3. Apply with `-var deploy_service=true` and the immutable image URI.
+4. Run the sensitive `local_token_install_command` output locally.
+5. Put Terraform's `service_url` into Rally's `google_cloud.url`, enable the
    integration, and run `./bin/rally --check --smoke`.
 
 Never commit Terraform state, a service token, an identity token, or an eval
