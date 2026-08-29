@@ -304,6 +304,23 @@ function renderDetail(run) {
   ring.append(svgRing(done, total), ringCopy);
   fragment.append(ring);
 
+  const receipt = run.value_receipt || {};
+  const valueGroup = element("div", "value-receipt-group");
+  valueGroup.append(element("p", "label", "Value receipt"));
+  const valueGrid = element("div", "value-receipt-grid");
+  [
+    [receipt.independently_verified || 0, "independent checks"],
+    [receipt.evidence_receipts || 0, "evidence receipts"],
+    [receipt.model_families || 0, "model families"],
+    [receipt.self_approved || 0, "self-approved"],
+  ].forEach(([value, label]) => {
+    const cell = element("div");
+    cell.append(element("strong", "", value), element("span", "", label));
+    valueGrid.append(cell);
+  });
+  valueGroup.append(valueGrid);
+  fragment.append(valueGroup);
+
   const invariant = element("div", "invariant-box");
   invariant.append(
     element("span", "", "Completion invariant"),

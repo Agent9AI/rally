@@ -22,7 +22,7 @@ operations leader commissioning that work from a phone.
 | 0:55 | Is Google load-bearing? | Cloud Run revision → Firestore record | Gemini 3.7 + ADK handoff, atomic request key, attempt metadata |
 | 1:30 | Are agents actually working? | Split view: repository edit, test run, `awaiting-verification`, other-family verdict | Continuous owner-to-verifier sequence |
 | 2:25 | Is completion enforceable? | Final state and evidence command | Every `done` item has `owner != verified_by` |
-| 3:05 | Is it production-minded? | ADK eval gate and metadata-only trace | 3/3 at 1.00/1.00; prompt capture disabled |
+| 3:05 | Is it production-minded? | ADK eval gate and metadata-only trace | 6/6 at 1.00/1.00; prompt capture disabled |
 | 3:35 | What does the user receive? | Final executive email | Outcome, evidence, residual risk, and no console archaeology |
 
 The polished entry may use clearly labeled elapsed-time cuts. Publish the full,
@@ -87,7 +87,7 @@ stale owner from overwriting the new attempt.
 ## Judge-visible numbers
 
 - 72 automated deterministic tests: 62 product tests + 10 cloud tests
-- 3 live ADK evaluation cases
+- 6 live ADK evaluation cases
 - 1.00 tool trajectory score
 - 1.00 response-quality score
 - 2 independent model families

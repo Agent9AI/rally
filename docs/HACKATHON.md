@@ -47,7 +47,7 @@ engineering leader can audit.
 |---|---|---|
 | Innovation & operational utility (40%) | Email-native access plus cross-family verification converts agents from personal copilots into a shared, accountable team service | Send one email; show alternating Claude/Gemini executive updates and final evidence |
 | Technical architecture (30%) | ADK + Gemini on IAM-protected Cloud Run, atomic Firestore idempotency, Secret Manager, Cloud Trace, signed edge webhook, deterministic state machine | Architecture diagram, Terraform, trace/log, verification state |
-| Demo & production readiness (30%) | Deployed path, live eval gate, bounded costs, polished emails, human stop/steer, reproducible repo | 3/3 eval, 72 tests, live Cloud Run health, complete email thread |
+| Demo & production readiness (30%) | Deployed path, live eval gate, bounded costs, polished emails, human stop/steer, reproducible repo | 6/6 eval, 72 tests, live Cloud Run health, complete email thread |
 
 ## Model assignment rationale
 
@@ -115,7 +115,10 @@ The hardest problem was separating believable model behavior from enforceable
 system behavior. We also discovered through live ADK evaluation that Gemini was
 paraphrasing requests at the audit boundary. The response looked excellent, but
 exact trajectory evaluation exposed the scope mutation. We changed the agent to
-preserve commissions verbatim and reran the unchanged gate to 3/3 passes.
+preserve commissions verbatim, expanded the gate, and caught task details being
+paraphrased in the confirmation. The coordinator now emits a fixed,
+privacy-preserving receipt after the exact handoff. All six cases pass without
+lowering a threshold.
 
 ### Accomplishments
 
@@ -126,7 +129,7 @@ preserve commissions verbatim and reran the unchanged gate to 3/3 passes.
 - Authenticated fleet catalog for cross-department discovery and governance
 - Dual-auth Cloud Run boundary and least-privilege runtime identity
 - Metadata-only GenAI observability
-- 72 automated tests plus three live ADK eval cases at 1.00/1.00
+- 72 automated tests plus six live ADK eval cases at 1.00/1.00
 - Validated Terraform and a demo-ready operator workflow
 
 ### What we learned

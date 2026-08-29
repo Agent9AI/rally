@@ -28,6 +28,18 @@
           "rubricContent": {
             "textProperty": "The response is direct, professional, and understandable to an executive without exposing chain-of-thought, credentials, or raw tool traces."
           }
+        },
+        {
+          "rubricId": "scope_fidelity",
+          "rubricContent": {
+            "textProperty": "The response confirms receipt without restating or paraphrasing the task; the complete user scope is preserved only in the handoff tool argument."
+          }
+        },
+        {
+          "rubricId": "user_expectation",
+          "rubricContent": {
+            "textProperty": "The response makes the user-facing contract clear: Rally accepted the job and independent verification remains required before completion."
+          }
         }
       ]
     }

@@ -81,6 +81,12 @@ class ConsoleSnapshotTests(unittest.TestCase):
         payload = rally_console.build_snapshot(state(checklist=checklist), config())
         self.assertEqual(payload["progress"], {"done": 1, "total": 1})
         self.assertEqual(payload["checklist"][0]["verified_by"], "agy")
+        self.assertEqual(payload["value_receipt"], {
+            "independently_verified": 1,
+            "evidence_receipts": 1,
+            "model_families": 2,
+            "self_approved": 0,
+        })
 
     def test_real_turn_history_is_preserved_for_the_console(self):
         turns = [{

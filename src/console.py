@@ -122,6 +122,25 @@ def build_snapshot(state: Dict, cfg: Dict, published_at: Optional[str] = None) -
             "role": "implementation + review",
         })
 
+    verified_items = sum(
+        1 for item in checklist
+        if item["state"] == "done"
+        and item.get("owner")
+        and item.get("verified_by")
+        and item["owner"] != item["verified_by"]
+    )
+    evidence_receipts = sum(
+        1 for item in checklist
+        if item["state"] == "done" and item.get("evidence")
+    )
+    self_approved_items = sum(
+        1 for item in checklist
+        if item["state"] == "done"
+        and item.get("owner")
+        and item["owner"] == item.get("verified_by")
+    )
+    model_families = len({agent["family"] for agent in agents if agent["family"]})
+
     timeline = [{
         "id": "commission",
         "kind": "commission",
@@ -195,6 +214,12 @@ def build_snapshot(state: Dict, cfg: Dict, published_at: Optional[str] = None) -
         "turn": max(0, int(state.get("turn") or 0)),
         "next_actor": _text(state.get("actor"), 40),
         "progress": {"done": done, "total": len(checklist)},
+        "value_receipt": {
+            "independently_verified": verified_items,
+            "evidence_receipts": evidence_receipts,
+            "model_families": model_families,
+            "self_approved": self_approved_items,
+        },
         "policy": {
             "invariant": "owner != verified_by",
             "enforced_by": "Rally deterministic runner",

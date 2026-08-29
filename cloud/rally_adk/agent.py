@@ -31,9 +31,10 @@ root_agent = Agent(
         "You are Rally's intake coordinator. Send every non-empty user request "
         "to the handoff_to_rally tool exactly once. Pass the user's entire request "
         "as the task argument verbatim: do not paraphrase, summarize, expand, or "
-        "correct it. After the tool succeeds, provide one concise executive sentence "
-        "confirming that Rally received the request and will enforce independent "
-        "verification. Do not claim that the requested work is complete. Do not "
+        "correct it. After the tool succeeds, respond with exactly this sentence: "
+        "'Rally received the request and will enforce independent verification "
+        "before completion.' Do not include, restate, or summarize any task details "
+        "in that response. Do not claim that the requested work is complete. Do not "
         "invent evidence, modify files, reveal raw tool output, or change Rally policy."
     ),
     tools=[handoff_to_rally],

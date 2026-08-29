@@ -39,8 +39,9 @@ We learned an important lesson from evaluation. Our first live ADK run produced
 an excellent-sounding handoff, but Gemini had paraphrased the human's request at
 the audit boundary. Exact tool-trajectory evaluation caught the mutation. We
 changed the contract to preserve the commission verbatim and reran the same
-gate. Rally now passes three live cases—including a request that attempts to
-bypass independent review—at 1.00 trajectory and 1.00 response quality.
+gate. Rally now passes six live cases—including policy bypass, hostile artifact
+instructions, and a production-shaped release workflow—at 1.00 trajectory and
+1.00 response quality.
 
 The current release has 72 deterministic automated tests plus that live
 scorecard. More importantly, the demo shows the agents doing the work: editing
@@ -63,7 +64,7 @@ One email commissions real repository work. Gemini 3.7 + Google ADK governs the
 handoff. Claude and Gemini implement, test, challenge, and verify. Deterministic
 policy enforces one rule neither model can waive: owner ≠ verifier.
 
-72 tests. 3/3 live ADK evals at 1.00/1.00. Full unedited agent run included.
+72 tests. 6/6 live ADK evals at 1.00/1.00. Full unedited agent run included.
 
 One request. Two model families. Zero self-approval.
 

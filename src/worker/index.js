@@ -103,6 +103,16 @@ function normalizeConsoleRun(value, expectedRunId) {
   })) : [];
   const done = integer(value.progress?.done, 1000);
   const total = integer(value.progress?.total, 1000);
+  const independentlyVerified = checklist.filter((item) =>
+    item.state === "done" && item.owner && item.verified_by && item.owner !== item.verified_by
+  ).length;
+  const evidenceReceipts = checklist.filter((item) =>
+    item.state === "done" && item.evidence
+  ).length;
+  const selfApproved = checklist.filter((item) =>
+    item.state === "done" && item.owner && item.owner === item.verified_by
+  ).length;
+  const modelFamilies = new Set(agents.map((agent) => agent.family).filter(Boolean)).size;
   return {
     schema_version: 1,
     visibility: value.visibility === "public" ? "public" : "private",
@@ -115,6 +125,12 @@ function normalizeConsoleRun(value, expectedRunId) {
     turn: integer(value.turn, 1000),
     next_actor: text(value.next_actor, 40),
     progress: { done: Math.min(done, total), total },
+    value_receipt: {
+      independently_verified: independentlyVerified,
+      evidence_receipts: evidenceReceipts,
+      model_families: modelFamilies,
+      self_approved: selfApproved,
+    },
     policy: {
       invariant: "owner != verified_by",
       enforced_by: "Rally deterministic runner",

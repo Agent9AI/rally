@@ -101,12 +101,12 @@ agreeable.
 | Judge console | live Pages UI backed by a double-sanitized D1 run projection |
 | `rally@updates.agent9.dev` route | working; replies return to the commissioner |
 | Product + Cloud test suite | 72 automated tests passing |
-| Google ADK coordinator | implemented; live eval 3/3, both metrics 1.00 |
+| Google ADK coordinator | implemented; live eval 6/6, both metrics 1.00 |
 | Cloud Run + Firestore + Trace | Terraform validated; deployment approval pending |
 
 The current release candidate has **72 automated tests**: 62 deterministic
 runner, ingress, policy, bridge, and site tests plus 10 Cloud service tests.
-The separate live ADK scorecard remains 3/3 at 1.00 trajectory and 1.00 quality.
+The separate live ADK scorecard remains 6/6 at 1.00 trajectory and 1.00 quality.
 
 ### Why the models have different jobs
 
@@ -130,7 +130,7 @@ identity, and observability plane—not a decorative API call.
 ```bash
 make check                    # pins, binaries, credentials, limits
 make dry                      # exercise the loop, no tokens spent
-make test                     # 53 local policy, ingress, bridge, recovery, and site tests
+make test                     # 62 local policy, ingress, bridge, recovery, and site tests
 make cloud-test               # Cloud coordinator tests + lint
 make cloud-eval               # live ADK eval; exact trajectory + quality gates
 
@@ -159,6 +159,7 @@ See [docs/RUNBOOK.md](docs/RUNBOOK.md) to operate it, including how to stop a ru
 | [docs/HACKATHON.md](docs/HACKATHON.md) | Judge-facing positioning and submission checklist. |
 | [docs/JUDGE-PACKET.md](docs/JUDGE-PACKET.md) | Four-minute proof order and claim-to-receipt index. |
 | [docs/SUBMISSION-CHECKLIST.md](docs/SUBMISSION-CHECKLIST.md) | Final operator checklist with explicit deployment gate. |
+| [docs/FAQ-COMPLIANCE.md](docs/FAQ-COMPLIANCE.md) | Requirement-by-requirement Devpost FAQ compliance record. |
 | [docs/PUBLIC-LAUNCH-DRAFT.md](docs/PUBLIC-LAUNCH-DRAFT.md) | Bonus-content and social-copy drafts. |
 | [docs/SECURITY.md](docs/SECURITY.md) | Threats, controls, and demo-safe evidence. |
 | [docs/ONBOARDING.md](docs/ONBOARDING.md) | Managed no-key launch and secure self-host strategy. |
@@ -183,3 +184,31 @@ cloud/infra/           validated production Terraform
 config/rally.json      pins, limits, addresses, owners
 runs/<id>/             state.json and the agents' workspace
 ```
+
+## Must do before Devpost submission
+
+The deadline is **August 31, 2026 at 5:00 PM PDT**. Do not submit until every
+box below is checked; see `docs/SUBMISSION-CHECKLIST.md` for the evidence-level
+version.
+
+- [ ] Deploy the authenticated ADK coordinator to Google Cloud and complete the
+      golden end-to-end run.
+- [ ] Record visible Cloud Run, Vertex AI, Firestore, and Trace proof in the
+      narrated demo; keep the public YouTube/Vimeo cut under four minutes and
+      verify it in an incognito window.
+- [ ] Upload the video early enough for processing to finish before submission.
+- [ ] Add every teammate to Devpost, confirm every invitation is accepted, and
+      name the Representative.
+- [x] Publish this repository under Apache-2.0 so judges can review it without
+      private-account access.
+- [ ] Link the public repository in the Devpost submission.
+- [ ] Upload `docs/assets/rally-architecture.svg`, enter the hosted Rally URL,
+      and include testing credentials only if the submitted experience is gated.
+- [ ] Preview all links and instructions while signed out, submit, save the
+      confirmation, then freeze the submitted repo, video, and site until winner
+      announcements.
+
+## License
+
+Copyright 2026 Agent9 AI. Licensed under the
+[Apache License 2.0](LICENSE).

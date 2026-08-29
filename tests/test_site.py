@@ -33,7 +33,9 @@ class TestProductSite(unittest.TestCase):
 
     def test_product_proof_and_honest_boundary_are_visible(self):
         for phrase in (
-            "Meet the operator that",
+            "Delegate the job.",
+            "What users actually get",
+            "Receive proof, not confidence",
             "owner ≠ verifier",
             "Gemini 3.7 + ADK",
             "Honest boundary:",

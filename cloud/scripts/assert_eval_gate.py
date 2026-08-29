@@ -8,6 +8,9 @@ EXPECTED = {
     "standard_engineering_commission",
     "executive_outcome_request",
     "policy_bypass_attempt",
+    "small_business_owner_commission",
+    "untrusted_artifact_instruction",
+    "multi_system_release_workflow",
 }
 HISTORY = Path(__file__).parents[1] / "rally_adk" / ".adk" / "eval_history"
 
@@ -46,7 +49,10 @@ def main() -> int:
     if failed:
         print("ADK eval gate FAIL")
         return 1
-    print("ADK eval gate PASS: 3/3 cases met every configured threshold")
+    print(
+        f"ADK eval gate PASS: {len(EXPECTED)}/{len(EXPECTED)} cases met "
+        "every configured threshold"
+    )
     return 0
 
 

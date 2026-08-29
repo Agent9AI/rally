@@ -7,7 +7,7 @@ entry. Items are ordered so a failure cannot invalidate later evidence.
 
 - [ ] `make release-check` passes from a clean terminal.
 - [ ] `make cloud-eval` passes all required cases without changing thresholds.
-- [ ] The live result still reads 3/3, trajectory 1.00, quality 1.00.
+- [x] The live result reads 6/6, trajectory 1.00, quality 1.00.
 - [ ] `git diff --check` passes.
 - [ ] No token, private key, webhook URL, or prompt content appears in tracked files.
 - [ ] The repository and site say 72 tests everywhere.
@@ -63,6 +63,8 @@ Save sanitized screenshots for each judge-visible claim.
 ## 6. Produce the entry video
 
 - [ ] Follow `docs/DEMO-SCRIPT.md`; final entry is four minutes or shorter.
+- [ ] Upload the public YouTube/Vimeo cut early; processing can take hours and
+      must finish before the submission deadline.
 - [ ] Add captions and readable cursor/highlight treatment.
 - [ ] Label every elapsed-time cut; do not imply instantaneous inference.
 - [ ] Never show secrets, raw webhook URLs, thought signatures, or account menus.
@@ -73,15 +75,25 @@ Save sanitized screenshots for each judge-visible claim.
 ## 7. Devpost entry
 
 - [ ] Category is **Fortified Enterprise Fleet**.
+- [ ] Every contributor is listed on the Devpost project and one eligible person
+      is named as the Representative.
+- [ ] Every teammate has accepted their Devpost invitation.
+- [x] Repository is public under Apache-2.0; private-repository judge grants do
+      not apply.
 - [ ] Use the copy in `docs/HACKATHON.md` and the proof order in
       `docs/JUDGE-PACKET.md`.
-- [ ] Link the public GitHub repository, product site, entry video, and unedited run.
-- [ ] Include the presentation-ready architecture diagram.
+- [ ] Link the reviewable GitHub repository, product site, entry video, and
+      unedited run.
+- [ ] Upload the presentation-ready architecture diagram.
+- [ ] Enter the hosted Rally project URL; if any judge-visible experience is
+      gated, include working login credentials in the testing instructions.
 - [ ] Explain why each model handles its workload.
 - [ ] Explicitly name Gemini 3.7 via Vertex AI, Google ADK, and Google Cloud services.
 - [ ] Include the new-project disclosure.
 - [ ] Preview every field and link in a signed-out browser.
 - [ ] Submit before **August 31, 2026 at 5:00 PM PDT**; save confirmation evidence.
+- [ ] Freeze the submitted repository, video, and site until winners are
+      announced; use a separate fork for any post-deadline development.
 
 ## 8. Optional bonus content
 
@@ -90,3 +102,6 @@ Save sanitized screenshots for each judge-visible claim.
 - [ ] Include the required hackathon acknowledgement.
 - [ ] Publish the social version with the final video/product link and relevant tag.
 - [ ] Archive the public URLs in the Devpost submission.
+
+The auditable requirement matrix and remaining human confirmations live in
+`docs/FAQ-COMPLIANCE.md`.

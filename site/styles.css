@@ -290,6 +290,13 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px soli
 .completion-ring strong, .completion-ring span { display: block; }
 .completion-ring strong { font-size: 1.45rem; font-weight: 500; }
 .completion-ring span { color: var(--quiet); font-size: .65rem; }
+.value-receipt-group { margin: 0 0 14px; }
+.value-receipt-group > .label { margin-bottom: 8px; }
+.value-receipt-grid { display: grid; grid-template-columns: 1fr 1fr; overflow: hidden; border: 1px solid var(--line-soft); border-radius: 12px; background: var(--line-soft); gap: 1px; }
+.value-receipt-grid div { min-height: 68px; display: flex; flex-direction: column; justify-content: center; padding: 11px; background: #fff; }
+.value-receipt-grid strong, .value-receipt-grid span { display: block; }
+.value-receipt-grid strong { color: var(--blue); font-size: 1.05rem; font-weight: 600; }
+.value-receipt-grid span { margin-top: 3px; color: var(--quiet); font-size: .52rem; line-height: 1.25; text-transform: uppercase; letter-spacing: .045em; }
 .invariant-box { padding: 14px; border: 1px solid #d2e3fc; border-radius: 12px; background: #fff; }
 .invariant-box span, .invariant-box code, .invariant-box small { display: block; }
 .invariant-box span { color: var(--blue); font-size: .6rem; font-weight: 600; text-transform: uppercase; }

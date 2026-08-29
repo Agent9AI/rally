@@ -5,6 +5,7 @@ __pycache__/
 .adk/
 *.tfstate
 *.tfstate.*
+*.tfplan
 .terraform/
 .pytest_cache/
 .ruff_cache/
