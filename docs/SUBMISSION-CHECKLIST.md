@@ -5,59 +5,59 @@ entry. Items are ordered so a failure cannot invalidate later evidence.
 
 ## 1. Freeze deterministic proof
 
-- [ ] `make release-check` passes from a clean terminal.
-- [ ] `make cloud-eval` passes all required cases without changing thresholds.
+- [x] `make release-check` passes from a clean terminal.
+- [x] `make cloud-eval` passes all required cases without changing thresholds.
 - [x] The live result reads 6/6, trajectory 1.00, quality 1.00.
-- [ ] `git diff --check` passes.
-- [ ] No token, private key, webhook URL, or prompt content appears in tracked files.
-- [ ] The repository and site say 74 tests everywhere.
-- [ ] The standard and filmed model pins are documented accurately.
+- [x] `git diff --check` passes.
+- [x] No token, private key, webhook URL, or prompt content appears in tracked files.
+- [x] The repository and site say 75 tests everywhere.
+- [x] The standard and filmed model pins are documented accurately.
 
 ## 2. Approval gate: Google Cloud deployment
 
 Deployment changes an external account and can consume credits. Do not cross
 this gate without the operator's explicit approval.
 
-- [ ] Operator states: **I approve deploying Rally to Google Cloud project `rally-agent9-2026`.**
-- [ ] Confirm active account and project.
-- [ ] Confirm the expected low-cost plan and budget alert.
-- [ ] Read and follow the Google ADK deployment workflow before executing it.
+- [x] Operator states: **I approve deploying Rally to Google Cloud project `rally-agent9-2026`.**
+- [x] Confirm active account and project.
+- [x] Confirm the expected low-cost plan and budget alert.
+- [x] Read and follow the Google ADK deployment workflow before executing it.
 
 ## 3. Provision and deploy
 
-- [ ] Phase 1 Terraform bootstrap provisions APIs, Artifact Registry, Firestore,
+- [x] Phase 1 Terraform bootstrap provisions APIs, Artifact Registry, Firestore,
       service account, IAM, and Secret Manager while `deploy_service=false`.
-- [ ] Confirm bootstrap created the application-token version without printing it.
-- [ ] Build and push the commit-addressed image in `us-east1`.
-- [ ] Phase 2 Terraform uses `deploy_service=true` and that exact immutable image.
-- [ ] Confirm Cloud Run has at most one instance and is not publicly invokable.
-- [ ] Install the service token in macOS Keychain using the documented command.
-- [ ] Configure the local bridge URL and audience without committing credentials.
+- [x] Confirm bootstrap created the application-token version without printing it.
+- [x] Build and push the commit-addressed image in `us-east1`.
+- [x] Phase 2 Terraform uses `deploy_service=true` and that exact immutable image.
+- [x] Confirm Cloud Run has at most one instance and is not publicly invokable.
+- [x] Install the service token in macOS Keychain using the documented command.
+- [x] Configure the local bridge URL and audience without committing credentials.
 
 ## 4. Prove the Google path
 
-- [ ] Authenticated health call returns the expected service/model identity.
-- [ ] Unauthenticated commission and catalog calls are rejected.
-- [ ] Authenticated `GET /v1/agents` returns the versioned fleet catalog.
-- [ ] A new commission creates one Firestore record.
-- [ ] Exact replay returns the same run and does not invoke Gemini again.
-- [ ] A conflicting replay with the same key returns HTTP 409.
+- [x] Authenticated health call returns the expected service/model identity.
+- [x] Unauthenticated commission and catalog calls are rejected.
+- [x] Authenticated `GET /v1/agents` returns the versioned fleet catalog.
+- [x] A new commission creates one Firestore record.
+- [x] Exact replay returns the same run and does not invoke Gemini again.
+- [x] A conflicting replay with the same key returns HTTP 409.
 - [ ] One controlled failed attempt resumes with an incremented attempt number.
 - [ ] A stale attempt cannot overwrite the reclaimed attempt.
-- [ ] Cloud Trace links the intake and Gemini spans.
-- [ ] Logs contain metadata but no commission or model response content.
+- [x] Cloud Trace links the intake and Gemini spans.
+- [x] Logs contain metadata but no commission or model response content.
 
 Save sanitized screenshots for each judge-visible claim.
 
 ## 5. Golden end-to-end run
 
-- [ ] Use the exact commission in `docs/DEMO-SCRIPT.md`.
+- [x] Use the exact commission in `docs/DEMO-SCRIPT.md`.
 - [ ] Start a complete unedited screen recording before pressing Send.
 - [ ] Show email → durable intake → Gemini/ADK handoff → repository work.
 - [ ] Keep one owner edit/test → `awaiting-verification` → other-family verdict
       sequence continuous and readable.
-- [ ] Verify every completed item names a different verifier and evidence.
-- [ ] Verify the final report includes outcome, tests, residual risk, and run ID.
+- [x] Verify every completed item names a different verifier and evidence.
+- [x] Verify the final report includes outcome, tests, residual risk, and the public console header carries the run ID.
 - [ ] Preserve the entire email thread and run state as sanitized evidence.
 
 ## 6. Produce the entry video

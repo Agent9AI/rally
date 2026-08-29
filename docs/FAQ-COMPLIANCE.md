@@ -7,11 +7,11 @@ facts that require the entrant.
 
 ## Current verdict
 
-**Not submission-complete yet.** The implementation satisfies the project-age,
-single-track, Gemini, and Google agent-framework requirements. The mandatory
-Google Cloud stack is implemented and tested but is not compliant until the
-Cloud Run service is deployed and captured in the demo. The public four-minute
-video has not been published.
+**The technical entry is compliant; the Devpost package is not submission-complete
+yet.** The project-age, single-track, Gemini, Google agent-framework, and deployed
+Google Cloud requirements are satisfied. The remaining blockers are the public
+four-minute video and entrant-controlled Devpost fields, uploads, confirmations,
+and final submission.
 
 ## Requirements the repository proves
 
@@ -21,17 +21,18 @@ video has not been published.
 | Enter one category | PASS | All submission materials consistently select **Fortified Enterprise Fleet**. |
 | Gemini 3.5 or newer through Gemini API or Vertex AI | PASS | Gemini 3.7 Flash is the ADK coordinator through Vertex AI; the six-case live eval passes at 1.00 trajectory and 1.00 quality. |
 | At least one Google agent framework | PASS | The coordinator is implemented with Google ADK and tested under `cloud/`. |
+| At least one deployed Google Cloud infrastructure service | PASS | Private Cloud Run revision `rally-google-coordinator-00004-zxb` runs the ADK coordinator in project `rally-agent9-2026`; Firestore, IAM, Secret Manager, Artifact Registry, Cloud Logging, and Cloud Trace are live supporting services. |
 | Reproducible setup instructions | PASS | `README.md` and `docs/RUNBOOK.md` provide local, cloud, test, and operational instructions. |
 | Reviewable repository | PASS | `Agent9AI/rally` is public and carries the Apache License 2.0. The FAQ's private-repository judging-account exception no longer applies. |
 | Real autonomous agent work, not a generic chatbot | PASS | Durable intake, bounded multi-turn execution, repository edits, tests, cross-family verification, replay controls, evidence receipts, and completion invariants are implemented. |
+| Judge-visible live agent proof | PASS | Public run `r-20260829-dbb5c0` shows the exact production-shaped commission, Gemini/Claude turn alternation, implementation, five passing webhook tests, 6/6 cross-family verification, evidence receipts, and zero self-approvals. |
 | Disclose pre-existing work | PASS | The disclosure says Rally began in the submission period and identifies standard third-party tools and services. |
 
 ## Mandatory blockers before submission
 
 | Requirement | Current state | Exact closeout action |
 |---|---:|---|
-| At least one deployed Google Cloud infrastructure service | BLOCKED | After explicit operator approval, deploy the ADK service to Cloud Run with Firestore and capture strict proof from Cloud Run, Vertex AI, Firestore, and Cloud Trace. |
-| Strict Google Cloud proof in the demo video | BLOCKED | Record the real `.run.app` service or Google Cloud Console and logs during the golden end-to-end run. Do not rely on diagrams or local mocks. |
+| Strict Google Cloud proof in the demo video | BLOCKED | Record the real `.run.app` service, Cloud Console, Firestore record, logs, and content-free trace alongside the public golden run. Do not rely on diagrams or local mocks. |
 | Public demo video, four minutes maximum | BLOCKED | Upload the narrated English/captioned cut publicly to YouTube or Vimeo and verify it while signed out. Only the first four minutes are judged. |
 | Architecture diagram in the submission | BLOCKED | Upload `docs/assets/rally-architecture.svg`; having it only in the repository does not close the final-call check. |
 | Hosted project URL and testing access | BLOCKED | Enter the public Rally URL in Devpost. If the submitted experience is gated, provide working login credentials in the testing instructions. |

@@ -47,7 +47,7 @@ engineering leader can audit.
 |---|---|---|
 | Innovation & operational utility (40%) | Email-native access plus cross-family verification converts agents from personal copilots into a shared, accountable team service | Send one email; show alternating Claude/Gemini executive updates and final evidence |
 | Technical architecture (30%) | ADK + Gemini on IAM-protected Cloud Run, atomic Firestore idempotency, Secret Manager, Cloud Trace, signed edge webhook, deterministic state machine | Architecture diagram, Terraform, trace/log, verification state |
-| Demo & production readiness (30%) | Deployed path, live eval gate, bounded costs, polished emails, human stop/steer, reproducible repo | 6/6 eval, 74 tests, live Cloud Run health, complete email thread |
+| Demo & production readiness (30%) | Deployed path, live eval gate, bounded costs, polished emails, human stop/steer, reproducible repo | 6/6 eval, 75 tests, live Cloud Run health, complete email thread |
 
 ## Model assignment rationale
 
@@ -129,7 +129,7 @@ lowering a threshold.
 - Authenticated fleet catalog for cross-department discovery and governance
 - Dual-auth Cloud Run boundary and least-privilege runtime identity
 - Metadata-only GenAI observability
-- 74 automated tests plus six live ADK eval cases at 1.00/1.00
+- 75 automated tests plus six live ADK eval cases at 1.00/1.00
 - Validated Terraform and a demo-ready operator workflow
 
 ### What we learned
@@ -153,8 +153,8 @@ contract remain unchanged.
 - [x] Cloud infrastructure defined and validated in Terraform
 - [x] Security, architecture, runbook, and honest-boundary documentation
 - [x] Versioned agent catalog and recovery/fencing tests
-- [ ] Cloud Run revision live with Firestore and Trace evidence
-- [ ] End-to-end email run through the Cloud coordinator
+- [x] Cloud Run revision live with Firestore and Trace evidence
+- [x] Golden governed run through the Cloud coordinator with every turn mirrored by email
 - [ ] Four-minute video uploaded and linked
 - [ ] Devpost fields, screenshots, and repository link entered
 

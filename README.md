@@ -98,14 +98,14 @@ agreeable.
 | Claude + Gemini CLI execution | working, live multi-turn runs completed |
 | Executive turn emails + report | working through Resend |
 | Ingress Worker (D1) | deployed, signed webhook and round trip verified |
-| Judge console | live Pages UI backed by a double-sanitized D1 run projection |
+| Judge console | live Pages UI backed by a double-sanitized D1 run projection; golden run `r-20260829-dbb5c0` is public |
 | `rally@updates.agent9.dev` route | working; replies return to the commissioner |
-| Product + Cloud test suite | 74 automated tests passing |
+| Product + Cloud test suite | 75 automated tests passing |
 | Google ADK coordinator | implemented; live eval 6/6, both metrics 1.00 |
-| Cloud Run + Firestore + Trace | Terraform validated; deployment approval pending |
+| Cloud Run + Firestore + Trace | deployed privately in `rally-agent9-2026`; authenticated commission, replay, Firestore, logs, and content-free trace verified |
 
-The current release candidate has **74 automated tests**: 64 deterministic
-runner, ingress, policy, bridge, and site tests plus 10 Cloud service tests.
+The current release candidate has **75 automated tests**: 64 deterministic
+runner, ingress, policy, bridge, and site tests plus 11 Cloud service tests.
 The separate live ADK scorecard remains 6/6 at 1.00 trajectory and 1.00 quality.
 
 ### Why the models have different jobs
@@ -191,8 +191,8 @@ The deadline is **August 31, 2026 at 5:00 PM PDT**. Do not submit until every
 box below is checked; see `docs/SUBMISSION-CHECKLIST.md` for the evidence-level
 version.
 
-- [ ] Deploy the authenticated ADK coordinator to Google Cloud and complete the
-      golden end-to-end run.
+- [x] Deploy the authenticated ADK coordinator to Google Cloud and complete the
+      exact golden governed run (`r-20260829-dbb5c0`, 6/6 independently verified).
 - [ ] Record visible Cloud Run, Vertex AI, Firestore, and Trace proof in the
       narrated demo; keep the public YouTube/Vimeo cut under four minutes and
       verify it in an incognito window.

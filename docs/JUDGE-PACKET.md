@@ -86,7 +86,7 @@ stale owner from overwriting the new attempt.
 
 ## Judge-visible numbers
 
-- 74 automated deterministic tests: 64 product tests + 10 cloud tests
+- 75 automated deterministic tests: 64 product tests + 11 cloud tests
 - 6 live ADK evaluation cases
 - 1.00 tool trajectory score
 - 1.00 response-quality score
@@ -97,9 +97,9 @@ stale owner from overwriting the new attempt.
 
 ## Truth boundary
 
-Do not describe Cloud Run, Firestore, Trace, or Artifact Registry as live until
-the post-deploy evidence checklist passes. Before then, use: **implemented,
-tested, containerized, and Terraform-validated; deployment pending approval.**
+The post-deploy evidence checklist passed on August 29, 2026. Tie every live
+claim to the private Cloud Run revision, Firestore record, IAM policy, or
+content-free Trace shown in the demo; never substitute a diagram for that proof.
 
 Do not say email delivers every model turn. The first email starts the real run,
 the authoritative runner dispatches subsequent turns, and email mirrors each
