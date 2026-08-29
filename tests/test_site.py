@@ -33,10 +33,11 @@ class TestProductSite(unittest.TestCase):
 
     def test_product_proof_and_honest_boundary_are_visible(self):
         for phrase in (
-            "Delegate the job.",
-            "What users actually get",
-            "Receive proof, not confidence",
-            "owner ≠ verifier",
+            "Your AIs, finally",
+            "The accountable AI team",
+            "One hard goal",
+            "Watch the accountable team work",
+            "No model approves its own work",
             "Gemini 3.7 + ADK",
             "Honest boundary:",
             "Rally runs one model at a time",
@@ -46,8 +47,23 @@ class TestProductSite(unittest.TestCase):
         self.assertIn('src="rally-mark.svg"', self.html)
         self.assertIn('name="rally-console-api"', self.html)
         self.assertIn("Loading authoritative runs", self.html)
+        for connector in ("Google Workspace", "Slack", "GitHub", "Cloudflare", "n8n", "Stripe"):
+            self.assertIn(f"<h3>{connector}</h3>", self.html)
         self.assertNotIn("Request a managed pilot", self.html)
         self.assertNotIn("Webhook launch", self.html)
+        with open(os.path.join(SITE, "rally-mark.svg")) as handle:
+            mark = handle.read()
+        self.assertIn("independent model paths", mark)
+        with open(os.path.join(SITE, "styles.css")) as handle:
+            styles = handle.read()
+        self.assertIn("rally-mark-bounce", styles)
+        self.assertIn("rally-handoff", styles)
+        self.assertIn("prefers-reduced-motion", styles)
+        with open(os.path.join(ROOT, "studio", "og-card.html")) as handle:
+            card = handle.read()
+        for phrase in ("THE ACCOUNTABLE AI TEAM", "Your AIs, finally", "75", "6/6", "0"):
+            self.assertIn(phrase, card)
+        self.assertNotIn("72 TESTS", card)
 
     def test_local_assets_exist_and_no_dead_hash_links(self):
         parser = LinkCollector()

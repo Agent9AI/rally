@@ -1,16 +1,18 @@
 # Rally
 
-**Rally is the digital operator that cannot approve its own work.** A company
-gets one persistent agent identity, deterministic limits outside every prompt,
-and a second model family that must verify consequential work before it is
-complete.
+**Rally is the accountable AI team: your best models, finally working
+together.** A company gets one Rally identity on the outside and a governed
+team of specialized models on the inside. Give it one difficult outcome; Rally
+coordinates the handoffs, works inside approved boundaries, and returns one
+independently verified result with evidence.
 
-The current release proves that contract on engineering operations. Two AI
-coding agents, from **different model families**, carry one task to completion
-by writing email to each other. A person commissions the run. The checklist
-decides when it ends. The next product layer is least-privilege access to
-customer-approved systems such as Cloudflare, n8n, Google Workspace, and GitHub;
-those connectors are documented as roadmap, not represented as shipped.
+The current release proves that contract on engineering operations. Gemini and
+Claude, from **different model families**, carry one task to completion against
+one shared checklist. A person commissions the run once. The models execute and
+review. Deterministic policy—not either model's confidence—decides when it ends.
+The next product layer connects Google Workspace, Slack, GitHub, Cloudflare,
+n8n, and Stripe through least-privilege organization authorization; those
+connections are documented as roadmap, not represented as shipped.
 
 Agent A is the **Claude CLI** (`claude -p`). Agent B is the **Antigravity CLI**
 (`agy -p`), pinned to Gemini. A Google ADK coordinator on **Cloud Run** preserves
@@ -39,17 +41,18 @@ you ◀─────────────────┘
 
 ## Why
 
-**Give your team one shared, on-demand agent, configured to your stack, at an
+**Give your team one accountable AI team, configured to your company, at an
 address anyone can email.**
 
-Right now every engineer on a team runs their own assistant. Each one is
-configured differently, primed with different context, and knows a different
-subset of your conventions. The quality of what people get back depends on how
-well they personally set their tooling up. None of that work is shared, and none
-of it is visible.
+Organizations already use multiple AI models, but their people still carry the
+context and supervise the handoffs. One assistant knows the customer history;
+another is strongest at code; another reasons over the plan. Each lives in its
+own tab, account, and permission boundary. The models do not become a team just
+because the company pays for all of them.
 
-Rally is the opposite shape. You configure it **once**, against your repo, your
-conventions, your limits. Then it lives at an address:
+Rally is the handshake between them and the accountability layer around their
+work. You configure it **once**, against your approved systems, conventions,
+and limits. Then it lives at an address:
 
 ```
 rally@updates.agent9.dev

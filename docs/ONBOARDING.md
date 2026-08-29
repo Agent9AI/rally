@@ -3,12 +3,13 @@
 The product goal is not “fewer API-key steps.” It is **no customer exposure to
 infrastructure credentials on the default path**.
 
-## Path 1: managed pilot (default)
+## Path 1: managed onboarding (default)
 
-The customer supplies a team, repository, commissioner addresses, and first use
-case. Agent9 owns the Cloudflare account, Resend mail plane, Google Cloud control
-plane, model configuration, secret rotation, budgets, and upgrades. The customer
-receives a private Rally address and uses email.
+An administrator names the Rally team identity, supplies commissioner addresses,
+chooses the first outcome, and selects the systems and authority it needs.
+Agent9 owns the Cloudflare account, Resend mail plane, Google Cloud control
+plane, model configuration, secret rotation, budgets, and upgrades. Everyone
+else receives one Rally address and simply gives the team work.
 
 This is the only credible no-key experience today. It removes three cloud
 accounts from the user's critical path instead of hiding their setup behind
@@ -43,12 +44,15 @@ dashboard link is not a completed integration. Rally will label a button
 - a post-connect capability check
 - a complete rollback path
 
-Until then, the public site offers a managed pilot and accurately describes the
-self-host flow.
+Until then, the public site offers managed onboarding and accurately describes
+the self-host flow.
 
 ## Company activation checklist
 
+- Rally team name, address, and administrator selected
 - Commissioner identities and escalation owner approved
+- Each connected system, resource allowlist, and OAuth scope approved
+- Read, draft, execute, verify-first, and human-approval action classes set
 - Repository and writable scope selected
 - Claude and Gemini entitlements verified
 - First task chosen with objective acceptance criteria

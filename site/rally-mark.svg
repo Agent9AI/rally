@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-labelledby="title desc">
   <title id="title">Rally</title>
-  <desc id="desc">Two independent paths protecting one verified action.</desc>
+  <desc id="desc">Two independent model paths exchange work and resolve into one verified result.</desc>
   <path fill="#246BFD" d="M22.4 4.2a4 4 0 0 1 4.9.2l14.3 10.9a4 4 0 0 1 0 6.4L30.9 30l-5.7-7.4 7.6-5.9-10.4-7.9Z"/>
   <path fill="#10233F" d="M22.4 4.2a4 4 0 0 1 4.9.2l14.3 10.9a4 4 0 0 1 0 6.4L30.9 30l-5.7-7.4 7.6-5.9-10.4-7.9Z" transform="rotate(180 24 24)"/>
   <rect width="9.2" height="9.2" x="19.4" y="19.4" fill="#16A36A" rx="2.1" transform="rotate(45 24 24)"/>

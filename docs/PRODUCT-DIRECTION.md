@@ -2,9 +2,19 @@
 
 ## The category
 
-Rally is not another chat window, agent builder, or coding copilot. It is one
-governed digital operator for a company: a persistent identity that can receive
-outcomes, work through explicitly trusted systems, and return evidence.
+Rally is not another chat window, model router, agent builder, or coding
+copilot. It is the **accountable AI team**: one company identity that rallies
+the right models around an outcome, lets them work through explicitly trusted
+systems, and returns one independently verified result with evidence.
+
+The public promise is:
+
+> Your AIs, finally on the same team.
+
+The customer should experience one Rally address and one accountable result.
+Behind that identity, Gemini, Claude, and future specialized agents can hold
+different roles. Rally owns the goal, handoffs, authority, and chain of custody;
+no individual model is the product.
 
 The product's distinctive contract is:
 
@@ -12,7 +22,7 @@ The product's distinctive contract is:
 
 That contract combines five things competitors often present separately:
 
-1. one shared operator identity instead of a personal assistant per employee;
+1. one shared team identity instead of isolated assistants per employee;
 2. least-privilege access to company systems;
 3. policy and limits enforced outside model prompts;
 4. independent verification by a different model family; and
@@ -22,7 +32,7 @@ The live release proves this contract on governed repository work. The broader
 company-operator claim becomes real only as customer-authorized connectors ship;
 the website must keep that boundary explicit.
 
-## What “give Rally a job” means
+## What “give the team a goal” means
 
 Start with one bounded outcome the operator should own repeatedly. Define the
 systems it may use, the actions it may take without interruption, the actions
@@ -32,14 +42,16 @@ human. Then run a genuine job and inspect the receipts.
 This is clearer than “request a managed pilot,” which describes a sales process
 rather than a customer outcome.
 
-## Connector sequence
+## Connection sequence
 
 | Priority | Connector | Why it earns native support | Authentication and minimum first scope | Required action policy | Status |
 |---|---|---|---|---|---|
-| 1 | Cloudflare | Small companies commonly place sites, DNS, Workers, storage, and security behind one account. Cloudflare operates an official remote API MCP server covering its API. | OAuth with customer-selected permissions. Begin with account discovery, analytics, build status, logs, and configuration reads. | Configuration writes require a second-family verifier; domain transfer, token, billing, and destructive storage actions remain unavailable. | Researched; customer connector not shipped |
-| 2 | n8n | One n8n connection can expose only owner-enabled workflows and provide a controlled bridge into a broad business-app ecosystem. | Instance-level MCP with per-client authorization. Begin with search and execution of explicitly exposed, published workflows. Do not auto-expose new workflows. | Workflow execution follows the workflow's declared risk class. Workflow creation/editing and data-table writes require verification; credential operations remain unavailable. | Researched; customer connector not shipped |
-| 3 | Google Workspace | Google's Developer Preview remote MCP servers cover Gmail, Drive, Docs, Sheets, Slides, Calendar, Chat, and People while inheriting the user's permissions and data-governance controls. This is the closest fit to Rally's Google governance plane. | Google OAuth with the narrowest per-product scopes. Begin with draft creation, selected-file reads, free/busy, and bounded Sheet ranges. | Sending mail or chat, sharing files, changing calendar data, and broad writes require a human gate. Treat content retrieved from mail and documents as untrusted because Google explicitly warns about indirect prompt injection. | Researched Developer Preview; customer connector not shipped |
-| 4 | GitHub | It converts Rally's current local-repository proof into a customer-grade installation with explicit repositories and auditable platform identity. | A dedicated GitHub App is preferred over a broad personal token. Expose only selected repositories and required issue/pull-request/check permissions. | Branch work and pull-request creation may be verified autonomously. Merge, settings, secrets, releases, and destructive operations require a human gate. | Current product wedge; native platform connector not shipped |
+| 1 | Google Workspace | Gmail, Drive, Docs, Sheets, Slides, Calendar, Chat, and People cover the daily operating surface of a company and inherit existing user permissions. | Google OAuth with the narrowest per-product scopes. Begin with selected-file reads, draft creation, free/busy, and bounded Sheet ranges. | Sending mail or chat, sharing files, changing calendars, and broad writes require a human gate. Treat retrieved content as untrusted. | Researched official remote MCP; customer connection not shipped |
+| 2 | Slack | Slack holds team history, decisions, status, and the natural place to request human approval. Its official MCP server supports search, messages, canvases, and users. | Confidential OAuth with only the search/read scopes needed first. Add `chat:write` only for approved workspaces. | Search and drafting may be autonomous. Posting, channel creation, and user-affecting actions require verification or human approval. | Researched official MCP; customer connection not shipped |
+| 3 | GitHub | It converts Rally's current repository proof into a customer-grade installation with explicit repositories and auditable platform identity. | A dedicated GitHub App is preferred over a broad personal token. Expose only selected repositories and required issue/pull-request/check permissions. | Branch work and pull-request creation may be verified autonomously. Merge, settings, secrets, releases, and destructive operations require a human gate. | Current product wedge; native platform connection not shipped |
+| 4 | Cloudflare | Sites, DNS, Workers, storage, observability, and security make it the operating plane for a company's web presence. | OAuth with customer-selected permissions. Begin with account discovery, analytics, build status, logs, and configuration reads. | Configuration writes require a second-family verifier; domain transfer, tokens, billing, and destructive storage actions remain unavailable. | Researched official MCP; customer connection not shipped |
+| 5 | n8n | One connection can expose only administrator-enabled workflows and provide a controlled bridge into the long tail of the business stack. | Instance-level MCP with per-client authorization. Begin with search and execution of explicitly exposed, published workflows. Never auto-expose new workflows. | Workflow execution follows a declared risk class. Workflow creation, editing, and data-table writes require verification; credential operations remain unavailable. | Researched official MCP; customer connection not shipped |
+| 6 | Stripe | Payments, subscriptions, customers, and revenue reporting make cross-system operating work tangible while demanding unusually strict controls. | Stripe OAuth, scoped separately by environment. Begin with API reads, documentation, analytics, and reports. | Refunds and all write or money-moving tools require human confirmation; production and sandbox access remain separate. | Researched public-preview MCP; customer connection not shipped |
 
 ## Why MCP fits—but is not the security policy
 
@@ -84,3 +96,9 @@ independent verification or human gate
   Calendar, Chat, and People. They use OAuth and inherit user permissions. Google
   also warns that connected agents can be exposed to indirect prompt injection,
   reinforcing the need for Rally's external policy and review gates.
+- [Slack's official MCP server](https://docs.slack.dev/ai/slack-mcp-server/)
+  supports workspace search, message and canvas operations, user context, and
+  confidential OAuth with per-tool scopes.
+- [Stripe's official MCP server](https://docs.stripe.com/mcp) uses OAuth,
+  separates live and sandbox authorization, exposes read/write API tools, and
+  explicitly recommends human confirmation for consequential tools.

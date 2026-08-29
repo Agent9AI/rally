@@ -2,13 +2,14 @@
 
 ## The thesis
 
-**Rally turns one executive email into independently verified engineering work.
-Gemini governs the handoff; Claude and Gemini do visible repository work; and
-deterministic policy prevents either model from approving its own output.**
+**Rally turns the AI models a company already trusts into one accountable team.
+One difficult goal comes in; Gemini governs the handoff; Claude and Gemini do
+visible work and review; and one independently verified result comes out.**
 
 Primary category: **Fortified Enterprise Fleet**.
 
-The category fit is not “we used several agents.” Rally provides discovery,
+The category fit is not “we used several agents.” Rally makes isolated models
+behave like one accountable company team, then provides discovery,
 runtime and memory, security and governance, and telemetry for agents that can
 modify production repositories. The unlikely hero is a nontechnical product or
 operations leader commissioning that work from a phone.
@@ -17,7 +18,7 @@ operations leader commissioning that work from a phone.
 
 | Time | Judge question | Live proof | Receipt |
 |---|---|---|---|
-| 0:00 | Is this useful? | Send the golden commission from email | One familiar address; no CLI or key for the commissioner |
+| 0:00 | Is this useful? | Give the accountable AI team one hard goal by email | One familiar identity; no CLI or key for the commissioner |
 | 0:25 | Is it really an agent system? | First scoped checklist email | Distinct run ID and model-family watermark |
 | 0:55 | Is Google load-bearing? | Cloud Run revision → Firestore record | Gemini 3.7 + ADK handoff, atomic request key, attempt metadata |
 | 1:30 | Are agents actually working? | Split view: repository edit, test run, `awaiting-verification`, other-family verdict | Continuous owner-to-verifier sequence |

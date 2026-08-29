@@ -1,7 +1,9 @@
 # Four-minute demo script
 
-The story is **one request, two model families, zero self-approval**. Keep the
-inbox as the hero. Terminal and Cloud Console are evidence, not the product.
+The story is **your AIs, finally on the same team**—made accountable by **one
+request, two model families, and zero self-approval**. Keep the human's goal and
+finished outcome as the heroes. Terminal and Cloud Console are evidence, not
+the product.
 
 ## Before recording
 
@@ -33,8 +35,9 @@ Visual: compose an email to `rally@updates.agent9.dev` and press Send.
 
 Narration:
 
-> The same AI model usually writes the code and grades its own work. Rally makes
-> that impossible. I send one engineering outcome by email; Claude and Gemini
+> Companies are collecting powerful AI assistants, but people still manage the
+> handoffs and decide which answer to trust. Rally puts those models on one
+> accountable team. I send one difficult outcome by email; Claude and Gemini
 > work it to completion, and neither can approve what it owns.
 
 ### 0:25–0:55 — The product surface
@@ -105,11 +108,12 @@ log query.
 
 Visual: polished final report in the same email thread.
 
-> Rally turns agents from personal copilots into a shared, governed team service:
-> one familiar address, two independent model families, and a completion claim
-> neither model is allowed to make alone.
+> Rally turns the models a company already trusts into one accountable AI team:
+> one familiar identity, the right models for the work, and a completion claim
+> no model is allowed to make alone.
 
-End on the line: **One request. Two model families. Zero self-approval.**
+End on the lines: **Your AIs, finally on the same team. One request. Two model
+families. Zero self-approval.**
 
 ## Editing rules
 

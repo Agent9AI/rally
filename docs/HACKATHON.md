@@ -2,18 +2,18 @@
 
 ## One line
 
-**Rally turns one executive email into independently verified engineering work
-by coordinating Claude and Gemini until a deterministic checklist—not either
-model's confidence—says the task is complete.**
+**Rally turns the AI models a company already trusts into one accountable team:
+one difficult goal in, cross-model work and review, and one independently
+verified result out.**
 
 ## Thirty-second pitch
 
-Single-agent coding systems have a structural trust problem: the same model that
-does the work usually decides whether the work is done. Rally separates those
-roles. Email a commission from any device; Google ADK and Gemini preserve and
-govern the request; Claude and Gemini alternate implementation and review; and
-the runner rejects every self-approved completion. Every turn appears as a
-polished email, every claim carries evidence, and every loop has a hard stop.
+Companies are collecting powerful AI assistants, but people still copy context
+between them, manage every handoff, and decide which answer to trust. Rally puts
+those models on one accountable team. Email one outcome from any device; Google
+ADK and Gemini govern the request; Claude and Gemini divide execution and
+review; and deterministic policy rejects every self-approved completion. The
+human receives one finished result with evidence and residual risk.
 
 ## Target category
 
@@ -81,21 +81,21 @@ creates the audited handoff; and Trace links the intake to model execution.
 
 ### Inspiration
 
-Teams are adopting coding agents faster than they are adopting ways to trust
-them. A single agent can produce impressive work, but it also grades its own
-homework. Meanwhile, access is fragmented across individual CLIs, licenses, and
-personal configuration. We wanted one address a whole team could use and one
+Companies already have multiple capable AI models, but those models live in
+separate tabs, accounts, and permission boundaries. People carry context between
+them, supervise every handoff, and decide which answer to trust. We wanted one
+accountable AI team a whole company could reach through one identity—and one
 rule no model could talk its way around: you cannot approve your own work.
 
 ### What it does
 
-A verified user emails `rally@updates.agent9.dev`. Rally durably queues the
-request, sends it through a Google ADK/Gemini coordinator, then alternates
-Claude and Gemini against one shared checklist. They negotiate scope, implement,
+A verified user emails one difficult goal to `rally@updates.agent9.dev`. Rally
+durably queues it, sends it through a Google ADK/Gemini coordinator, and rallies
+Claude and Gemini around one shared checklist. They negotiate scope, implement,
 run tests, reject weak evidence, and verify each other's work. The commissioner
-sees polished, watermarked updates in one email thread and receives a final
-executive report when every item is independently verified—or a precise halt
-report when the loop cannot safely finish.
+sees the accountable team working in one thread and receives one executive
+result when every item is independently verified—or a precise halt report when
+the work cannot safely finish.
 
 ### How we built it
 
@@ -141,10 +141,11 @@ preservation, not just whether the final answer sounds good.
 
 ### What's next
 
-Move licensed execution into isolated fleet workers, add organization groups and
-repository routing, stream run events directly from Firestore, and support a
-third verifier for high-risk changes. The email interface and state-machine
-contract remain unchanged.
+Onboard Rally through one administrator-controlled connection center, then add
+official OAuth/MCP paths for Google Workspace, Slack, GitHub, Cloudflare, n8n,
+and Stripe. Each connection will declare what Rally may read, draft, execute, or
+execute only after human approval. The one-company identity, cross-model team,
+and no-self-approval contract remain unchanged.
 
 ## Final evidence checklist
 
