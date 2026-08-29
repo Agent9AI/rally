@@ -4,9 +4,11 @@ Terraform owns the production Cloud Run service, its least-privilege service
 account, Firestore, Artifact Registry, Secret Manager token, API enablement, and
 the sole Cloud Run invoker grant.
 
-The service is not public. `imterryim@gmail.com` must pass Cloud Run IAM and the
-caller must also present the independent `X-Rally-Service-Token` application
-credential. Prompt and response bodies are excluded from telemetry.
+The service is not public. The local bridge impersonates a dedicated
+`rally-local-invoker` service account to mint a short-lived, service-audience ID
+token. Only `imterryim@gmail.com` may impersonate it, and the caller must also
+present the independent `X-Rally-Service-Token` application credential. Prompt
+and response bodies are excluded from telemetry.
 
 Deployment is deliberately gated and two-phase so Cloud Run never references an
 image before its Terraform-managed registry exists. After tests and ADK

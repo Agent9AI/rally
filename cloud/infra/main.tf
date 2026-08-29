@@ -6,6 +6,7 @@ locals {
     "cloudtrace.googleapis.com",
     "firestore.googleapis.com",
     "iam.googleapis.com",
+    "iamcredentials.googleapis.com",
     "logging.googleapis.com",
     "run.googleapis.com",
     "secretmanager.googleapis.com",
@@ -45,6 +46,20 @@ resource "google_service_account" "coordinator" {
   display_name = "Rally Google ADK coordinator"
 
   depends_on = [google_project_service.required]
+}
+
+resource "google_service_account" "local_invoker" {
+  project      = var.project_id
+  account_id   = "rally-local-invoker"
+  display_name = "Rally local bridge Cloud Run invoker"
+
+  depends_on = [google_project_service.required]
+}
+
+resource "google_service_account_iam_member" "operator_token_creator" {
+  service_account_id = google_service_account.local_invoker.name
+  role               = "roles/iam.serviceAccountTokenCreator"
+  member             = var.operator_member
 }
 
 resource "google_project_iam_member" "coordinator" {
@@ -195,5 +210,5 @@ resource "google_cloud_run_v2_service_iam_member" "invoker" {
   location = var.region
   name     = google_cloud_run_v2_service.coordinator[0].name
   role     = "roles/run.invoker"
-  member   = var.invoker_member
+  member   = "serviceAccount:${google_service_account.local_invoker.email}"
 }

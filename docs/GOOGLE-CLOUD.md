@@ -44,7 +44,9 @@ Terraform creates:
 - native Firestore with deletion protection
 - a generated application token in Secret Manager
 - an IAM-protected Cloud Run service with scale-to-zero
-- a single invoker grant for `imterryim@gmail.com`
+- a dedicated least-privilege Cloud Run invoker identity
+- permission for `imterryim@gmail.com` to mint only short-lived tokens as that
+  invoker identity
 
 ### Approved two-phase deployment
 
@@ -82,8 +84,9 @@ Review each plan and approve it interactively. Never add `-auto-approve` to the
 operator path.
 
 The deployed service also checks the Secret Manager token. The local runner
-mints a Google identity token and reads the application token from macOS
-Keychain, giving the boundary two independent credentials.
+impersonates the dedicated invoker to mint a token whose audience is the exact
+Cloud Run URL, then reads the application token from macOS Keychain. The
+boundary therefore requires two independent credentials.
 
 After the approved service apply, mirror the token locally without printing it:
 

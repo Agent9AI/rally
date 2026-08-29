@@ -55,9 +55,21 @@ def _identity_token(cloud: Dict) -> Optional[str]:
     token = os.environ.get("RALLY_CLOUD_IDENTITY_TOKEN", "").strip()
     if token:
         return token
+    command = ["gcloud", "auth", "print-identity-token"]
+    service_account = (cloud.get("identity_service_account") or "").strip()
+    if service_account:
+        audience = (cloud.get("identity_audience") or cloud.get("url") or "").strip()
+        if not audience:
+            raise CoordinatorError("Cloud identity audience is unset")
+        command.extend([
+            "--impersonate-service-account",
+            service_account,
+            "--audiences",
+            audience.rstrip("/"),
+        ])
     try:
         proc = subprocess.run(
-            ["gcloud", "auth", "print-identity-token"],
+            command,
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
             timeout=30,
@@ -67,7 +79,7 @@ def _identity_token(cloud: Dict) -> Optional[str]:
     token = proc.stdout.decode(errors="replace").strip() if proc.returncode == 0 else ""
     if not token:
         raise CoordinatorError(
-            "no Google Cloud identity token; run `gcloud auth login imterryim@gmail.com`"
+            "no Google Cloud identity token; confirm gcloud login and invoker impersonation"
         )
     return token
 

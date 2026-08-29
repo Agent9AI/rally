@@ -72,13 +72,16 @@ is not deleted during judging.
 The Cloud Run service is not public. A commission must pass two independent
 checks:
 
-1. Cloud Run IAM accepts only `imterryim@gmail.com` as invoker.
+1. Cloud Run IAM accepts only the least-privilege `rally-local-invoker` service
+   account. `imterryim@gmail.com` may mint its short-lived, service-audience ID
+   tokens but cannot turn an ordinary user token into an invocation.
 2. The FastAPI service compares `X-Rally-Service-Token` with a Secret Manager
    value using constant-time comparison.
 
-The local bridge mints a short-lived Google identity token with `gcloud` and
-reads the application token from macOS Keychain. Neither credential is stored
-in config, Firestore, email, logs, or git.
+The local bridge impersonates that identity with `gcloud`, binds the token's
+audience to the exact Cloud Run URL, and reads the application token from macOS
+Keychain. Neither credential is stored in config, Firestore, email, logs, or
+git.
 
 ## Observability without prompt leakage
 

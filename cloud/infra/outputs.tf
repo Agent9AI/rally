@@ -8,6 +8,11 @@ output "service_account" {
   value       = google_service_account.coordinator.email
 }
 
+output "invoker_service_account" {
+  description = "Least-privilege identity used by the local Rally bridge."
+  value       = google_service_account.local_invoker.email
+}
+
 output "artifact_repository" {
   description = "Container repository resource name."
   value       = google_artifact_registry_repository.rally.name

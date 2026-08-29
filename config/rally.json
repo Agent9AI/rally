@@ -52,11 +52,12 @@
     "token_keychain": "rally-poll-token"
   },
   "google_cloud": {
-    "enabled": false,
+    "enabled": true,
     "required": true,
-    "url": "",
+    "url": "https://rally-google-coordinator-u5xngrbzna-ue.a.run.app",
     "token_keychain": "rally-cloud-token",
     "google_identity": true,
+    "identity_service_account": "rally-local-invoker@rally-agent9-2026.iam.gserviceaccount.com",
     "timeout_sec": 180
   }
 }

@@ -94,17 +94,17 @@ agreeable.
 
 | Piece | State |
 |---|---|
-| Turn loop, state machine, console projection, guards | working, 62 core/product tests |
+| Turn loop, state machine, console projection, guards | working, 64 core/product tests |
 | Claude + Gemini CLI execution | working, live multi-turn runs completed |
 | Executive turn emails + report | working through Resend |
 | Ingress Worker (D1) | deployed, signed webhook and round trip verified |
 | Judge console | live Pages UI backed by a double-sanitized D1 run projection |
 | `rally@updates.agent9.dev` route | working; replies return to the commissioner |
-| Product + Cloud test suite | 72 automated tests passing |
+| Product + Cloud test suite | 74 automated tests passing |
 | Google ADK coordinator | implemented; live eval 6/6, both metrics 1.00 |
 | Cloud Run + Firestore + Trace | Terraform validated; deployment approval pending |
 
-The current release candidate has **72 automated tests**: 62 deterministic
+The current release candidate has **74 automated tests**: 64 deterministic
 runner, ingress, policy, bridge, and site tests plus 10 Cloud service tests.
 The separate live ADK scorecard remains 6/6 at 1.00 trajectory and 1.00 quality.
 
@@ -130,7 +130,7 @@ identity, and observability plane—not a decorative API call.
 ```bash
 make check                    # pins, binaries, credentials, limits
 make dry                      # exercise the loop, no tokens spent
-make test                     # 62 local policy, ingress, bridge, recovery, and site tests
+make test                     # 64 local policy, ingress, bridge, recovery, and site tests
 make cloud-test               # Cloud coordinator tests + lint
 make cloud-eval               # live ADK eval; exact trajectory + quality gates
 

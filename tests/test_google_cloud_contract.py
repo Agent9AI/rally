@@ -49,6 +49,15 @@ class TestGoogleCloudContract(unittest.TestCase):
         self.assertIn("agent_catalog.json", dockerfile)
         self.assertGreaterEqual(len(catalog["agents"]), 3)
 
+    def test_private_invocation_uses_a_dedicated_audience_bound_identity(self):
+        terraform = (ROOT / "cloud" / "infra" / "main.tf").read_text()
+        bridge = (ROOT / "src" / "cloud_coordinator.py").read_text()
+        self.assertIn("iamcredentials.googleapis.com", terraform)
+        self.assertIn("rally-local-invoker", terraform)
+        self.assertIn("roles/iam.serviceAccountTokenCreator", terraform)
+        self.assertIn('"--audiences"', bridge)
+        self.assertIn('"--impersonate-service-account"', bridge)
+
 
 if __name__ == "__main__":
     unittest.main()

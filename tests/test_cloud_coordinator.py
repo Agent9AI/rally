@@ -79,6 +79,29 @@ class CoordinatorTests(unittest.TestCase):
             {"google_cloud": {"enabled": False}}, "Ship it", "r-test-123", "mail-1"
         ))
 
+    @mock.patch.dict(os.environ, {"RALLY_CLOUD_IDENTITY_TOKEN": ""}, clear=False)
+    @mock.patch("cloud_coordinator.subprocess.run")
+    def test_identity_token_is_audience_bound_and_least_privilege(self, run):
+        run.return_value.returncode = 0
+        run.return_value.stdout = b"short-lived-token\n"
+        token = cloud_coordinator._identity_token({
+            "url": "https://coordinator.example/",
+            "identity_service_account": "rally-invoker@example.iam.gserviceaccount.com",
+        })
+        self.assertEqual(token, "short-lived-token")
+        self.assertEqual(
+            run.call_args.args[0],
+            [
+                "gcloud",
+                "auth",
+                "print-identity-token",
+                "--impersonate-service-account",
+                "rally-invoker@example.iam.gserviceaccount.com",
+                "--audiences",
+                "https://coordinator.example",
+            ],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

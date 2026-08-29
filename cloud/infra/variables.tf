@@ -27,8 +27,8 @@ variable "deploy_service" {
   default     = false
 }
 
-variable "invoker_member" {
-  description = "Only principal allowed through Cloud Run IAM."
+variable "operator_member" {
+  description = "Human allowed to mint short-lived tokens as the local invoker identity."
   type        = string
   default     = "user:imterryim@gmail.com"
 }

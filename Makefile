@@ -36,7 +36,7 @@ release-check: test cloud-test infra-check
 	@cd src/worker && wrangler deploy --dry-run --outdir /tmp/rally-worker-build
 	@git diff --check
 	@git diff --cached --check
-	@echo "release gates passed: 72 automated tests, Terraform, Worker bundle, syntax, whitespace"
+	@echo "release gates passed: 74 automated tests, Terraform, Worker bundle, syntax, whitespace"
 
 check:
 	@./bin/rally --check
