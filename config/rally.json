@@ -45,6 +45,12 @@
       "terry@agent9.dev"
     ]
   },
+  "console": {
+    "enabled": false,
+    "public": false,
+    "worker_url": "https://rally-ingress.terry-c87.workers.dev",
+    "token_keychain": "rally-poll-token"
+  },
   "google_cloud": {
     "enabled": false,
     "required": true,

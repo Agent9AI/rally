@@ -86,16 +86,17 @@ agreeable.
 
 | Piece | State |
 |---|---|
-| Turn loop, state machine, guards | working, 53 core/product tests |
+| Turn loop, state machine, console projection, guards | working, 62 core/product tests |
 | Claude + Gemini CLI execution | working, live multi-turn runs completed |
 | Executive turn emails + report | working through Resend |
 | Ingress Worker (D1) | deployed, signed webhook and round trip verified |
+| Judge console | live Pages UI backed by a double-sanitized D1 run projection |
 | `rally@updates.agent9.dev` route | working; replies return to the commissioner |
-| Product + Cloud test suite | 63 automated tests passing |
+| Product + Cloud test suite | 72 automated tests passing |
 | Google ADK coordinator | implemented; live eval 3/3, both metrics 1.00 |
 | Cloud Run + Firestore + Trace | Terraform validated; deployment approval pending |
 
-The current release candidate has **63 automated tests**: 53 deterministic
+The current release candidate has **72 automated tests**: 62 deterministic
 runner, ingress, policy, bridge, and site tests plus 10 Cloud service tests.
 The separate live ADK scorecard remains 3/3 at 1.00 trajectory and 1.00 quality.
 

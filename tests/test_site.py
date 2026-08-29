@@ -39,6 +39,9 @@ class TestProductSite(unittest.TestCase):
             "The authoritative runner dispatches the next model locally",
         ):
             self.assertIn(phrase, self.html)
+        self.assertIn('name="rally-console-api"', self.html)
+        self.assertIn("Loading authoritative runs", self.html)
+        self.assertNotIn("Webhook launch", self.html)
 
     def test_local_assets_exist_and_no_dead_hash_links(self):
         parser = LinkCollector()
@@ -55,7 +58,7 @@ class TestProductSite(unittest.TestCase):
             headers = handle.read()
         self.assertIn("Content-Security-Policy", headers)
         self.assertIn("frame-ancestors 'none'", headers)
-        self.assertIn("connect-src 'none'", headers)
+        self.assertIn("connect-src 'self' https://rally-ingress.terry-c87.workers.dev", headers)
 
 
 if __name__ == "__main__":

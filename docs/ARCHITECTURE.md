@@ -19,6 +19,8 @@ flowchart LR
     A -->|"executive turn email"| H
     G -->|"executive turn email"| H
     L -->|"final evidence report"| H
+    L -->|"allowlisted public projection"| W
+    W --> D["Judge console<br/>Pages live UI"]
 ```
 
 ## What each layer is allowed to decide
@@ -85,6 +87,22 @@ request ID, run ID, event, status, duplicate flag, latency, and trace linkage.
 `OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=NO_CONTENT` is set in both
 code and infrastructure, so telemetry proves execution without retaining the
 commission or model response.
+
+## Genuine public console
+
+The Pages console does not ship sample runs. An explicitly public demo profile
+projects authoritative runner state to `PUT /v1/console/runs/:id` using the
+existing server-to-server poll credential. The runner allowlists run ID, task,
+model identity, accepted turn narratives, commit IDs, checklist transitions,
+verifier identity, evidence, and terminal report. It excludes commissioner
+address, local worktree, mail/thread identifiers, raw prompts, credentials, and
+cloud request keys.
+
+The Worker applies the allowlist again, stores the projection in a separate D1
+table, and exposes public read-only list/detail routes. The browser labels that
+source as live D1 data, polls it every 15 seconds, and shows an explicit empty or
+error state instead of substituting a mock. The default production profile
+cannot publish; public visibility is double opt-in in the demo configuration.
 
 ## Why the hybrid runtime is deliberate
 

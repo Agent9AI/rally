@@ -21,6 +21,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import agents  # noqa: E402
 import cloud_coordinator  # noqa: E402
+import console as rally_console  # noqa: E402
 import envelope as E  # noqa: E402
 import report  # noqa: E402
 import transport  # noqa: E402
@@ -157,6 +158,7 @@ class Run:
             "turn": 0, "actor": "claude", "checklist": [], "halt": None,
             "violations": [], "human_note": None, "digest_streak": 0,
             "last_digest": "", "created": now(), "log": [],
+            "turns": [],
             "thread_message_id": None, "thread_references": [], "reprompts": 0,
             "commission_message_id": None, "commission_request_key": None,
         }
@@ -211,6 +213,18 @@ class Run:
         self.s["log"].append("%s %s" % (now(), msg))
         self.s.setdefault("events", []).append({"at": now(), "message": msg})
         print("  %s" % msg, flush=True)
+
+
+def sync_console(run: Run, cfg: Dict) -> bool:
+    """Best-effort projection; console availability never controls the run."""
+    try:
+        result = rally_console.publish(run.s, cfg)
+    except (rally_console.ConsoleError, transport.SendBlocked) as exc:
+        print("  CONSOLE SYNC FAILED: %s" % exc, flush=True)
+        return False
+    if result:
+        print("  console synced: %s" % run.s["run_id"], flush=True)
+    return True
 
 
 def quarantine(message: Dict, reason: str) -> None:
@@ -429,6 +443,7 @@ def take_turn(run: Run, cfg: Dict, dry: bool = False) -> Optional[str]:
         # checked by the runner before a turn is dispatched.
         s["halt"] = {"reason": "stopped_by_human", "detail": note}
         run.save()
+        sync_console(run, cfg)
         return "stopped_by_human"
     prompt = build_prompt(run, actor, cfg)
     run.note("turn %s: %s thinking (%s)" % (s["turn"], actor, cfg["agents"][actor]["model"]))
@@ -446,6 +461,7 @@ def take_turn(run: Run, cfg: Dict, dry: bool = False) -> Optional[str]:
             s["halt"] = {"reason": "agent_error", "detail": detail}
             run.note("AGENT FAILED: %s" % detail)
             run.save()
+            sync_console(run, cfg)
             return "agent_error"
 
     if not dry and os.path.abspath(s["workdir"]) != ROOT:
@@ -478,6 +494,7 @@ def take_turn(run: Run, cfg: Dict, dry: bool = False) -> Optional[str]:
             s["halt"] = {"reason": "agent_error", "detail": detail}
             run.note("AGENT FAILED: %s" % detail)
             run.save()
+            sync_console(run, cfg)
             return "agent_error"
         run.note("no envelope from %s, reprompting (%d/%d)"
                  % (actor, s["reprompts"], max_reprompts))
@@ -486,6 +503,8 @@ def take_turn(run: Run, cfg: Dict, dry: bool = False) -> Optional[str]:
     s["reprompts"] = 0
 
     problems = E.validate_shape(env)
+    before_items = {item.get("id"): json.loads(json.dumps(item))
+                    for item in s["checklist"]}
     # Scope closes after negotiation: turn 0 scopes, turn 1 negotiates.
     accepted, violations = E.reconcile(
         s["checklist"], env.get("checklist", []), actor, limits["rejections_max"],
@@ -498,12 +517,32 @@ def take_turn(run: Run, cfg: Dict, dry: bool = False) -> Optional[str]:
 
     s["human_note"] = None  # delivered with this turn's prompt, do not repeat it
     commit = git_commit(s["workdir"], "rally %s t%s (%s)" % (s["run_id"], s["turn"], actor))
+    changes = []
+    for item in s["checklist"]:
+        previous = before_items.get(item.get("id"))
+        visible = {key: item.get(key) for key in (
+            "id", "state", "owner", "verified_by", "evidence"
+        )}
+        if previous is None or any(previous.get(key) != visible.get(key) for key in visible):
+            changes.append(visible)
+    narrative = env.get("narrative", "")[:4000]
+    s.setdefault("turns", []).append({
+        "at": now(),
+        "turn": s["turn"],
+        "actor": actor,
+        "family": cfg["agents"][actor].get("family", ""),
+        "model": cfg["agents"][actor].get("model", ""),
+        "narrative": narrative,
+        "commit": commit,
+        "changes": changes,
+    })
     try:
-        mail_turn(run, cfg, actor, env.get("narrative", "")[:4000], commit)
+        mail_turn(run, cfg, actor, narrative, commit)
     except transport.SendBlocked as exc:
         run.note("SEND BLOCKED: %s" % exc)
         s["halt"] = {"reason": "turn_budget", "detail": str(exc)}
         run.save()
+        sync_console(run, cfg)
         return "send ceiling: %s" % exc
 
     # --- guards ------------------------------------------------------------
@@ -513,6 +552,7 @@ def take_turn(run: Run, cfg: Dict, dry: bool = False) -> Optional[str]:
     s["turn"] += 1
     s["actor"] = "agy" if actor == "claude" else "claude"
     run.save()
+    sync_console(run, cfg)
 
     if E.is_complete(s["checklist"]):
         return "complete"
@@ -564,7 +604,11 @@ def loop(run: Run, cfg: Dict, dry: bool = False, max_turns: int = 0) -> str:
         if halt:
             run.s["halt"] = run.s.get("halt") or {"reason": halt, "detail": ""}
             run.save()
+            sync_console(run, cfg)
             return halt
+    run.s["halt"] = {"reason": "turn_budget", "detail": "run turn limit exhausted"}
+    run.save()
+    sync_console(run, cfg)
     return "turn_budget"
 
 
@@ -652,15 +696,18 @@ def handle_commission(cfg: Dict, task: str, sender: str,
         text = report.mechanical_summary(run.s, halt)
         run.s["report"] = text
         run.save()
+        sync_console(run, cfg)
         try:
             mail_report(run, cfg, text, halt)
         except transport.SendBlocked as exc:
             run.note("failure report not mailed: %s" % exc)
         return run.s["run_id"]
+    sync_console(run, cfg)
     halt = loop(run, cfg)
     text = write_report(run, cfg, halt)
     run.s["report"] = text
     run.save()
+    sync_console(run, cfg)
     try:
         mail_report(run, cfg, text, halt)
     except transport.SendBlocked as exc:
@@ -692,12 +739,14 @@ def handle_note(cfg: Dict, run_id: str, text: str, message_id: Optional[str] = N
             mail_report(run, cfg, report_text, "stopped_by_human")
         except transport.SendBlocked:
             pass
+        sync_console(run, cfg)
         return
     print("note delivered to %s, resuming" % run_id)
     halt = loop(run, cfg)
     text_out = write_report(run, cfg, halt)
     run.s["report"] = text_out
     run.save()
+    sync_console(run, cfg)
     try:
         mail_report(run, cfg, text_out, halt)
     except transport.SendBlocked:
@@ -776,7 +825,23 @@ def cmd_status(run_id: str) -> int:
     return 0
 
 
-def cmd_stop(run_id: str, detail: str = "stopped by operator") -> int:
+def cmd_publish_console(run_id: str, cfg: Dict) -> int:
+    settings = cfg.get("console") or {}
+    if not settings.get("enabled") or not settings.get("public"):
+        print("console publication is not explicitly enabled and public in this config")
+        return 1
+    try:
+        run = Run.load(run_id)
+    except IOError:
+        print("unknown run %s" % run_id)
+        return 1
+    if not sync_console(run, cfg):
+        return 1
+    print("published %s to the public console" % run_id)
+    return 0
+
+
+def cmd_stop(run_id: str, cfg: Dict, detail: str = "stopped by operator") -> int:
     try:
         run = Run.load(run_id)
     except IOError:
@@ -784,6 +849,7 @@ def cmd_stop(run_id: str, detail: str = "stopped by operator") -> int:
         return 1
     run.s["halt"] = {"reason": "stopped_by_human", "detail": detail}
     run.save()
+    sync_console(run, cfg)
     print("stopped %s" % run_id)
     return 0
 
@@ -807,6 +873,7 @@ def cmd_retry(run_id: str, cfg: Dict) -> int:
     text = write_report(run, cfg, halt)
     run.s["report"] = text
     run.save()
+    sync_console(run, cfg)
     try:
         mail_report(run, cfg, text, halt)
     except transport.SendBlocked as exc:
@@ -925,6 +992,8 @@ def main(argv: List[str]) -> int:
     ap.add_argument("--run", metavar="TASK", help="commission a run")
     ap.add_argument("--resume", metavar="RUN_ID")
     ap.add_argument("--status", metavar="RUN_ID", help="show run state")
+    ap.add_argument("--publish-console", metavar="RUN_ID",
+                    help="republish one completed run through the public allowlist")
     ap.add_argument("--stop", metavar="RUN_ID", help="stop a run")
     ap.add_argument("--retry", metavar="RUN_ID", help="retry a halted run")
     ap.add_argument("--workdir", default=None,
@@ -949,8 +1018,10 @@ def main(argv: List[str]) -> int:
         return cmd_check(cfg, a.smoke)
     if a.status:
         return cmd_status(a.status)
+    if a.publish_console:
+        return cmd_publish_console(a.publish_console, cfg)
     if a.stop:
-        return cmd_stop(a.stop, a.note or "stopped by operator")
+        return cmd_stop(a.stop, cfg, a.note or "stopped by operator")
     if a.retry:
         return cmd_retry(a.retry, cfg)
     if a.serve:
@@ -973,10 +1044,12 @@ def main(argv: List[str]) -> int:
             run.save()
         if not a.dry and not attach_cloud_coordination(run, cfg, run.s["run_id"]):
             print("run %s halted: Google ADK coordinator failed" % run.s["run_id"])
+            sync_console(run, cfg)
             return 1
     if a.note:
         run.s["human_note"] = a.note
         run.save()
+    sync_console(run, cfg)
     print("run %s  workdir %s" % (run.s["run_id"], run.s["workdir"]))
     halt = loop(run, cfg, a.dry, a.max_turns)
 
@@ -988,6 +1061,7 @@ def main(argv: List[str]) -> int:
     text = write_report(run, cfg, halt, a.dry)
     run.s["report"] = text
     run.save()
+    sync_console(run, cfg)
     try:
         mail_report(run, cfg, text, halt)
     except transport.SendBlocked as exc:

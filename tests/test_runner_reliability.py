@@ -93,6 +93,37 @@ class DurableIngressTests(unittest.TestCase):
 
         ack.assert_called_once_with(cfg, [])
 
+    def test_accepted_turn_is_retained_for_live_console_provenance(self):
+        cfg = {
+            "agents": {
+                "claude": {"model": "sonnet", "family": "anthropic", "address": "c@example.com"},
+                "agy": {"model": "gemini-3.7-flash-low", "family": "google", "address": "g@example.com"},
+            },
+            "limits": {
+                "turns_max": 12, "sends_per_run": 60, "no_progress_halt": 3,
+                "reprompts_max": 1, "rejections_max": 2, "turn_timeout_sec": 30,
+            },
+            "mail": {"enabled": False},
+        }
+        run = runner.Run.create("prove the console", self.tmp.name, cfg)
+
+        self.assertIsNone(runner.take_turn(run, cfg, dry=True))
+
+        self.assertEqual(len(run.s["turns"]), 1)
+        self.assertEqual(run.s["turns"][0]["actor"], "claude")
+        self.assertEqual(run.s["turns"][0]["model"], "sonnet")
+        self.assertGreaterEqual(len(run.s["turns"][0]["changes"]), 1)
+
+    def test_console_outage_never_controls_authoritative_execution(self):
+        run = runner.Run.create("ship it", ".", {})
+        with mock.patch.object(
+            runner.rally_console,
+            "publish",
+            side_effect=runner.rally_console.ConsoleError("edge unavailable"),
+        ):
+            self.assertFalse(runner.sync_console(run, {"console": {"enabled": True}}))
+        self.assertIsNone(run.s["halt"])
+
 
 if __name__ == "__main__":
     unittest.main()

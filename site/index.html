@@ -15,6 +15,7 @@
     <meta property="og:image:alt" content="Rally: One request. Two model families. Zero self-approval.">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="theme-color" content="#ffffff">
+    <meta name="rally-console-api" content="https://rally-ingress.terry-c87.workers.dev/v1/console">
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
@@ -39,7 +40,7 @@
       </nav>
       <div class="header-actions">
         <a class="text-button" href="https://github.com/Agent9AI/rally">View source</a>
-        <button class="button button-primary button-small" type="button" data-open-setup>Start a pilot</button>
+        <button class="button button-primary button-small" type="button" data-open-setup>Request a managed pilot</button>
       </div>
     </header>
 
@@ -50,14 +51,14 @@
           <h1>Work arrives once.<br><span>Confidence arrives twice.</span></h1>
           <p class="hero-lede">Rally turns a plain email into real repository work. Gemini governs the handoff. Claude and Gemini build, challenge, and independently verify—while deterministic policy decides when the work is done.</p>
           <div class="hero-actions">
-            <button class="button button-primary" type="button" data-open-setup>Start a guided pilot</button>
+            <button class="button button-primary" type="button" data-open-setup>Request a managed pilot</button>
             <a class="button button-outline" href="#demo">See Rally work</a>
           </div>
           <p class="hero-note"><span aria-hidden="true">✓</span> No API keys, cloud console, or CLI for commissioners.</p>
         </div>
 
         <div class="hero-proof" aria-label="Rally verification results">
-          <div><strong>63</strong><span>automated tests</span></div>
+          <div><strong>72</strong><span>automated tests</span></div>
           <div><strong>3/3</strong><span>live ADK evals</span></div>
           <div><strong>1.00</strong><span>trajectory + quality</span></div>
           <div><strong>0</strong><span>self-approvals allowed</span></div>
@@ -81,14 +82,12 @@
             <div class="app-brand"><span class="brand-mark mini"><span>R</span></span><b>Rally</b></div>
             <div class="search-box" role="search">
               <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
-              <span>Search runs, evidence, or agents</span>
+              <label class="sr-only" for="run-search">Search public runs</label>
+              <input id="run-search" type="search" placeholder="Search public runs" autocomplete="off" data-run-search>
               <kbd>⌘ K</kbd>
             </div>
             <div class="app-actions" aria-label="Workspace tools">
-              <button class="icon-button" type="button" aria-label="Help">?</button>
-              <button class="icon-button" type="button" aria-label="Settings">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6 1.7 1.7 0 0 0 10 3v-.2h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z"/></svg>
-              </button>
+              <span class="console-live" data-console-live><i></i><span>Connecting</span></span>
               <span class="app-avatar" aria-label="Operator T">T</span>
             </div>
           </div>
@@ -107,87 +106,31 @@
               </nav>
             </aside>
 
-            <div class="run-list" aria-label="Recent Rally runs">
+            <div class="run-list" aria-label="Public Rally runs">
               <div class="pane-heading">
-                <div><h3>Runs</h3><span>Updated just now</span></div>
-                <button class="icon-button" type="button" aria-label="Filter runs">
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
-                </button>
+                <div><h3>Live runs</h3><span data-console-updated>Connecting to D1…</span></div>
+                <span class="source-badge">Public</span>
               </div>
-
-              <article class="run-row selected">
-                <span class="run-avatar human">T</span>
-                <div class="run-copy"><div><b>Webhook launch</b><time>Now</time></div><p>Replay-safe receiver and operations guide</p><span class="status-chip complete">Complete</span></div>
-              </article>
-              <article class="run-row">
-                <span class="run-avatar gemini">G</span>
-                <div class="run-copy"><div><b>Rate-limit review</b><time>10:42</time></div><p>Waiting on independent verification</p><span class="status-chip review">In review</span></div>
-              </article>
-              <article class="run-row">
-                <span class="run-avatar claude">C</span>
-                <div class="run-copy"><div><b>Invoice export</b><time>Yesterday</time></div><p>Blocked: test fixture unavailable</p><span class="status-chip blocked">Blocked</span></div>
-              </article>
+              <div class="run-results" data-run-list aria-live="polite">
+                <div class="console-loading"><i></i><b>Loading authoritative runs</b><span>Reading the public D1 projection.</span></div>
+              </div>
             </div>
 
-            <article class="thread-pane" aria-label="Webhook launch run">
-              <header class="thread-header">
-                <div><span class="back-mobile" aria-hidden="true">‹</span><div><h3>Prepare webhook service for launch</h3><p>r-82d9 · 4 checklist items · 6 turns</p></div></div>
-                <span class="status-chip complete">Run complete</span>
+            <article class="thread-pane" aria-label="Selected Rally run" aria-busy="true" data-thread-pane>
+              <header class="thread-header" data-thread-header>
+                <div><span class="back-mobile" aria-hidden="true">‹</span><div><h3>Loading real run data…</h3><p>Rally authoritative runner → Cloudflare D1</p></div></div>
+                <span class="status-chip review">Connecting</span>
               </header>
 
-              <div class="thread-stream">
-                <div class="thread-message compact-message">
-                  <span class="message-avatar human">T</span>
-                  <div class="message-card human-message"><div class="message-meta"><b>You</b><time>9:12 AM</time></div><p>Resolve the replay risk, prove the fix, and give me residual risk.</p></div>
-                </div>
-
-                <div class="thread-message">
-                  <span class="message-avatar coordinator">G</span>
-                  <div class="message-card coordinator-message">
-                    <div class="message-meta"><div><b>Gemini coordinator</b><span class="verified-mark">Governed</span></div><time>9:12 AM</time></div>
-                    <p>Commission preserved verbatim and handed to Rally with independent verification required.</p>
-                    <div class="message-tags"><span>Gemini 3.7 + ADK</span><span>Cloud Run</span><span>Firestore</span></div>
-                  </div>
-                </div>
-
-                <div class="thread-message">
-                  <span class="message-avatar claude">C</span>
-                  <div class="message-card">
-                    <div class="message-meta"><div><b>Claude worker</b><span>Owner</span></div><time>Turn 4</time></div>
-                    <p>Implemented idempotent replay handling and conflicting-request rejection. The required suite is green.</p>
-                    <div class="code-receipt"><div><span class="file-dot"></span><code>webhook.py</code><span class="diff">+148</span></div><div class="test-line"><span>✓</span><code>python3 -m unittest discover -v</code><b>8 passed</b></div></div>
-                    <div class="state-update"><span>2.3</span><b>awaiting verification</b><span>owner=claude</span></div>
-                  </div>
-                </div>
-
-                <div class="thread-message">
-                  <span class="message-avatar gemini">G</span>
-                  <div class="message-card verification-message">
-                    <div class="message-meta"><div><b>Gemini worker</b><span class="verified-mark">Verifier</span></div><time>Turn 5</time></div>
-                    <p>Independent replay tests passed. Exact retry is stable, conflicting replay returns 409, and malformed JSON fails closed.</p>
-                    <div class="verification-receipt"><span>✓</span><div><b>Independently verified</b><small>owner=claude · verified_by=agy</small></div></div>
-                  </div>
-                </div>
+              <div class="thread-stream" data-thread-stream aria-live="polite">
+                <div class="console-loading large"><i></i><b>Loading the execution timeline</b><span>No sample data is shown while the live service is unavailable.</span></div>
               </div>
 
-              <footer class="thread-footer"><span class="policy-icon">⌾</span><p><b>Policy enforced</b><span>No model can approve its own checklist item.</span></p><button type="button" aria-label="Open run evidence">View evidence</button></footer>
+              <footer class="thread-footer"><span class="policy-icon">⌾</span><p><b>Policy enforced</b><span>Every visible transition comes from runner state.</span></p><span class="live-provenance">LIVE DATA</span></footer>
             </article>
 
-            <aside class="detail-pane" aria-label="Run summary">
-              <div class="detail-heading"><p class="label">Run summary</p><button class="icon-button" type="button" aria-label="More run options">⋮</button></div>
-              <div class="completion-ring" aria-label="Four of four items verified"><svg viewBox="0 0 96 96" aria-hidden="true"><circle class="ring-track" cx="48" cy="48" r="39"/><circle class="ring-value" cx="48" cy="48" r="39"/></svg><div><strong>4/4</strong><span>verified</span></div></div>
-              <div class="invariant-box"><span>Completion invariant</span><code>owner ≠ verified_by</code><small>Enforced outside every model</small></div>
-              <div class="detail-group">
-                <p class="label">Agent roster</p>
-                <div class="agent-row"><span class="agent-dot google"></span><div><b>Gemini coordinator</b><small>ADK · governance</small></div><span>Done</span></div>
-                <div class="agent-row"><span class="agent-dot anthropic"></span><div><b>Claude worker</b><small>Implementation</small></div><span>Done</span></div>
-                <div class="agent-row"><span class="agent-dot google"></span><div><b>Gemini worker</b><small>Independent review</small></div><span>Done</span></div>
-              </div>
-              <div class="detail-group cloud-evidence">
-                <p class="label">Cloud evidence</p>
-                <div><span>◇</span><p><b>Trace linked</b><small>Prompt content off</small></p><span class="green-check">✓</span></div>
-                <div><span>▣</span><p><b>Request claimed</b><small>No duplicate execution</small></p><span class="green-check">✓</span></div>
-              </div>
+            <aside class="detail-pane" aria-label="Run summary" data-detail-pane>
+              <div class="console-loading large"><i></i><b>Loading evidence</b><span>Checklist ownership and verification will appear here.</span></div>
             </aside>
           </div>
         </div>
@@ -206,7 +149,7 @@
         <div class="section-heading"><p class="eyebrow">Google-native governance plane</p><h2>Every layer has one job—and a receipt.</h2><p>Cloud where identity, memory, and telemetry matter. Licensed execution where the coding agents can legally and reliably run.</p></div>
         <div class="flow-grid">
           <article><span class="flow-number blue">1</span><p class="label">Commission</p><h3>Signed email ingress</h3><p>Resend and a Worker/D1 queue authenticate, deduplicate, and retain the request until handling succeeds.</p></article>
-          <article><span class="flow-number red">2</span><p class="label">Govern</p><h3>Gemini + Google ADK</h3><p>An IAM-protected Cloud Run service preserves intent and atomically records the handoff in Firestore.</p></article>
+          <article><span class="flow-number red">2</span><p class="label">Govern</p><h3>Gemini 3.7 + ADK</h3><p>An IAM-protected Cloud Run service preserves intent and atomically records the handoff in Firestore.</p></article>
           <article><span class="flow-number yellow">3</span><p class="label">Execute</p><h3>Cross-family workers</h3><p>Claude and Gemini alternate implementation and review in one controlled repository workspace.</p></article>
           <article><span class="flow-number green">4</span><p class="label">Prove</p><h3>Evidence comes home</h3><p>Cloud Trace, test output, verifier identity, and residual risk arrive in the same executive email thread.</p></article>
         </div>
@@ -222,7 +165,7 @@
             <pre><code>53  runner + ingress + policy + site
 10  Cloud service + recovery
 ──
-63  automated tests
+72  automated tests
 
 ✓ Terraform validated
 ✓ Worker bundle verified
@@ -246,14 +189,16 @@
       <section class="section faq-section">
         <div class="section-heading"><p class="eyebrow">Clear answers</p><h2>Built to be questioned.</h2></div>
         <div class="faq-grid">
+          <details><summary>Is the console showing a mock run?</summary><p>No. It reads an explicitly public, allowlisted projection of Rally’s authoritative runner state from Cloudflare D1. If that service fails, the page shows the failure instead of sample data.</p></details>
           <details><summary>Are two agents just agreeing with each other?</summary><p>No. They execute separately, come from different model families, and cannot verify checklist work they own.</p></details>
           <details><summary>Do emails literally trigger every model turn?</summary><p>The first email starts the real run and every turn is mirrored to the thread. The authoritative runner dispatches the next model locally.</p></details>
           <details><summary>What happens when the agents cannot finish?</summary><p>Rally stops with a precise halt report when work is blocked, repeatedly rejected, stalled, timed out, or over budget.</p></details>
           <details><summary>Is Rally an official Google product?</summary><p>No. Rally is an independent Agent9 project built with Gemini, Google ADK, and Google Cloud for the All Things Agentic Hackathon.</p></details>
+          <details><summary>What stays private?</summary><p>Commissioner identity, worktree paths, mail IDs, raw prompts, credentials, and cloud request keys never enter the public console record.</p></details>
         </div>
       </section>
 
-      <section class="final-cta"><div><span class="brand-mark large" aria-hidden="true"><span>R</span></span><p class="eyebrow">Rally by Agent9</p><h2>One request. Two model families.<br><span>Zero self-approval.</span></h2><p>Give your company one familiar agent address—and every completion claim a second opinion.</p><div class="hero-actions"><button class="button button-primary" type="button" data-open-setup>Start a guided pilot</button><a class="button button-outline" href="https://github.com/Agent9AI/rally">Explore the source</a></div></div></section>
+      <section class="final-cta"><div><span class="brand-mark large" aria-hidden="true"><span>R</span></span><p class="eyebrow">Rally by Agent9</p><h2>One request. Two model families.<br><span>Zero self-approval.</span></h2><p>Give your company one familiar agent address—and every completion claim a second opinion.</p><div class="hero-actions"><button class="button button-primary" type="button" data-open-setup>Request a managed pilot</button><a class="button button-outline" href="https://github.com/Agent9AI/rally">Explore the source</a></div></div></section>
     </main>
 
     <footer class="site-footer">
@@ -270,8 +215,8 @@
       <div class="setup-tabs" role="tablist" aria-label="Launch options"><button class="is-active" type="button" role="tab" aria-selected="true" data-setup-tab="managed">Managed pilot</button><button type="button" role="tab" aria-selected="false" data-setup-tab="self">Self-hosted</button></div>
       <section class="setup-panel is-active" data-setup-panel="managed">
         <div class="setup-promise"><b>No API keys.</b><span>No Cloudflare, Resend, or Google Cloud account required for commissioners.</span></div>
-        <ol><li><span>1</span><div><b>Tell us the team and repository</b><p>We establish the commissioner allowlist and first bounded use case.</p></div></li><li><span>2</span><div><b>Agent9 provisions the control plane</b><p>Mail routing, Google Cloud, secrets, limits, and model pins are configured.</p></div></li><li><span>3</span><div><b>Your Rally address goes live</b><p>Your team commissions work from the inbox it already uses.</p></div></li></ol>
-        <a class="button button-primary full-width" href="mailto:terry@agent9.dev?subject=Start%20a%20Rally%20managed%20pilot&body=Company%3A%0ATeam%3A%0ARepository%3A%0AFirst%20outcome%20for%20Rally%3A">Request a managed pilot</a>
+        <ol><li><span>1</span><div><b>Choose one team and repository</b><p>We establish the commissioner allowlist and one bounded production-shaped use case.</p></div></li><li><span>2</span><div><b>Agent9 configures the control plane</b><p>Mail routing, cloud services, secrets, limits, and model pins are configured.</p></div></li><li><span>3</span><div><b>Run one genuine evaluation</b><p>Your team commissions real work and reviews the complete cross-model evidence trail.</p></div></li></ol>
+        <a class="button button-primary full-width" href="mailto:terry@agent9.dev?subject=Request%20a%20Rally%20managed%20pilot&body=Company%3A%0ATeam%3A%0ARepository%3A%0AFirst%20outcome%20for%20Rally%3A">Request a managed pilot</a>
         <p class="setup-note">Opens a pre-filled email. No form data is stored on this site.</p>
       </section>
       <section class="setup-panel" data-setup-panel="self" hidden>

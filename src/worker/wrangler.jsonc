@@ -1,0 +1,25 @@
+{
+  "name": "rally-ingress",
+  "main": "index.js",
+  "compatibility_date": "2026-08-29",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1
+    },
+    "traces": {
+      "enabled": true,
+      "head_sampling_rate": 0.1
+    }
+  },
+  "d1_databases": [
+    {
+      "binding": "INBOX",
+      "database_name": "rally-inbox",
+      "database_id": "8f66248a-5b72-452e-bffa-37bca493b511",
+      "migrations_dir": "migrations"
+    }
+  ]
+}

@@ -47,7 +47,7 @@ engineering leader can audit.
 |---|---|---|
 | Innovation & operational utility (40%) | Email-native access plus cross-family verification converts agents from personal copilots into a shared, accountable team service | Send one email; show alternating Claude/Gemini executive updates and final evidence |
 | Technical architecture (30%) | ADK + Gemini on IAM-protected Cloud Run, atomic Firestore idempotency, Secret Manager, Cloud Trace, signed edge webhook, deterministic state machine | Architecture diagram, Terraform, trace/log, verification state |
-| Demo & production readiness (30%) | Deployed path, live eval gate, bounded costs, polished emails, human stop/steer, reproducible repo | 3/3 eval, 63 tests, live Cloud Run health, complete email thread |
+| Demo & production readiness (30%) | Deployed path, live eval gate, bounded costs, polished emails, human stop/steer, reproducible repo | 3/3 eval, 72 tests, live Cloud Run health, complete email thread |
 
 ## Model assignment rationale
 
@@ -126,7 +126,7 @@ preserve commissions verbatim and reran the unchanged gate to 3/3 passes.
 - Authenticated fleet catalog for cross-department discovery and governance
 - Dual-auth Cloud Run boundary and least-privilege runtime identity
 - Metadata-only GenAI observability
-- 63 automated tests plus three live ADK eval cases at 1.00/1.00
+- 72 automated tests plus three live ADK eval cases at 1.00/1.00
 - Validated Terraform and a demo-ready operator workflow
 
 ### What we learned
