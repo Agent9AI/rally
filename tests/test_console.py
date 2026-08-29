@@ -47,7 +47,13 @@ def config(enabled=False, public=False):
 class ConsoleSnapshotTests(unittest.TestCase):
     def test_snapshot_excludes_private_runner_fields(self):
         payload = rally_console.build_snapshot(state(
-            report="Open /private/sensitive/path/output.py for private@example.com",
+            report=(
+                "Open /private/sensitive/path/output.py for private@example.com; "
+                "the model also linked [server.py]"
+                "(file:///Users/terry/.agent-scratch/server.py) and "
+                "/Users/another-person/unexpected/tool/output.py; raw "
+                "file:///tmp/another-output.txt"
+            ),
             checklist=[{
                 "id": "c1", "description": "Check /private/sensitive/path/output.py",
                 "state": "done", "owner": "claude", "verified_by": "agy",
@@ -58,7 +64,10 @@ class ConsoleSnapshotTests(unittest.TestCase):
         self.assertNotIn("private@example.com", encoded)
         self.assertNotIn("/private/sensitive/path", encoded)
         self.assertNotIn("secret@example.com", encoded)
+        self.assertNotIn("file:///", encoded)
+        self.assertNotIn("/Users/", encoded)
         self.assertIn("[workspace]", encoded)
+        self.assertIn("[local-file]", encoded)
 
     def test_status_is_derived_from_authoritative_halt(self):
         cases = [

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import re
 import urllib.request
 from typing import Dict, List, Optional
 
@@ -17,6 +18,13 @@ import transport
 
 USER_AGENT = "rally/1.0 (+https://github.com/Agent9AI/rally)"
 STATUSES = {"running", "complete", "blocked", "halted"}
+LOCAL_MARKDOWN_FILE_LINK_RE = re.compile(
+    r"\[([^\]]+)\]\(file:///[^\s)]+\)"
+)
+LOCAL_FILE_URL_RE = re.compile(r"file:///[^\s)\]>]+")
+LOCAL_ABSOLUTE_PATH_RE = re.compile(
+    r"(?<![A-Za-z0-9])/(?:Users|home|private|var/folders|tmp)/[^\s)\]>`]+"
+)
 
 
 class ConsoleError(RuntimeError):
@@ -53,6 +61,13 @@ def _public_text(value, limit: int, redactions: List[tuple]) -> str:
     cleaned = "" if value is None else str(value).strip()
     for secret, replacement in redactions:
         cleaned = cleaned.replace(secret, replacement)
+    # Model-generated reports can mention a tool's scratch directory rather
+    # than the authoritative Rally workspace. Those paths are not known when
+    # the run-level redaction list is assembled, so remove all common local
+    # filesystem forms as a final defense before publication.
+    cleaned = LOCAL_MARKDOWN_FILE_LINK_RE.sub(r"\1", cleaned)
+    cleaned = LOCAL_FILE_URL_RE.sub("[local-file]", cleaned)
+    cleaned = LOCAL_ABSOLUTE_PATH_RE.sub("[local-path]", cleaned)
     return cleaned[:limit]
 
 
