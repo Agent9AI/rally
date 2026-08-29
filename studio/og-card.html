@@ -7,38 +7,56 @@
     <style>
       * { box-sizing: border-box; }
       html, body { width: 1200px; height: 630px; margin: 0; overflow: hidden; }
-      body {
-        position: relative;
-        padding: 58px 64px;
-        color: #eff8f4;
-        background:
-          radial-gradient(circle at 92% 0%, rgba(114,168,255,.18), transparent 38%),
-          radial-gradient(circle at 5% 105%, rgba(124,247,189,.12), transparent 42%),
-          #06100d;
-        font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      }
-      body::after {
-        position: absolute;
-        inset: 22px;
-        border: 1px solid rgba(124,247,189,.16);
-        border-radius: 22px;
-        content: "";
-      }
-      .eyebrow { margin: 0 0 42px; color: #7cf7bd; font-size: 15px; font-weight: 850; letter-spacing: .17em; }
-      h1 { max-width: 850px; margin: 0; font-size: 70px; line-height: .98; letter-spacing: -.055em; }
-      h1 em { color: #7cf7bd; font-style: normal; }
-      .lede { max-width: 760px; margin: 28px 0 0; color: #a6bab1; font-size: 21px; line-height: 1.42; }
-      .brand { position: absolute; right: 64px; bottom: 52px; display: flex; align-items: center; gap: 12px; font-size: 17px; font-weight: 850; }
-      .mark { display: grid; width: 36px; height: 36px; place-items: center; color: #06100d; border-radius: 9px; background: #7cf7bd; }
-      .proof { position: absolute; left: 64px; bottom: 54px; display: flex; gap: 30px; color: #8fa39a; font: 700 13px/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .05em; }
-      .proof b { color: #eff8f4; }
+      body { position: relative; padding: 58px 62px; color: #202124; background: #fff; font-family: Arial, system-ui, sans-serif; }
+      body::before { position: absolute; inset: 0 0 auto; height: 10px; background: linear-gradient(90deg, #4285f4 0 25%, #ea4335 25% 50%, #fbbc04 50% 75%, #34a853 75%); content: ""; }
+      .copy { width: 650px; }
+      .eyebrow { margin: 0 0 38px; color: #0b57d0; font-size: 15px; font-weight: 700; letter-spacing: .13em; }
+      h1 { margin: 0; font-size: 67px; font-weight: 500; line-height: 1; letter-spacing: -.055em; }
+      h1 em { color: #0b57d0; font-style: normal; }
+      .lede { max-width: 610px; margin: 26px 0 0; color: #5f6368; font-size: 20px; line-height: 1.42; }
+      .proof { position: absolute; left: 62px; bottom: 54px; display: flex; gap: 27px; color: #80868b; font: 600 12px/1 Arial, sans-serif; letter-spacing: .055em; }
+      .proof b { color: #202124; }
+      .brand { position: absolute; right: 62px; bottom: 46px; display: flex; align-items: center; gap: 10px; color: #3c4043; font-size: 16px; font-weight: 600; }
+      .mark { position: relative; display: grid; width: 38px; height: 38px; overflow: hidden; place-items: center; color: #fff; border-radius: 11px; background: #0b57d0; box-shadow: inset -9px -9px #4285f4; }
+      .mark::before { position: absolute; top: -8px; right: -5px; width: 18px; height: 18px; border-radius: 50%; background: #fbbc04; content: ""; }
+      .mark::after { position: absolute; bottom: -9px; left: -5px; width: 18px; height: 18px; border-radius: 50%; background: #34a853; content: ""; }
+      .mark b { position: relative; z-index: 1; }
+      .app { position: absolute; top: 76px; right: 52px; width: 410px; height: 438px; overflow: hidden; border: 1px solid #dadce0; border-radius: 22px; background: #fff; box-shadow: 0 18px 45px rgba(60,64,67,.18); }
+      .bar { height: 52px; display: flex; align-items: center; gap: 9px; padding: 0 15px; border-bottom: 1px solid #e8eaed; }
+      .mini { width: 23px; height: 23px; display: grid; place-items: center; color: #fff; border-radius: 7px; background: #0b57d0; font-size: 10px; font-weight: 700; }
+      .search { height: 32px; flex: 1; display: flex; align-items: center; margin-left: 8px; padding: 0 12px; color: #80868b; border-radius: 8px; background: #f1f3f4; font-size: 10px; }
+      .avatar { width: 26px; height: 26px; display: grid; place-items: center; color: #fff; border-radius: 50%; background: #7e57c2; font-size: 9px; }
+      .app-body { height: 386px; display: grid; grid-template-columns: 112px 1fr; }
+      .list { border-right: 1px solid #e8eaed; background: #f8fafd; }
+      .list-title { padding: 15px 13px; font-size: 12px; font-weight: 600; }
+      .row { margin: 0 7px 7px; padding: 10px 8px; border-radius: 9px; background: #fff; font-size: 8px; }
+      .row.active { background: #e8f0fe; box-shadow: inset 2px 0 #0b57d0; }
+      .row b, .row span { display: block; }
+      .row span { margin-top: 4px; color: #80868b; line-height: 1.3; }
+      .thread { padding: 16px; }
+      .thread-title { margin-bottom: 15px; font-size: 11px; font-weight: 600; }
+      .message { margin: 0 0 10px 20px; padding: 10px; border: 1px solid #e8eaed; border-radius: 3px 11px 11px; font-size: 8px; line-height: 1.45; }
+      .message.blue { border-color: #d2e3fc; background: #f8faff; }
+      .message.green { border-color: #ceead6; background: #f7fcf8; }
+      .message b { display: block; margin-bottom: 4px; }
+      .receipt { display: flex; align-items: center; gap: 6px; margin-top: 7px; padding: 6px; color: #188038; border-radius: 6px; background: #e6f4ea; font-weight: 600; }
+      .check { width: 14px; height: 14px; display: grid; place-items: center; color: #fff; border-radius: 50%; background: #188038; font-size: 7px; }
     </style>
   </head>
   <body>
-    <p class="eyebrow">THE ENGINEERING AGENT YOUR WHOLE COMPANY CAN EMAIL</p>
-    <h1>One request.<br>Two model families.<br><em>Zero self-approval.</em></h1>
-    <p class="lede">Gemini governs the handoff. Claude and Gemini build, challenge, and independently verify.</p>
+    <div class="copy">
+      <p class="eyebrow">THE ENGINEERING AGENT YOUR WHOLE COMPANY CAN EMAIL</p>
+      <h1>One request.<br>Two model families.<br><em>Zero self-approval.</em></h1>
+      <p class="lede">Gemini governs the handoff. Claude and Gemini build, challenge, and independently verify.</p>
+    </div>
+    <div class="app">
+      <div class="bar"><span class="mini">R</span><b>Rally</b><span class="search">Search runs and evidence</span><span class="avatar">T</span></div>
+      <div class="app-body">
+        <div class="list"><div class="list-title">Runs</div><div class="row active"><b>Webhook launch</b><span>Replay-safe receiver</span></div><div class="row"><b>Rate-limit review</b><span>Awaiting verification</span></div><div class="row"><b>Invoice export</b><span>Blocked safely</span></div></div>
+        <div class="thread"><div class="thread-title">Prepare webhook service for launch</div><div class="message blue"><b>Gemini coordinator</b>Commission governed with independent verification required.</div><div class="message"><b>Claude worker</b>Implemented replay handling. Eight tests pass.</div><div class="message green"><b>Gemini worker</b>Conflicting replay returns 409.<div class="receipt"><span class="check">✓</span> Independently verified</div></div></div>
+      </div>
+    </div>
     <div class="proof"><span><b>63</b> TESTS</span><span><b>3/3</b> LIVE ADK EVALS</span><span><b>1.00</b> TRAJECTORY + QUALITY</span></div>
-    <div class="brand"><span class="mark">R</span><span>Rally by Agent9</span></div>
+    <div class="brand"><span class="mark"><b>R</b></span><span>Rally by Agent9</span></div>
   </body>
 </html>

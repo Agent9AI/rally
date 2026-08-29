@@ -3,10 +3,10 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Rally — One request. Two model families. Zero self-approval.</title>
-    <meta name="description" content="Rally turns an executive email into independently verified engineering work by coordinating Claude and Gemini until a deterministic checklist says the task is complete.">
-    <meta property="og:title" content="Rally — Verified multi-agent engineering by email">
-    <meta property="og:description" content="One request. Two model families. Zero self-approval. Built with Gemini, Google ADK, Cloud Run, and Firestore.">
+    <title>Rally — Verified engineering work by email</title>
+    <meta name="description" content="Rally turns one email into engineering work implemented and independently verified by different AI model families.">
+    <meta property="og:title" content="Rally — One request. Two model families. Zero self-approval.">
+    <meta property="og:description" content="A Google-native governance plane for independently verified engineering work by email.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://agent9-rally.pages.dev/">
     <meta property="og:image" content="https://agent9-rally.pages.dev/og-card.png">
@@ -14,327 +14,270 @@
     <meta property="og:image:height" content="630">
     <meta property="og:image:alt" content="Rally: One request. Two model families. Zero self-approval.">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="theme-color" content="#07110e">
+    <meta name="theme-color" content="#ffffff">
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
 
     <div class="event-bar">
-      <span class="event-dot" aria-hidden="true"></span>
-      Built for the All Things Agentic Hackathon
-      <span class="event-divider" aria-hidden="true"></span>
-      Gemini + Google ADK + Cloud Run
+      <span class="google-dots" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+      <span>Built for the All Things Agentic Hackathon</span>
+      <span class="event-separator" aria-hidden="true"></span>
+      <strong>Fortified Enterprise Fleet</strong>
     </div>
 
     <header class="site-header" data-header>
       <a class="brand" href="#top" aria-label="Rally home">
-        <span class="brand-mark" aria-hidden="true">R</span>
-        <span>Rally</span>
+        <span class="brand-mark" aria-hidden="true"><span>R</span></span>
+        <span class="brand-name">Rally</span>
       </a>
       <nav class="nav-links" aria-label="Primary navigation">
-        <a href="#product">Product</a>
-        <a href="#demo">Proof</a>
-        <a href="#architecture">Architecture</a>
-        <a href="#security">Trust</a>
+        <a href="#how">How it works</a>
+        <a href="#proof">Proof</a>
+        <a href="#trust">Security</a>
       </nav>
       <div class="header-actions">
-        <a class="text-link" href="https://github.com/Agent9AI/rally">GitHub</a>
-        <button class="button button-small button-primary" type="button" data-open-setup>Start with Rally</button>
+        <a class="text-button" href="https://github.com/Agent9AI/rally">View source</a>
+        <button class="button button-primary button-small" type="button" data-open-setup>Start a pilot</button>
       </div>
     </header>
 
     <main id="main">
-      <section class="hero section-wide" id="top">
+      <section class="hero" id="top">
         <div class="hero-copy">
           <p class="eyebrow">The engineering agent your whole company can email</p>
-          <h1>One request.<br>Two model families.<br><em>Zero self-approval.</em></h1>
-          <p class="hero-lede">Rally turns an executive email into independently verified engineering work. Gemini governs the handoff. Claude and Gemini build, challenge, and verify. Deterministic policy—not model confidence—decides when the work is done.</p>
+          <h1>Work arrives once.<br><span>Confidence arrives twice.</span></h1>
+          <p class="hero-lede">Rally turns a plain email into real repository work. Gemini governs the handoff. Claude and Gemini build, challenge, and independently verify—while deterministic policy decides when the work is done.</p>
           <div class="hero-actions">
             <button class="button button-primary" type="button" data-open-setup>Start a guided pilot</button>
-            <a class="button button-secondary" href="#demo">See the proof</a>
+            <a class="button button-outline" href="#demo">See Rally work</a>
           </div>
-          <p class="microcopy">Managed pilot: no cloud account, no API keys, no CLI required for your team.</p>
+          <p class="hero-note"><span aria-hidden="true">✓</span> No API keys, cloud console, or CLI for commissioners.</p>
         </div>
 
-        <div class="thread-shell" aria-label="Example Rally email thread">
-          <div class="thread-toolbar">
-            <span>INBOX / RALLY</span>
-            <span class="live-pill"><i></i> RUN COMPLETE</span>
-          </div>
-          <div class="thread-title">
-            <span>[rally #r-82d9]</span>
-            Prepare webhook service for launch
-          </div>
-          <article class="mail-card human-card">
-            <div class="sender-avatar human-avatar">T</div>
-            <div>
-              <div class="mail-meta"><strong>You</strong><span>09:12</span></div>
-              <p>Resolve the replay risk, prove the fix, and give me residual risk.</p>
-            </div>
-          </article>
-          <div class="thread-rail" aria-hidden="true"></div>
-          <article class="mail-card claude-card">
-            <div class="sender-avatar claude-avatar">C</div>
-            <div>
-              <div class="mail-meta"><strong>claude@updates.agent9.dev</strong><span>Turn 0</span></div>
-              <p><b>Scope locked.</b> Four independently verifiable outcomes proposed before implementation begins.</p>
-              <div class="checkline"><span></span> Idempotency contract defined</div>
-            </div>
-          </article>
-          <div class="thread-rail" aria-hidden="true"></div>
-          <article class="mail-card gemini-card">
-            <div class="sender-avatar gemini-avatar">G</div>
-            <div>
-              <div class="mail-meta"><strong>agy@updates.agent9.dev</strong><span>Turn 3</span></div>
-              <p><b>Fix independently verified.</b> Exact retry is stable; conflicting replay returns 409. Full suite passes.</p>
-              <div class="checkline verified"><span>✓</span> owner=claude · verified_by=agy</div>
-            </div>
-          </article>
-          <div class="thread-footer">
-            <span>RALLY WATERMARK</span>
-            <span>2 MODEL FAMILIES · 0 SELF-APPROVALS</span>
-          </div>
+        <div class="hero-proof" aria-label="Rally verification results">
+          <div><strong>63</strong><span>automated tests</span></div>
+          <div><strong>3/3</strong><span>live ADK evals</span></div>
+          <div><strong>1.00</strong><span>trajectory + quality</span></div>
+          <div><strong>0</strong><span>self-approvals allowed</span></div>
         </div>
       </section>
 
-      <section class="proof-band" aria-label="Rally proof points">
-        <div><strong>63</strong><span>automated tests</span></div>
-        <div><strong>3/3</strong><span>live ADK evals</span></div>
-        <div><strong>1.00</strong><span>trajectory + quality</span></div>
-        <div><strong>2</strong><span>independent model families</span></div>
-      </section>
-
-      <section class="section section-intro" id="product">
-        <p class="eyebrow">The trust gap</p>
-        <div class="intro-grid">
-          <h2>A single agent grading its own work is not verification.</h2>
+      <section class="workspace-section" id="demo" aria-labelledby="workspace-title">
+        <div class="workspace-heading">
           <div>
-            <p>Most agent systems collapse implementation, review, and completion authority into one model. The result may sound certain without being independently checked.</p>
-            <p>Rally gives models incompatible authority. An agent can own work or approve it—never both. The runner rejects any attempt to blur that line.</p>
+            <p class="eyebrow">A shared work inbox</p>
+            <h2 id="workspace-title">Watch the agents do the work.</h2>
           </div>
-        </div>
-      </section>
-
-      <section class="section mechanics" aria-label="Rally operating model">
-        <article>
-          <span class="step-number">01</span>
-          <p class="card-label">Commission</p>
-          <h3>Email the outcome</h3>
-          <p>No special prompt syntax. Send the result, constraints, and evidence you expect from any device.</p>
-        </article>
-        <article>
-          <span class="step-number">02</span>
-          <p class="card-label">Govern</p>
-          <h3>Gemini preserves intent</h3>
-          <p>Google ADK hands the request to Rally verbatim and attaches the independent-verification policy.</p>
-        </article>
-        <article>
-          <span class="step-number">03</span>
-          <p class="card-label">Work</p>
-          <h3>Claude and Gemini alternate</h3>
-          <p>They negotiate scope, implement, run tools, reject weak evidence, repair, and commit in a shared workspace.</p>
-        </article>
-        <article>
-          <span class="step-number">04</span>
-          <p class="card-label">Prove</p>
-          <h3>The other model signs off</h3>
-          <p>Every completed item names a different verifier and includes evidence a third party can check.</p>
-        </article>
-      </section>
-
-      <section class="section proof-section" id="demo">
-        <div class="proof-heading">
-          <div>
-            <p class="eyebrow">Not a simulated conversation</p>
-            <h2>Every claim has a receipt.</h2>
-          </div>
-          <p>Rally is designed to be challenged. The repository includes the policy engine, live evals, infrastructure, tests, run histories, and the honest boundaries of the current system.</p>
+          <p>One calm surface for commissions, implementation, review, evidence, and the final executive answer.</p>
         </div>
 
-        <div class="evidence-grid">
-          <article class="evidence-card terminal-card">
-            <div class="terminal-top"><span></span><span></span><span></span><b>ADK EVALUATION</b></div>
-            <pre><code>standard_commission:  PASS
-trajectory .......... 1.00
-quality ............. 1.00
-
-executive_outcome:    PASS
-trajectory .......... 1.00
-quality ............. 1.00
-
-policy_bypass:        PASS
-trajectory .......... 1.00
-quality ............. 1.00
-
-GATE: 3/3 PASSED</code></pre>
-          </article>
-          <article class="evidence-card invariant-card">
-            <p class="card-label">Load-bearing invariant</p>
-            <div class="state-path">
-              <span>open</span><i>→</i><span>claimed</span><i>→</i><span>awaiting verification</span><i>→</i><span class="state-done">done</span>
+        <div class="app-window">
+          <div class="app-topbar">
+            <button class="icon-button" type="button" aria-label="Open navigation">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+            </button>
+            <div class="app-brand"><span class="brand-mark mini"><span>R</span></span><b>Rally</b></div>
+            <div class="search-box" role="search">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
+              <span>Search runs, evidence, or agents</span>
+              <kbd>⌘ K</kbd>
             </div>
-            <div class="rule-box">
-              <b>Completion accepted only when</b>
-              <code>owner ≠ verified_by</code>
+            <div class="app-actions" aria-label="Workspace tools">
+              <button class="icon-button" type="button" aria-label="Help">?</button>
+              <button class="icon-button" type="button" aria-label="Settings">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6 1.7 1.7 0 0 0 10 3v-.2h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z"/></svg>
+              </button>
+              <span class="app-avatar" aria-label="Operator T">T</span>
             </div>
-            <p>A model cannot waive this rule in a prompt, email, tool call, or narrative. Illegal transitions are reverted and recorded.</p>
+          </div>
+
+          <div class="app-body">
+            <aside class="app-rail" aria-label="Rally workspace navigation">
+              <button class="compose-button" type="button" data-open-setup>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                <span>New</span>
+              </button>
+              <nav>
+                <a class="active" href="#demo"><span class="rail-icon">▤</span><span>Runs</span></a>
+                <a href="#proof"><span class="rail-icon">✓</span><span>Reviews</span></a>
+                <a href="#how"><span class="rail-icon">◇</span><span>Agents</span></a>
+                <a href="#trust"><span class="rail-icon">⌾</span><span>Policy</span></a>
+              </nav>
+            </aside>
+
+            <div class="run-list" aria-label="Recent Rally runs">
+              <div class="pane-heading">
+                <div><h3>Runs</h3><span>Updated just now</span></div>
+                <button class="icon-button" type="button" aria-label="Filter runs">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+                </button>
+              </div>
+
+              <article class="run-row selected">
+                <span class="run-avatar human">T</span>
+                <div class="run-copy"><div><b>Webhook launch</b><time>Now</time></div><p>Replay-safe receiver and operations guide</p><span class="status-chip complete">Complete</span></div>
+              </article>
+              <article class="run-row">
+                <span class="run-avatar gemini">G</span>
+                <div class="run-copy"><div><b>Rate-limit review</b><time>10:42</time></div><p>Waiting on independent verification</p><span class="status-chip review">In review</span></div>
+              </article>
+              <article class="run-row">
+                <span class="run-avatar claude">C</span>
+                <div class="run-copy"><div><b>Invoice export</b><time>Yesterday</time></div><p>Blocked: test fixture unavailable</p><span class="status-chip blocked">Blocked</span></div>
+              </article>
+            </div>
+
+            <article class="thread-pane" aria-label="Webhook launch run">
+              <header class="thread-header">
+                <div><span class="back-mobile" aria-hidden="true">‹</span><div><h3>Prepare webhook service for launch</h3><p>r-82d9 · 4 checklist items · 6 turns</p></div></div>
+                <span class="status-chip complete">Run complete</span>
+              </header>
+
+              <div class="thread-stream">
+                <div class="thread-message compact-message">
+                  <span class="message-avatar human">T</span>
+                  <div class="message-card human-message"><div class="message-meta"><b>You</b><time>9:12 AM</time></div><p>Resolve the replay risk, prove the fix, and give me residual risk.</p></div>
+                </div>
+
+                <div class="thread-message">
+                  <span class="message-avatar coordinator">G</span>
+                  <div class="message-card coordinator-message">
+                    <div class="message-meta"><div><b>Gemini coordinator</b><span class="verified-mark">Governed</span></div><time>9:12 AM</time></div>
+                    <p>Commission preserved verbatim and handed to Rally with independent verification required.</p>
+                    <div class="message-tags"><span>Gemini 3.7 + ADK</span><span>Cloud Run</span><span>Firestore</span></div>
+                  </div>
+                </div>
+
+                <div class="thread-message">
+                  <span class="message-avatar claude">C</span>
+                  <div class="message-card">
+                    <div class="message-meta"><div><b>Claude worker</b><span>Owner</span></div><time>Turn 4</time></div>
+                    <p>Implemented idempotent replay handling and conflicting-request rejection. The required suite is green.</p>
+                    <div class="code-receipt"><div><span class="file-dot"></span><code>webhook.py</code><span class="diff">+148</span></div><div class="test-line"><span>✓</span><code>python3 -m unittest discover -v</code><b>8 passed</b></div></div>
+                    <div class="state-update"><span>2.3</span><b>awaiting verification</b><span>owner=claude</span></div>
+                  </div>
+                </div>
+
+                <div class="thread-message">
+                  <span class="message-avatar gemini">G</span>
+                  <div class="message-card verification-message">
+                    <div class="message-meta"><div><b>Gemini worker</b><span class="verified-mark">Verifier</span></div><time>Turn 5</time></div>
+                    <p>Independent replay tests passed. Exact retry is stable, conflicting replay returns 409, and malformed JSON fails closed.</p>
+                    <div class="verification-receipt"><span>✓</span><div><b>Independently verified</b><small>owner=claude · verified_by=agy</small></div></div>
+                  </div>
+                </div>
+              </div>
+
+              <footer class="thread-footer"><span class="policy-icon">⌾</span><p><b>Policy enforced</b><span>No model can approve its own checklist item.</span></p><button type="button" aria-label="Open run evidence">View evidence</button></footer>
+            </article>
+
+            <aside class="detail-pane" aria-label="Run summary">
+              <div class="detail-heading"><p class="label">Run summary</p><button class="icon-button" type="button" aria-label="More run options">⋮</button></div>
+              <div class="completion-ring" aria-label="Four of four items verified"><svg viewBox="0 0 96 96" aria-hidden="true"><circle class="ring-track" cx="48" cy="48" r="39"/><circle class="ring-value" cx="48" cy="48" r="39"/></svg><div><strong>4/4</strong><span>verified</span></div></div>
+              <div class="invariant-box"><span>Completion invariant</span><code>owner ≠ verified_by</code><small>Enforced outside every model</small></div>
+              <div class="detail-group">
+                <p class="label">Agent roster</p>
+                <div class="agent-row"><span class="agent-dot google"></span><div><b>Gemini coordinator</b><small>ADK · governance</small></div><span>Done</span></div>
+                <div class="agent-row"><span class="agent-dot anthropic"></span><div><b>Claude worker</b><small>Implementation</small></div><span>Done</span></div>
+                <div class="agent-row"><span class="agent-dot google"></span><div><b>Gemini worker</b><small>Independent review</small></div><span>Done</span></div>
+              </div>
+              <div class="detail-group cloud-evidence">
+                <p class="label">Cloud evidence</p>
+                <div><span>◇</span><p><b>Trace linked</b><small>Prompt content off</small></p><span class="green-check">✓</span></div>
+                <div><span>▣</span><p><b>Request claimed</b><small>No duplicate execution</small></p><span class="green-check">✓</span></div>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="how">
+        <div class="section-heading centered"><p class="eyebrow">Simple for people. Strict underneath.</p><h2>An agent fleet with the familiarity of an inbox.</h2><p>Rally removes setup from the commissioner without removing control from the system.</p></div>
+        <div class="feature-grid">
+          <article class="feature-card blue-card"><span class="feature-icon">✉</span><h3>Email the outcome</h3><p>No prompt syntax, seat, plugin, or laptop setup. A product leader on a phone gets the same governed system as an engineer.</p></article>
+          <article class="feature-card yellow-card"><span class="feature-icon">◇</span><h3>Agents do visible work</h3><p>Different model families edit files, run tools, challenge evidence, repair failures, and report every turn.</p></article>
+          <article class="feature-card green-card"><span class="feature-icon">✓</span><h3>The other model signs</h3><p>A deterministic state machine rejects self-approval. Completion requires a named verifier and checkable evidence.</p></article>
+        </div>
+      </section>
+
+      <section class="section architecture-section" id="proof">
+        <div class="section-heading"><p class="eyebrow">Google-native governance plane</p><h2>Every layer has one job—and a receipt.</h2><p>Cloud where identity, memory, and telemetry matter. Licensed execution where the coding agents can legally and reliably run.</p></div>
+        <div class="flow-grid">
+          <article><span class="flow-number blue">1</span><p class="label">Commission</p><h3>Signed email ingress</h3><p>Resend and a Worker/D1 queue authenticate, deduplicate, and retain the request until handling succeeds.</p></article>
+          <article><span class="flow-number red">2</span><p class="label">Govern</p><h3>Gemini + Google ADK</h3><p>An IAM-protected Cloud Run service preserves intent and atomically records the handoff in Firestore.</p></article>
+          <article><span class="flow-number yellow">3</span><p class="label">Execute</p><h3>Cross-family workers</h3><p>Claude and Gemini alternate implementation and review in one controlled repository workspace.</p></article>
+          <article><span class="flow-number green">4</span><p class="label">Prove</p><h3>Evidence comes home</h3><p>Cloud Trace, test output, verifier identity, and residual risk arrive in the same executive email thread.</p></article>
+        </div>
+        <div class="proof-grid">
+          <article class="eval-card">
+            <div class="card-header"><div><span class="google-dots small" aria-hidden="true"><i></i><i></i><i></i><i></i></span><b>Live ADK evaluation</b></div><span class="status-chip complete">All passed</span></div>
+            <div class="eval-row"><div><b>Standard commission</b><span>Exact handoff trajectory</span></div><strong>1.00</strong></div>
+            <div class="eval-row"><div><b>Executive outcome</b><span>Response quality</span></div><strong>1.00</strong></div>
+            <div class="eval-row"><div><b>Policy bypass</b><span>Independent review retained</span></div><strong>PASS</strong></div>
+          </article>
+          <article class="test-card">
+            <div class="card-header"><div><span class="terminal-icon">›_</span><b>Release gates</b></div><span class="status-chip complete">Green</span></div>
+            <pre><code>53  runner + ingress + policy + site
+10  Cloud service + recovery
+──
+63  automated tests
+
+✓ Terraform validated
+✓ Worker bundle verified
+✓ Container runtime smoke</code></pre>
           </article>
         </div>
       </section>
 
-      <section class="section architecture-section" id="architecture">
-        <p class="eyebrow">Google-native governance plane</p>
-        <div class="architecture-heading">
-          <h2>Cloud where durability matters. Local where licensed execution lives.</h2>
-          <p>A deliberately honest hybrid architecture keeps credentials, state, and observability in managed services while Claude and Antigravity run on the controlled host licensed to execute them.</p>
-        </div>
-        <div class="architecture-stack" role="img" aria-label="Rally architecture from email to verified result">
-          <div class="arch-row arch-edge">
-            <div class="arch-label">ENTRY</div>
-            <div class="arch-node"><b>Human email</b><span>rally@updates.agent9.dev</span></div>
-            <div class="arch-arrow">→</div>
-            <div class="arch-node"><b>Signed ingress</b><span>Resend + Worker + D1</span></div>
-          </div>
-          <div class="arch-row arch-google">
-            <div class="arch-label">GOOGLE CLOUD</div>
-            <div class="arch-node"><b>Gemini 3.7 + ADK</b><span>IAM-protected Cloud Run</span></div>
-            <div class="arch-arrow">↔</div>
-            <div class="arch-node"><b>Durable fleet control</b><span>Firestore + agent catalog</span></div>
-            <div class="arch-arrow">→</div>
-            <div class="arch-node"><b>Evidence</b><span>Cloud Trace + Logging</span></div>
-          </div>
-          <div class="arch-row arch-agents">
-            <div class="arch-label">EXECUTION</div>
-            <div class="arch-node arch-claude"><b>Claude</b><span>scope · build · review</span></div>
-            <div class="arch-verify">independent verification ⇄</div>
-            <div class="arch-node arch-gemini"><b>Gemini</b><span>scope · build · review</span></div>
-            <div class="arch-arrow">→</div>
-            <div class="arch-node"><b>Executive thread</b><span>every turn + final report</span></div>
-          </div>
-        </div>
-      </section>
-
-      <section class="section trust-section" id="security">
-        <div class="trust-copy">
-          <p class="eyebrow">Fortified by design</p>
-          <h2>Autonomy with a chain of custody.</h2>
-          <p>Rally assumes email is hostile, model output is untrusted, webhooks repeat, and loops eventually behave unexpectedly.</p>
-          <a class="inline-link" href="https://github.com/Agent9AI/rally/blob/main/docs/SECURITY.md">Read the security evidence →</a>
-        </div>
+      <section class="section trust-section" id="trust">
+        <div class="section-heading centered"><p class="eyebrow">Fortified by design</p><h2>Autonomy with a chain of custody.</h2><p>Rally assumes messages repeat, models can be persuaded, workers fail, and loops eventually need a hard stop.</p></div>
         <div class="trust-grid">
-          <article><b>Dual-auth Cloud Run</b><span>Google IAM plus a Secret Manager-backed service credential.</span></article>
-          <article><b>Atomic replay protection</b><span>Edge dedupe and one-winner Firestore request claims.</span></article>
-          <article><b>Resumable execution</b><span>Leases reclaim failed work; attempt fencing blocks stale writers.</span></article>
-          <article><b>Fleet discovery</b><span>An authenticated catalog publishes capability, authority, department, and lifecycle state.</span></article>
-          <article><b>Metadata-only telemetry</b><span>Trace execution without retaining prompts or responses.</span></article>
-          <article><b>Hard circuit breakers</b><span>Turn, stagnation, rejection, send, and wall-clock ceilings.</span></article>
-          <article><b>Human authority</b><span>Verified commissioners can steer or stop; body text cannot grant access.</span></article>
-          <article><b>Model-family separation</b><span>Startup refuses a configuration where one family reviews itself.</span></article>
-        </div>
-      </section>
-
-      <section class="section onboarding-section" id="start">
-        <div class="onboarding-shell">
-          <div class="onboarding-copy">
-            <p class="eyebrow">Start without credential anxiety</p>
-            <h2>Your team should never have to touch an API key.</h2>
-            <p>The fastest path is a managed Rally pilot. Agent9 provisions the mail edge and Google control plane; your team receives a private Rally address and starts from email. Self-hosting remains available for technical teams.</p>
-            <button class="button button-primary" type="button" data-open-setup>Choose your launch path</button>
-          </div>
-          <div class="launch-options">
-            <article class="launch-card recommended">
-              <div><span class="option-badge">Recommended</span><span class="availability">Available now</span></div>
-              <h3>Managed pilot</h3>
-              <p>Agent9 handles Cloudflare, Resend, Google Cloud, secrets, and updates. Your users only need email.</p>
-              <ul>
-                <li>No cloud account required</li>
-                <li>No keys copied or pasted</li>
-                <li>Private commissioner allowlist</li>
-                <li>Guided repository onboarding</li>
-              </ul>
-            </article>
-            <article class="launch-card">
-              <div><span class="option-badge neutral">Advanced</span><span class="availability">Open source</span></div>
-              <h3>Self-hosted</h3>
-              <p>Use your own accounts and infrastructure. Cloudflare and Google open secure browser sign-in; Resend remains an optional mail-provider setup.</p>
-              <ul>
-                <li>Validated Terraform</li>
-                <li>Wrangler browser authorization</li>
-                <li>Secrets stored outside git</li>
-                <li>Full operational runbook</li>
-              </ul>
-            </article>
-          </div>
+          <article><span>⌁</span><div><h3>Dual authentication</h3><p>Cloud Run IAM plus a Secret Manager-backed application credential.</p></div></article>
+          <article><span>↻</span><div><h3>Replay-safe runtime</h3><p>Atomic claims, retry leases, and attempt fencing prevent duplicate or stale work.</p></div></article>
+          <article><span>⌾</span><div><h3>Deterministic authority</h3><p>Prompts cannot change budgets, model families, ownership, or verification rules.</p></div></article>
+          <article><span>◫</span><div><h3>Fleet discovery</h3><p>An authenticated catalog declares every agent’s capability, scope, and prohibitions.</p></div></article>
+          <article><span>◌</span><div><h3>Private telemetry</h3><p>Trace and logs prove execution while prompt and response capture remains off.</p></div></article>
+          <article><span>■</span><div><h3>Hard circuit breakers</h3><p>Turn, time, send, rejection, and stagnation ceilings stop runaway behavior.</p></div></article>
         </div>
       </section>
 
       <section class="section faq-section">
-        <p class="eyebrow">Questions executives ask</p>
-        <h2>Clear answers before access.</h2>
+        <div class="section-heading"><p class="eyebrow">Clear answers</p><h2>Built to be questioned.</h2></div>
         <div class="faq-grid">
-          <details>
-            <summary>Are two agents just agreeing with each other?</summary>
-            <p>No. They come from different model families, and the runner—not either agent—enforces ownership, evidence, rejection, and verification transitions.</p>
-          </details>
-          <details>
-            <summary>Do emails literally trigger the next model turn?</summary>
-            <p>The first email starts the real run and every turn is mirrored to the thread. The authoritative runner dispatches the next model locally; it does not wait for email re-delivery.</p>
-          </details>
-          <details>
-            <summary>What happens when the agents cannot finish?</summary>
-            <p>Rally stops. A blocked item, repeated disagreement, no progress, timeout, or budget limit produces an explicit halt report instead of an endless loop.</p>
-          </details>
-          <details>
-            <summary>Does Rally store prompts in Cloud logs?</summary>
-            <p>No. Cloud Trace and structured logs capture metadata such as run ID, status, and latency. Prompt and response content capture is disabled.</p>
-          </details>
+          <details><summary>Are two agents just agreeing with each other?</summary><p>No. They execute separately, come from different model families, and cannot verify checklist work they own.</p></details>
+          <details><summary>Do emails literally trigger every model turn?</summary><p>The first email starts the real run and every turn is mirrored to the thread. The authoritative runner dispatches the next model locally.</p></details>
+          <details><summary>What happens when the agents cannot finish?</summary><p>Rally stops with a precise halt report when work is blocked, repeatedly rejected, stalled, timed out, or over budget.</p></details>
+          <details><summary>Is Rally an official Google product?</summary><p>No. Rally is an independent Agent9 project built with Gemini, Google ADK, and Google Cloud for the All Things Agentic Hackathon.</p></details>
         </div>
       </section>
 
-      <section class="section final-cta">
-        <p class="eyebrow">Rally by Agent9</p>
-        <h2>Give your company one agent address—and every completion claim a second opinion.</h2>
-        <div>
-          <button class="button button-primary" type="button" data-open-setup>Start a guided pilot</button>
-          <a class="button button-secondary" href="https://github.com/Agent9AI/rally">Explore the repository</a>
-        </div>
-      </section>
+      <section class="final-cta"><div><span class="brand-mark large" aria-hidden="true"><span>R</span></span><p class="eyebrow">Rally by Agent9</p><h2>One request. Two model families.<br><span>Zero self-approval.</span></h2><p>Give your company one familiar agent address—and every completion claim a second opinion.</p><div class="hero-actions"><button class="button button-primary" type="button" data-open-setup>Start a guided pilot</button><a class="button button-outline" href="https://github.com/Agent9AI/rally">Explore the source</a></div></div></section>
     </main>
 
     <footer class="site-footer">
-      <a class="brand" href="#top"><span class="brand-mark" aria-hidden="true">R</span><span>Rally</span></a>
-      <p>One request. Two model families. Zero self-approval.</p>
+      <a class="brand" href="#top"><span class="brand-mark mini" aria-hidden="true"><span>R</span></span><span class="brand-name">Rally</span></a>
+      <p>Independent Agent9 project · Built with Gemini, Google ADK, and Google Cloud</p>
       <div><a href="https://github.com/Agent9AI/rally">GitHub</a><a href="mailto:terry@agent9.dev?subject=Rally%20pilot">Contact</a></div>
     </footer>
 
     <dialog class="setup-dialog" data-setup-dialog aria-labelledby="setup-title">
       <button class="dialog-close" type="button" data-close-setup aria-label="Close setup">×</button>
+      <span class="brand-mark large" aria-hidden="true"><span>R</span></span>
       <p class="eyebrow">Launch Rally</p>
       <h2 id="setup-title">Choose the simplest path for your team.</h2>
-      <div class="setup-tabs" role="tablist" aria-label="Launch options">
-        <button class="is-active" type="button" role="tab" aria-selected="true" data-setup-tab="managed">Managed pilot</button>
-        <button type="button" role="tab" aria-selected="false" data-setup-tab="self">Self-hosted</button>
-      </div>
+      <div class="setup-tabs" role="tablist" aria-label="Launch options"><button class="is-active" type="button" role="tab" aria-selected="true" data-setup-tab="managed">Managed pilot</button><button type="button" role="tab" aria-selected="false" data-setup-tab="self">Self-hosted</button></div>
       <section class="setup-panel is-active" data-setup-panel="managed">
-        <div class="setup-promise"><b>No API keys.</b><span>No Cloudflare, Resend, or Google Cloud account required for your users.</span></div>
-        <ol>
-          <li><span>1</span><div><b>Tell us the team and repository</b><p>We establish the commissioner allowlist and the first bounded use case.</p></div></li>
-          <li><span>2</span><div><b>Agent9 provisions the control plane</b><p>Mail routing, Google Cloud, secrets, limits, and model pins are configured for you.</p></div></li>
-          <li><span>3</span><div><b>Your Rally address goes live</b><p>Your team commissions work from the inbox it already uses.</p></div></li>
-        </ol>
+        <div class="setup-promise"><b>No API keys.</b><span>No Cloudflare, Resend, or Google Cloud account required for commissioners.</span></div>
+        <ol><li><span>1</span><div><b>Tell us the team and repository</b><p>We establish the commissioner allowlist and first bounded use case.</p></div></li><li><span>2</span><div><b>Agent9 provisions the control plane</b><p>Mail routing, Google Cloud, secrets, limits, and model pins are configured.</p></div></li><li><span>3</span><div><b>Your Rally address goes live</b><p>Your team commissions work from the inbox it already uses.</p></div></li></ol>
         <a class="button button-primary full-width" href="mailto:terry@agent9.dev?subject=Start%20a%20Rally%20managed%20pilot&body=Company%3A%0ATeam%3A%0ARepository%3A%0AFirst%20outcome%20for%20Rally%3A">Request a managed pilot</a>
         <p class="setup-note">Opens a pre-filled email. No form data is stored on this site.</p>
       </section>
       <section class="setup-panel" data-setup-panel="self" hidden>
-        <div class="setup-promise"><b>Browser authorization where providers support it.</b><span>Credentials stay in provider tooling and your operating-system keychain.</span></div>
-        <div class="provider-list">
-          <div><span class="provider-mark google-mark">G</span><div><b>Google Cloud</b><p>Browser sign-in through Google CLI; Terraform provisions the control plane.</p></div><span class="provider-status">OAuth</span></div>
-          <div><span class="provider-mark cloudflare-mark">C</span><div><b>Cloudflare</b><p>Wrangler opens Cloudflare's consent screen; no API token is pasted into Rally.</p></div><span class="provider-status">OAuth</span></div>
-          <div><span class="provider-mark resend-mark">R</span><div><b>Resend</b><p>Managed mail avoids customer credentials. Bring-your-own mail is an advanced fallback.</p></div><span class="provider-status muted-status">Optional</span></div>
-        </div>
-        <a class="button button-secondary full-width" href="https://github.com/Agent9AI/rally/blob/main/docs/RUNBOOK.md">Open the self-host runbook</a>
-        <p class="setup-note">We do not display fake “Connect” buttons before a provider integration can complete securely end to end.</p>
+        <div class="setup-promise"><b>Provider-native authorization.</b><span>Credentials stay in provider tooling and your operating-system keychain.</span></div>
+        <div class="provider-list"><div><span class="provider-mark google-mark">G</span><div><b>Google Cloud</b><p>Browser sign-in through Google CLI; Terraform provisions the control plane.</p></div><span class="provider-status">OAuth</span></div><div><span class="provider-mark cloudflare-mark">C</span><div><b>Cloudflare</b><p>Wrangler opens Cloudflare consent; no API token is pasted into Rally.</p></div><span class="provider-status">OAuth</span></div><div><span class="provider-mark resend-mark">R</span><div><b>Resend</b><p>Managed mail avoids customer credentials. Bring-your-own mail is optional.</p></div><span class="provider-status muted-status">Optional</span></div></div>
+        <a class="button button-outline full-width" href="https://github.com/Agent9AI/rally/blob/main/docs/RUNBOOK.md">Open the self-host runbook</a>
       </section>
     </dialog>
 
