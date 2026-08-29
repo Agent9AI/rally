@@ -136,22 +136,22 @@ async def finish_coordination(record: dict[str, Any], task: str) -> dict[str, An
             )
             raise HTTPException(status_code=502, detail="ADK coordinator failed") from exc
 
-    record["updated_at"] = isoformat(utc_now())
-    record["lease_expires_at"] = None
-    if not await store.update(run_id, record, expected_attempt=attempt):
-        current = await store.get(run_id)
-        if current:
-            return {**current, "duplicate": True}
-        raise HTTPException(status_code=409, detail="coordination ownership changed")
-    logger.info(
-        "commission ready for Rally",
-        extra={
-            "event": "commission_ready",
-            "run_id": run_id,
-            "status": record["status"],
-        },
-    )
-    return record
+        record["updated_at"] = isoformat(utc_now())
+        record["lease_expires_at"] = None
+        if not await store.update(run_id, record, expected_attempt=attempt):
+            current = await store.get(run_id)
+            if current:
+                return {**current, "duplicate": True}
+            raise HTTPException(status_code=409, detail="coordination ownership changed")
+        logger.info(
+            "commission ready for Rally",
+            extra={
+                "event": "commission_ready",
+                "run_id": run_id,
+                "status": record["status"],
+            },
+        )
+        return record
 
 
 @app.get("/health")
