@@ -37,7 +37,7 @@ from hosted_connectors import (
     normalize_workflow_ids,
     pack_secret,
     public_catalog,
-    resolve_endpoint,
+    resolve_token_endpoint,
 )
 from hosted_connectors import (
     connector as hosted_connector,
@@ -490,7 +490,9 @@ async def store_connection(
     if not item.token_ready:
         raise HTTPException(status_code=409, detail="this connector requires OAuth")
     try:
-        endpoint = resolve_endpoint(item, body.endpoint)
+        if body.scheme != item.token_scheme:
+            raise HostedConnectorError("credential_scheme_not_allowed")
+        endpoint = resolve_token_endpoint(item, body.endpoint)
         workflow_ids = normalize_workflow_ids(item, body.workflow_ids)
         material = pack_secret(
             credential=body.credential.get_secret_value(),

@@ -67,9 +67,20 @@ async def test_unknown_connector_and_oversized_credentials_fail(web_control_plan
             "/v1/connections/github",
             json={"credential": "x" * 65537, "kind": "api_key"},
         )
+        wrong_scheme = await client.put(
+            "/v1/connections/github",
+            json={
+                "credential": "secret",
+                "kind": "bearer_token",
+                "scheme": "basic",
+                "account": "owner@example.com",
+            },
+        )
 
     assert unknown.status_code == 404
     assert oversized.status_code == 422
+    assert wrong_scheme.status_code == 422
+    assert wrong_scheme.json()["detail"] == "credential_scheme_not_allowed"
     assert "x" * 100 not in oversized.text
 
 

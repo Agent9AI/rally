@@ -14,7 +14,7 @@ from connector_oauth import (
     OAuthFlow,
 )
 from credential_vault import MemoryConnectorVault
-from hosted_connectors import connector
+from hosted_connectors import connector, resolve_token_endpoint
 from user_auth import UserIdentity
 
 NOW = dt.datetime(2026, 8, 30, 18, 0, tzinfo=dt.UTC)
@@ -111,6 +111,23 @@ async def test_oauth_start_uses_pkce_cimd_and_one_use_hashed_state():
     completion = await broker.exchange(flow, "provider-code")
     assert completion.access_material["credential"] == "provider-access-token"
     assert "provider-refresh-token" in completion.stored_material
+    assert resolve_token_endpoint(connector("atlassian")) == "https://mcp.atlassian.com/v1/mcp"
+
+    def unsupported_token_transport(request: httpx.Request) -> httpx.Response:
+        if request.method == "POST" and str(request.url) == "https://hyperagent.com/oauth/token":
+            return httpx.Response(
+                200,
+                json={"access_token": "wrong-scheme", "token_type": "Basic"},
+            )
+        return oauth_transport(request)
+
+    unsupported = ConnectorOAuthBroker(
+        store,
+        transport=httpx.MockTransport(unsupported_token_transport),
+        clock=lambda: NOW,
+    )
+    with pytest.raises(HostedOAuthError, match="oauth_token_exchange_failed"):
+        await unsupported.exchange(flow, "provider-code")
 
 
 @pytest.mark.asyncio

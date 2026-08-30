@@ -33,6 +33,7 @@ class HostedConnectorError(RuntimeError):
 
 
 AuthReadiness = Literal["oauth", "token", "provider_app"]
+TokenScheme = Literal["bearer", "basic"]
 
 
 @dataclass(frozen=True)
@@ -54,6 +55,8 @@ class HostedConnector:
     credential_label: str = "Access token"
     credential_help: str = "Create the narrowest credential the provider allows."
     token_url: str | None = None
+    token_endpoint: str | None = None
+    token_scheme: TokenScheme = "bearer"
 
 
 _CONNECTORS: Final[dict[str, HostedConnector]] = {
@@ -159,7 +162,8 @@ _CONNECTORS: Final[dict[str, HostedConnector]] = {
         ),
         credential_label="Atlassian service-account key",
         credential_help="OAuth is preferred. The token fallback requires an organization-enabled service-account API key.",
-        token_url="https://id.atlassian.com/manage-profile/security/api-tokens",
+        token_url="https://developer.atlassian.com/cloud/rovo-mcp/guides/configuring-authentication-via-api-token/",
+        token_endpoint="https://mcp.atlassian.com/v1/mcp",
     ),
     "salesforce": HostedConnector(
         id="salesforce",
@@ -218,6 +222,7 @@ def public_catalog() -> list[dict[str, Any]]:
             "credential_label": item.credential_label,
             "credential_help": item.credential_help,
             "token_url": item.token_url,
+            "token_scheme": item.token_scheme,
         }
         for item in _CONNECTORS.values()
     ]
@@ -289,6 +294,15 @@ def resolve_endpoint(item: HostedConnector, supplied: str | None = None) -> str:
     )
     if not suffix_match or (item.endpoint_paths and path not in item.endpoint_paths):
         raise HostedConnectorError("endpoint_not_allowed")
+    return canonical
+
+
+def resolve_token_endpoint(item: HostedConnector, supplied: str | None = None) -> str:
+    """Resolve the endpoint used by a non-interactive credential fallback."""
+
+    if supplied or item.token_endpoint is None:
+        return resolve_endpoint(item, supplied)
+    _, _, canonical = _canonical_https(item.token_endpoint)
     return canonical
 
 

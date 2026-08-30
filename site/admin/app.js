@@ -53,6 +53,7 @@
     endpoint_invalid: "That is not a valid HTTPS MCP server URL.",
     endpoint_not_allowed: "That URL is outside this connector’s verified provider boundary.",
     credential_invalid: "Use a valid provider credential without spaces or line breaks.",
+    credential_scheme_not_allowed: "That credential type is not enabled for this connector.",
     account_required: "Enter the provider account email associated with this credential.",
     policy_configuration_required: "Add at least one approved n8n workflow ID.",
     policy_scope_invalid: "Check the workflow IDs and try again.",
@@ -396,7 +397,7 @@
           credential,
           kind,
           endpoint: endpointInput.value.trim() || null,
-          scheme: "bearer",
+          scheme: item.token_scheme || "bearer",
           workflow_ids: workflowIds(),
         }),
       });
