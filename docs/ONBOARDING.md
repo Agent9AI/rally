@@ -35,11 +35,11 @@ A future guided installer should orchestrate provider-native browser consent:
 The installer may report credential status, but must never print tokens, write
 them to the repository, or ask the user to disable security warnings.
 
-## Why there are no fake Connect buttons
+## Why every Connect button is real
 
 A website cannot safely reuse Wrangler's local OAuth identity, and a provider
-dashboard link is not a completed integration. Rally will label a button
-“Connect” only when all of these exist:
+dashboard link is not a completed integration. The hosted admin now labels a
+button “Connect” only when all of these exist:
 
 - a registered application and least-privilege consent scopes
 - a state-bound callback with PKCE where supported
@@ -48,8 +48,11 @@ dashboard link is not a completed integration. Rally will label a button
 - a post-connect capability check
 - a complete rollback path
 
-Until then, the public site offers managed onboarding and accurately describes
-the self-host flow.
+Cloudflare, n8n Cloud, Stripe, Atlassian, and HyperAgent use provider-native
+OAuth in the current tab and return to the exact admin card. GitHub uses a
+guided fine-grained-token path. Google Workspace, Slack, and Salesforce remain
+labelled “App setup needed” until Rally's provider registrations are complete;
+their setup links open separately and are never presented as connections.
 
 ## Hosted control-plane slice
 
@@ -60,12 +63,18 @@ protects each connection; Google Cloud KMS wraps that key; and Firestore stores
 only ciphertext and non-secret metadata. The browser retains no session or
 credential in persistent storage.
 
-The vault intentionally reports `stored_unverified`, not `connected`. Token- or
-key-based adapters may accept a credential only after sign-in. OAuth-only
-providers remain visibly unavailable until their registered application,
-state-bound callback, PKCE flow, consent scopes, revocation, and live capability
-check are complete. This preserves the no-fake-Connect rule while letting the
-security foundation ship independently.
+The vault moves through `stored_unverified`, `verifying`, and `ready`. OAuth
+state is one-use, hashed at rest, expires after ten minutes, and its encrypted
+flow record is deleted atomically at callback. Rally stores a returned token
+before immediately testing authenticated MCP discovery and intersecting the
+live tool names with a committed safe preset. A failed check becomes
+`needs_attention`; no tool is enabled merely because a secret was accepted.
+
+This hosted activation plane proves custody, provider identity, and the safe
+tool boundary. The existing runner gateway remains a separate execution plane:
+a ready hosted connection is not delegated to an agent run until Rally issues a
+run-scoped, immutable authority snapshot for that user. That last bridge must
+remain explicit rather than letting a browser session become model authority.
 
 ## Company activation checklist
 

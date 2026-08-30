@@ -123,15 +123,15 @@ still cannot finish, Rally tells you exactly where and why.
 | Judge console | live Pages UI backed by a double-sanitized D1 run projection; professional proof run `r-20260830-447f2f` is public |
 | `rally@updates.agent9.dev` route | working; replies return to the commissioner |
 | Connector gateway | BigQuery live MCP handshake + six-tool discovery verified; ten pinned runtime adapters; provider-safe presets; exact one-time human approvals; per-run authority, payload ceilings, and content-free receipts |
-| Product + Cloud test suite | 196 automated tests passing |
+| Product + Cloud test suite | 201 automated tests passing |
 | Google ADK coordinator | implemented; live eval 6/6, both metrics 1.00 |
 | Cloud Run + Firestore + Trace | deployed privately in `rally-agent9-2026`; authenticated commission, replay, Firestore, logs, and content-free trace verified |
 | Customer identity + credential vault | verified Google-account boundary, tenant-isolated API, and Cloud KMS envelope encryption implemented; Google web client registration required before public activation |
 | A2A v1.0 boundary | Agent Card, JSON-RPC, HTTP+JSON, SSE streaming, polling, listing, Firestore tasks, and dual-auth tested with official SDK clients |
 | WebMCP browser surface | Three feature-detected tools shipped for public-run search, bounded verification inspection, and human-confirmed job drafting; production ChatGPT in-app invocation remains the final proof gate |
 
-The current release candidate has **196 automated tests**: 87 deterministic
-runner, ingress, policy, bridge, connector, and site tests plus 109 Cloud, A2A,
+The current release candidate has **201 automated tests**: 87 deterministic
+runner, ingress, policy, bridge, connector, and site tests plus 114 Cloud, A2A,
 credential, preset, approval, and connector-gateway service tests.
 The separate live ADK scorecard remains 6/6 at 1.00 trajectory and 1.00 quality.
 

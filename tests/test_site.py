@@ -196,7 +196,22 @@ class TestProductSite(unittest.TestCase):
         self.assertIn('headers.set("X-Rally-Session", sessionToken)', admin_app)
         self.assertIn("use_fedcm_for_button: true", admin_app)
         self.assertIn('state.get("rally-login-code")', admin_app)
+        self.assertIn('state.get("rally-connection")', admin_app)
+        self.assertIn("window.location.assign", admin_app)
+        self.assertIn('api("/v1/connectors")', admin_app)
+        self.assertIn("Opening secure consent", admin_app)
+        self.assertNotIn("window.open", admin_app)
         self.assertNotIn('headers.set("Authorization"', admin_app)
+        self.assertIn('target="_blank"', admin_html)
+        self.assertIn("Authorize</li><li><span>2</span>Verify", admin_html)
+        metadata_path = os.path.join(SITE, "oauth", "client-metadata.json")
+        self.assertTrue(os.path.exists(metadata_path))
+        with open(metadata_path) as handle:
+            client_metadata = json.load(handle)
+        self.assertEqual(
+            client_metadata["redirect_uris"],
+            ["https://rally.agent9.dev/admin/connect/callback"],
+        )
         with open(os.path.join(private_browser, "app.js")) as handle:
             redirect_app = handle.read()
         self.assertIn('ux_mode: "redirect"', redirect_app)
@@ -282,8 +297,14 @@ class TestProductSite(unittest.TestCase):
         self.assertIn('const SITE_ORIGIN = "https://agent9-rally.pages.dev"', worker)
         self.assertIn("return await fetch(new Request(upstreamUrl, request))", worker)
         self.assertIn('const GOOGLE_CALLBACK_PATH = "/admin/google/callback"', worker)
+        self.assertIn(
+            'const CONNECTOR_CALLBACK_PATH = "/admin/connect/callback"',
+            worker,
+        )
         self.assertIn("return proxyGoogleCallback(request)", worker)
+        self.assertIn("return proxyConnectorCallback(request, url)", worker)
         self.assertIn("MAX_GOOGLE_FORM_BODY", worker)
+        self.assertIn("MAX_CONNECTOR_CALLBACK_QUERY", worker)
 
 
 if __name__ == "__main__":

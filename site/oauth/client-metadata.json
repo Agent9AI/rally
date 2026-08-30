@@ -1,0 +1,18 @@
+{
+  "client_name": "Rally",
+  "client_uri": "https://rally.agent9.dev/",
+  "logo_uri": "https://rally.agent9.dev/rally-symbol.png",
+  "redirect_uris": [
+    "https://rally.agent9.dev/admin/connect/callback"
+  ],
+  "grant_types": [
+    "authorization_code",
+    "refresh_token"
+  ],
+  "response_types": [
+    "code"
+  ],
+  "token_endpoint_auth_method": "none",
+  "policy_uri": "https://rally.agent9.dev/privacy/",
+  "tos_uri": "https://rally.agent9.dev/terms/"
+}

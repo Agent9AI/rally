@@ -23,6 +23,12 @@ class CredentialVaultError(RuntimeError):
 _CONNECTOR_ID: Final = re.compile(r"^[a-z0-9][a-z0-9-]{0,63}$")
 _MAX_SECRET_BYTES: Final = 64 * 1024
 _ENVELOPE_SCHEMA: Final = "rally.connector-secret/v1"
+_CONNECTION_STATUSES: Final = {
+    "stored_unverified",
+    "verifying",
+    "ready",
+    "needs_attention",
+}
 
 
 def _validate_connector_id(connector_id: str) -> str:
@@ -84,14 +90,29 @@ class ConnectionRecord:
     status: str
     created_at: str
     updated_at: str
+    tool_count: int = 0
+    verified_at: str | None = None
+    error_code: str | None = None
 
 
 class ConnectorVault(Protocol):
-    async def put(self, uid: str, connector_id: str, secret: ConnectorSecret) -> ConnectionRecord: ...
+    async def put(
+        self, uid: str, connector_id: str, secret: ConnectorSecret
+    ) -> ConnectionRecord: ...
 
     async def list(self, uid: str) -> list[ConnectionRecord]: ...
 
     async def get_secret(self, uid: str, connector_id: str) -> ConnectorSecret | None: ...
+
+    async def mark(
+        self,
+        uid: str,
+        connector_id: str,
+        *,
+        status: str,
+        tool_count: int = 0,
+        error_code: str | None = None,
+    ) -> ConnectionRecord: ...
 
     async def delete(self, uid: str, connector_id: str) -> bool: ...
 
@@ -99,15 +120,24 @@ class ConnectorVault(Protocol):
 class KmsEnvelopeCipher:
     """One random AES-GCM DEK per credential, wrapped by a Cloud KMS KEK."""
 
-    def __init__(self, key_name: str, client: Any | None = None):
+    def __init__(
+        self,
+        key_name: str,
+        client: Any | None = None,
+        *,
+        envelope_schema: str = _ENVELOPE_SCHEMA,
+    ):
         if not key_name.startswith("projects/") or "/cryptoKeys/" not in key_name:
             raise CredentialVaultError("invalid Cloud KMS key name")
+        if not envelope_schema.startswith("rally.") or not envelope_schema.endswith("/v1"):
+            raise CredentialVaultError("invalid envelope schema")
         if client is None:
             from google.cloud import kms
 
             client = kms.KeyManagementServiceClient()
         self.key_name = key_name
         self.client = client
+        self.envelope_schema = envelope_schema
 
     def seal(self, plaintext: bytes, associated_data: bytes) -> dict[str, str]:
         if not plaintext or len(plaintext) > _MAX_SECRET_BYTES:
@@ -122,7 +152,7 @@ class KmsEnvelopeCipher:
         except Exception as exc:
             raise CredentialVaultError("could not protect connector credential") from exc
         return {
-            "schema": _ENVELOPE_SCHEMA,
+            "schema": self.envelope_schema,
             "nonce": _encode(nonce),
             "ciphertext": _encode(ciphertext),
             "wrapped_dek": _encode(wrapped),
@@ -130,7 +160,7 @@ class KmsEnvelopeCipher:
         }
 
     def open(self, envelope: dict[str, Any], associated_data: bytes) -> bytes:
-        if envelope.get("schema") != _ENVELOPE_SCHEMA:
+        if envelope.get("schema") != self.envelope_schema:
             raise CredentialVaultError("stored connector credential is invalid")
         if envelope.get("kms_key") != self.key_name:
             raise CredentialVaultError("stored connector credential uses an unexpected key")
@@ -155,9 +185,7 @@ class MemoryConnectorVault:
     def __init__(self):
         self._items: dict[tuple[str, str], tuple[ConnectorSecret, ConnectionRecord]] = {}
 
-    async def put(
-        self, uid: str, connector_id: str, secret: ConnectorSecret
-    ) -> ConnectionRecord:
+    async def put(self, uid: str, connector_id: str, secret: ConnectorSecret) -> ConnectionRecord:
         connector_id = _validate_connector_id(connector_id)
         key = (uid, connector_id)
         now = _utc_now()
@@ -182,6 +210,36 @@ class MemoryConnectorVault:
         item = self._items.get((uid, _validate_connector_id(connector_id)))
         return item[0] if item else None
 
+    async def mark(
+        self,
+        uid: str,
+        connector_id: str,
+        *,
+        status: str,
+        tool_count: int = 0,
+        error_code: str | None = None,
+    ) -> ConnectionRecord:
+        connector_id = _validate_connector_id(connector_id)
+        if status not in _CONNECTION_STATUSES or not 0 <= tool_count <= 128:
+            raise CredentialVaultError("invalid connector status")
+        key = (uid, connector_id)
+        item = self._items.get(key)
+        if item is None:
+            raise CredentialVaultError("connector credential does not exist")
+        now = _utc_now()
+        record = ConnectionRecord(
+            connector_id=connector_id,
+            credential_kind=item[1].credential_kind,
+            status=status,
+            created_at=item[1].created_at,
+            updated_at=now,
+            tool_count=tool_count,
+            verified_at=now if status == "ready" else None,
+            error_code=error_code,
+        )
+        self._items[key] = (item[0], record)
+        return record
+
     async def delete(self, uid: str, connector_id: str) -> bool:
         return self._items.pop((uid, _validate_connector_id(connector_id)), None) is not None
 
@@ -205,18 +263,12 @@ class GoogleKmsConnectorVault:
         self.collection = firestore_client.collection("connector_credentials")
         self.cipher = KmsEnvelopeCipher(key_name, client=kms_client)
 
-    async def put(
-        self, uid: str, connector_id: str, secret: ConnectorSecret
-    ) -> ConnectionRecord:
+    async def put(self, uid: str, connector_id: str, secret: ConnectorSecret) -> ConnectionRecord:
         connector_id = _validate_connector_id(connector_id)
         document = self.collection.document(_document_id(uid, connector_id))
         previous = await document.get()
         now = _utc_now()
-        created_at = (
-            str((previous.to_dict() or {}).get("created_at"))
-            if previous.exists
-            else now
-        )
+        created_at = str((previous.to_dict() or {}).get("created_at")) if previous.exists else now
         plaintext = json.dumps(
             {"kind": secret.kind, "value": secret.value},
             separators=(",", ":"),
@@ -264,6 +316,36 @@ class GoogleKmsConnectorVault:
         except (KeyError, TypeError, ValueError, UnicodeDecodeError):
             raise CredentialVaultError("stored connector credential is invalid") from None
 
+    async def mark(
+        self,
+        uid: str,
+        connector_id: str,
+        *,
+        status: str,
+        tool_count: int = 0,
+        error_code: str | None = None,
+    ) -> ConnectionRecord:
+        connector_id = _validate_connector_id(connector_id)
+        if status not in _CONNECTION_STATUSES or not 0 <= tool_count <= 128:
+            raise CredentialVaultError("invalid connector status")
+        document = self.collection.document(_document_id(uid, connector_id))
+        snapshot = await document.get()
+        if not snapshot.exists:
+            raise CredentialVaultError("connector credential does not exist")
+        record = snapshot.to_dict() or {}
+        if not hmac.compare_digest(str(record.get("owner_hash", "")), _owner_hash(uid)):
+            raise CredentialVaultError("connector credential does not exist")
+        now = _utc_now()
+        updates: dict[str, Any] = {
+            "status": status,
+            "tool_count": tool_count,
+            "verified_at": now if status == "ready" else None,
+            "error_code": error_code,
+            "updated_at": now,
+        }
+        await document.update(updates)
+        return _public_record({**record, **updates})
+
     async def delete(self, uid: str, connector_id: str) -> bool:
         connector_id = _validate_connector_id(connector_id)
         document = self.collection.document(_document_id(uid, connector_id))
@@ -285,6 +367,13 @@ def _public_record(record: dict[str, Any]) -> ConnectionRecord:
             status=str(record["status"]),
             created_at=str(record["created_at"]),
             updated_at=str(record["updated_at"]),
+            tool_count=int(record.get("tool_count", 0)),
+            verified_at=(
+                str(record["verified_at"]) if record.get("verified_at") is not None else None
+            ),
+            error_code=(
+                str(record["error_code"]) if record.get("error_code") is not None else None
+            ),
         )
     except (KeyError, TypeError, CredentialVaultError):
         raise CredentialVaultError("stored connector metadata is invalid") from None

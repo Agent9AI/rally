@@ -26,6 +26,23 @@ The gateway ships named provider-safe presets. A preset is an exact tool
 allowlist with smaller payload bounds; it is not a wildcard and never follows
 future provider catalog growth automatically.
 
+## Hosted activation
+
+The Google-authenticated admin at `/admin/` is the hosted connection front
+door. Cloudflare Observability, n8n Cloud, Stripe, Atlassian, and HyperAgent use
+OAuth Authorization Code with PKCE and an exact Rally callback. Their OAuth
+metadata and token endpoints are restricted to provider-owned hosts. GitHub has
+a guided fine-grained-token path. Google Workspace, Slack, and Salesforce are
+honestly held at provider-app setup instead of showing a Connect button that
+cannot complete.
+
+The browser retains neither credential nor connection session in persistent
+storage. Google Cloud KMS envelope-encrypts tokens in the user-owned vault.
+“Ready” is emitted only after live MCP discovery succeeds and at least one live
+tool matches the committed safe preset. Hosted readiness does not itself grant
+an agent authority: a later run must receive a separate immutable, run-scoped
+authority snapshot through the execution gateway described below.
+
 ## Per-user isolation
 
 A connection belongs to one commissioner, never to the Rally installation.

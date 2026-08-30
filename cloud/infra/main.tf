@@ -121,6 +121,15 @@ resource "google_firestore_field" "auth_session_ttl" {
   ttl_config {}
 }
 
+resource "google_firestore_field" "connector_oauth_flow_ttl" {
+  project    = var.project_id
+  database   = google_firestore_database.rally.name
+  collection = "rally_connector_oauth_flows"
+  field      = "expires_at"
+
+  ttl_config {}
+}
+
 resource "google_kms_key_ring" "connector_vault" {
   project  = var.project_id
   name     = "rally-connector-vault"
@@ -307,7 +316,7 @@ resource "google_cloud_run_v2_service" "control_plane" {
 
   template {
     service_account                  = google_service_account.control_plane.email
-    timeout                          = "30s"
+    timeout                          = "60s"
     max_instance_request_concurrency = 40
 
     scaling {
@@ -371,6 +380,10 @@ resource "google_cloud_run_v2_service" "control_plane" {
         value = "firestore"
       }
       env {
+        name  = "RALLY_OAUTH_BACKEND"
+        value = "firestore"
+      }
+      env {
         name  = "RALLY_ADMIN_RETURN_URL"
         value = "https://rally.agent9.dev/admin/"
       }
@@ -397,6 +410,7 @@ resource "google_cloud_run_v2_service" "control_plane" {
     google_firestore_database.rally,
     google_firestore_field.auth_code_ttl,
     google_firestore_field.auth_session_ttl,
+    google_firestore_field.connector_oauth_flow_ttl,
     google_kms_crypto_key_iam_member.control_plane,
     google_project_iam_member.control_plane,
   ]

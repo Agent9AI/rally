@@ -13,16 +13,19 @@
  *   GET  /v1/console/runs      Public, sanitized judge console feed.
  *   GET  /v1/console/runs/:id Public, sanitized run detail.
  *   POST /admin/google/callback Exact, bounded Google redirect handoff.
+ *   GET  /admin/connect/callback Exact, bounded provider OAuth handoff.
  *   GET  /health           Liveness, no auth, no data.
  */
 
 const MAX_BODY = 512 * 1024;
 const MAX_CONSOLE_BODY = 96 * 1024;
 const MAX_GOOGLE_FORM_BODY = 32 * 1024;
+const MAX_CONNECTOR_CALLBACK_QUERY = 12 * 1024;
 const CONSOLE_ROOT = "/v1/console/runs";
 const SITE_ORIGIN = "https://agent9-rally.pages.dev";
 const CONTROL_PLANE_ORIGIN = "https://rally-control-plane-u5xngrbzna-ue.a.run.app";
 const GOOGLE_CALLBACK_PATH = "/admin/google/callback";
+const CONNECTOR_CALLBACK_PATH = "/admin/connect/callback";
 const RUN_ID = /^r-[0-9a-z-]{3,77}$/;
 const RUN_STATUSES = new Set(["running", "complete", "blocked", "halted"]);
 const TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/;
@@ -108,6 +111,59 @@ async function proxyGoogleCallback(request) {
       error: error instanceof Error ? error.message : String(error),
     }));
     return json({ error: "sign-in temporarily unavailable" }, 502);
+  }
+}
+
+async function proxyConnectorCallback(request, url) {
+  if (url.search.length > MAX_CONNECTOR_CALLBACK_QUERY) {
+    return json({ error: "authorization response too large" }, 413);
+  }
+  const allowed = new Set(["code", "state", "error", "error_description"]);
+  for (const name of url.searchParams.keys()) {
+    if (!allowed.has(name) || url.searchParams.getAll(name).length !== 1) {
+      return json({ error: "invalid authorization response" }, 400);
+    }
+  }
+  const state = url.searchParams.get("state") || "";
+  const code = url.searchParams.get("code") || "";
+  const error = url.searchParams.get("error") || "";
+  if (
+    !/^[A-Za-z0-9_-]{32,128}$/.test(state) ||
+    (!code && !error) ||
+    code.length > 8192 ||
+    error.length > 128
+  ) {
+    return json({ error: "invalid authorization response" }, 400);
+  }
+
+  try {
+    const upstream = await fetch(`${CONTROL_PLANE_ORIGIN}/auth/connector/callback`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ state, code: code || null, error: error || null }),
+      redirect: "manual",
+    });
+    const responseHeaders = new Headers({
+      "cache-control": "no-store",
+      "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+      "referrer-policy": "no-referrer",
+      "x-content-type-options": "nosniff",
+    });
+    for (const name of ["content-type", "location", "pragma", "www-authenticate"]) {
+      const value = upstream.headers.get(name);
+      if (value) responseHeaders.set(name, value);
+    }
+    return new Response(upstream.body, {
+      status: upstream.status,
+      statusText: upstream.statusText,
+      headers: responseHeaders,
+    });
+  } catch (error) {
+    console.error(JSON.stringify({
+      event: "connector_callback_failed",
+      error: error instanceof Error ? error.message : String(error),
+    }));
+    return json({ error: "connector authorization temporarily unavailable" }, 502);
   }
 }
 
@@ -437,6 +493,12 @@ export default {
     // double-submit CSRF token before issuing a one-time exchange code.
     if (request.method === "POST" && path === GOOGLE_CALLBACK_PATH) {
       return proxyGoogleCallback(request);
+    }
+
+    // Provider authorization returns here in the same tab. OAuth state—not a
+    // browser-stored Rally session—restores the user and exact connector card.
+    if (request.method === "GET" && path === CONNECTOR_CALLBACK_PATH) {
+      return proxyConnectorCallback(request, url);
     }
 
     // --- inbound from Resend -------------------------------------------

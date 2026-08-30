@@ -19,12 +19,28 @@ from auth_sessions import (
     AuthSessionStore,
     make_auth_session_store,
 )
+from connector_oauth import (
+    ConnectorOAuthBroker,
+    HostedOAuthError,
+    make_oauth_flow_store,
+)
 from credential_vault import (
     ConnectionRecord,
     ConnectorSecret,
     ConnectorVault,
     CredentialVaultError,
     make_connector_vault,
+)
+from hosted_connectors import (
+    HostedConnectorError,
+    McpConnectionVerifier,
+    normalize_workflow_ids,
+    pack_secret,
+    public_catalog,
+    resolve_endpoint,
+)
+from hosted_connectors import (
+    connector as hosted_connector,
 )
 from user_auth import UserIdentity, verify_google_id_token
 
@@ -44,9 +60,7 @@ SUPPORTED_CONNECTORS = frozenset(
 
 app = FastAPI(title="Rally Control Plane", version="0.1")
 allowed_origins = tuple(
-    origin.strip()
-    for origin in os.getenv("RALLY_ALLOWED_ORIGINS", "").split(",")
-    if origin.strip()
+    origin.strip() for origin in os.getenv("RALLY_ALLOWED_ORIGINS", "").split(",") if origin.strip()
 )
 app.add_middleware(
     CORSMiddleware,
@@ -64,6 +78,8 @@ app.add_middleware(
 
 _vault: ConnectorVault | None = None
 _auth_store: AuthSessionStore | None = None
+_oauth_broker: ConnectorOAuthBroker | None = None
+_connection_verifier: McpConnectionVerifier | None = None
 _MAX_GOOGLE_FORM_BYTES = 32 * 1024
 
 
@@ -90,8 +106,27 @@ def get_auth_store() -> AuthSessionStore:
         try:
             _auth_store = make_auth_session_store()
         except AuthSessionError as exc:
-            raise HTTPException(status_code=503, detail="browser authentication is unavailable") from exc
+            raise HTTPException(
+                status_code=503, detail="browser authentication is unavailable"
+            ) from exc
     return _auth_store
+
+
+def get_oauth_broker() -> ConnectorOAuthBroker:
+    global _oauth_broker
+    if _oauth_broker is None:
+        try:
+            _oauth_broker = ConnectorOAuthBroker(make_oauth_flow_store())
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail="connector OAuth is unavailable") from exc
+    return _oauth_broker
+
+
+def get_connection_verifier() -> McpConnectionVerifier:
+    global _connection_verifier
+    if _connection_verifier is None:
+        _connection_verifier = McpConnectionVerifier()
+    return _connection_verifier
 
 
 def _unauthorized(detail: str = "authentication required") -> HTTPException:
@@ -115,7 +150,9 @@ async def require_user(
     try:
         identity = await get_auth_store().get_identity(session_token or "")
     except AuthSessionError as exc:
-        raise HTTPException(status_code=503, detail="browser authentication is unavailable") from exc
+        raise HTTPException(
+            status_code=503, detail="browser authentication is unavailable"
+        ) from exc
     if identity is None:
         raise _unauthorized("login session is invalid or expired")
     return identity
@@ -135,6 +172,21 @@ async def response_security(request: Request, call_next):
 class CredentialInput(BaseModel):
     credential: SecretStr = Field(min_length=1, max_length=65536)
     kind: Literal["api_key", "bearer_token", "oauth_refresh_token"]
+    endpoint: str | None = Field(default=None, max_length=2048)
+    scheme: Literal["bearer", "basic"] = "bearer"
+    account: str | None = Field(default=None, max_length=320)
+    workflow_ids: list[str] = Field(default_factory=list, max_length=64)
+
+
+class OAuthStartInput(BaseModel):
+    endpoint: str | None = Field(default=None, max_length=2048)
+    workflow_ids: list[str] = Field(default_factory=list, max_length=64)
+
+
+class OAuthCallbackInput(BaseModel):
+    state: SecretStr = Field(min_length=32, max_length=128)
+    code: SecretStr | None = Field(default=None, min_length=1, max_length=8192)
+    error: str | None = Field(default=None, max_length=128)
 
 
 class LoginCodeInput(BaseModel):
@@ -196,12 +248,15 @@ async def bounded_google_form(request: Request) -> dict[str, str]:
     return {key: values[0] for key, values in parsed.items()}
 
 
-def public_connection(record: ConnectionRecord) -> dict[str, str | bool]:
+def public_connection(record: ConnectionRecord) -> dict[str, object]:
     return {
         "connector_id": record.connector_id,
         "credential_kind": record.credential_kind,
         "status": record.status,
-        "verified": False,
+        "verified": record.status == "ready",
+        "tool_count": record.tool_count,
+        "verified_at": record.verified_at,
+        "error_code": record.error_code,
         "created_at": record.created_at,
         "updated_at": record.updated_at,
     }
@@ -213,6 +268,20 @@ def validated_connector(connector_id: str) -> str:
     return connector_id
 
 
+def connector_return_url(
+    *,
+    login_code: str | None = None,
+    connector_id: str | None = None,
+    status: str,
+) -> str:
+    fragment: dict[str, str] = {"rally-connection-status": status}
+    if login_code:
+        fragment["rally-login-code"] = login_code
+    if connector_id:
+        fragment["rally-connection"] = connector_id
+    return f"{admin_return_url()}#{urlencode(fragment)}"
+
+
 @app.get("/health")
 @app.get("/healthz", include_in_schema=False)
 def healthz() -> dict[str, str]:
@@ -222,6 +291,16 @@ def healthz() -> dict[str, str]:
 @app.get("/v1/me")
 def me(user: Annotated[UserIdentity, Depends(require_user)]) -> dict[str, str | None]:
     return public_user(user)
+
+
+@app.get("/v1/connectors")
+def connector_catalog(
+    _: Annotated[UserIdentity, Depends(require_user)],
+) -> dict[str, object]:
+    return {
+        "connectors": public_catalog(),
+        "activation": ["authorize", "verify", "ready"],
+    }
 
 
 @app.post("/auth/google/callback", include_in_schema=False)
@@ -241,7 +320,9 @@ async def google_callback(
     try:
         code = await auth_store.issue_code(identity)
     except AuthSessionError as exc:
-        raise HTTPException(status_code=503, detail="browser authentication is unavailable") from exc
+        raise HTTPException(
+            status_code=503, detail="browser authentication is unavailable"
+        ) from exc
     fragment = urlencode({"rally-login-code": code})
     return RedirectResponse(f"{admin_return_url()}#{fragment}", status_code=303)
 
@@ -256,7 +337,9 @@ async def exchange_login_code(
     try:
         exchanged = await auth_store.exchange_code(body.code.get_secret_value())
     except AuthSessionError as exc:
-        raise HTTPException(status_code=503, detail="browser authentication is unavailable") from exc
+        raise HTTPException(
+            status_code=503, detail="browser authentication is unavailable"
+        ) from exc
     if exchanged is None:
         raise _unauthorized("login code is invalid or expired")
     session_token, user = exchanged
@@ -267,11 +350,126 @@ async def exchange_login_code(
     }
 
 
+@app.post("/v1/connections/{connector_id}/oauth/start")
+async def start_connector_oauth(
+    connector_id: str,
+    body: OAuthStartInput,
+    user: Annotated[UserIdentity, Depends(require_user)],
+    broker: Annotated[ConnectorOAuthBroker, Depends(get_oauth_broker)],
+) -> dict[str, str]:
+    connector_id = validated_connector(connector_id)
+    item = hosted_connector(connector_id)
+    try:
+        authorization_url = await broker.start(
+            item,
+            user,
+            body.endpoint,
+            body.workflow_ids,
+        )
+    except HostedOAuthError as exc:
+        if exc.code in {
+            "endpoint_required",
+            "endpoint_invalid",
+            "endpoint_not_allowed",
+            "policy_configuration_required",
+            "policy_scope_invalid",
+        }:
+            raise HTTPException(status_code=422, detail=exc.code) from exc
+        if exc.code == "oauth_not_available":
+            raise HTTPException(status_code=409, detail="OAuth is not available") from exc
+        raise HTTPException(
+            status_code=503, detail="provider authorization is unavailable"
+        ) from exc
+    return {
+        "connector_id": connector_id,
+        "authorization_url": authorization_url,
+        "return_to": admin_return_url(),
+    }
+
+
+@app.post("/auth/connector/callback", include_in_schema=False)
+async def connector_callback(
+    body: OAuthCallbackInput,
+    broker: Annotated[ConnectorOAuthBroker, Depends(get_oauth_broker)],
+    vault: Annotated[ConnectorVault, Depends(get_vault)],
+    auth_store: Annotated[AuthSessionStore, Depends(get_auth_store)],
+    verifier: Annotated[McpConnectionVerifier, Depends(get_connection_verifier)],
+) -> RedirectResponse:
+    """Consume OAuth state, verify live MCP capabilities, and restore login."""
+
+    try:
+        flow = await broker.consume(body.state.get_secret_value())
+    except HostedOAuthError as exc:
+        raise HTTPException(status_code=503, detail="connector OAuth is unavailable") from exc
+    if flow is None:
+        return RedirectResponse(
+            connector_return_url(status="invalid-or-expired"),
+            status_code=303,
+        )
+
+    status = "cancelled"
+    if not body.error and body.code is not None:
+        item = hosted_connector(flow.connector_id)
+        try:
+            completion = await broker.exchange(flow, body.code.get_secret_value())
+            await vault.put(
+                flow.identity.uid,
+                flow.connector_id,
+                ConnectorSecret(completion.stored_material, "oauth_refresh_token"),
+            )
+            await vault.mark(
+                flow.identity.uid,
+                flow.connector_id,
+                status="verifying",
+            )
+            try:
+                tool_count = await verifier.verify(
+                    item,
+                    completion.access_material,
+                    allowed_workflow_ids=flow.allowed_workflow_ids,
+                )
+            except HostedConnectorError as exc:
+                await vault.mark(
+                    flow.identity.uid,
+                    flow.connector_id,
+                    status="needs_attention",
+                    error_code=exc.code,
+                )
+                status = "needs-attention"
+            else:
+                await vault.mark(
+                    flow.identity.uid,
+                    flow.connector_id,
+                    status="ready",
+                    tool_count=tool_count,
+                )
+                status = "ready"
+        except (HostedOAuthError, CredentialVaultError):
+            status = "needs-attention"
+    elif not body.error:
+        status = "needs-attention"
+
+    try:
+        login_code = await auth_store.issue_code(flow.identity)
+    except AuthSessionError as exc:
+        raise HTTPException(
+            status_code=503, detail="browser authentication is unavailable"
+        ) from exc
+    return RedirectResponse(
+        connector_return_url(
+            login_code=login_code,
+            connector_id=flow.connector_id,
+            status=status,
+        ),
+        status_code=303,
+    )
+
+
 @app.get("/v1/connections")
 async def list_connections(
     user: Annotated[UserIdentity, Depends(require_user)],
     vault: Annotated[ConnectorVault, Depends(get_vault)],
-) -> dict[str, list[dict[str, str | bool]]]:
+) -> dict[str, list[dict[str, object]]]:
     try:
         records = await vault.list(user.uid)
     except CredentialVaultError as exc:
@@ -285,14 +483,55 @@ async def store_connection(
     body: CredentialInput,
     user: Annotated[UserIdentity, Depends(require_user)],
     vault: Annotated[ConnectorVault, Depends(get_vault)],
-) -> dict[str, str | bool]:
+    verifier: Annotated[McpConnectionVerifier, Depends(get_connection_verifier)],
+) -> dict[str, object]:
     connector_id = validated_connector(connector_id)
+    item = hosted_connector(connector_id)
+    if not item.token_ready:
+        raise HTTPException(status_code=409, detail="this connector requires OAuth")
     try:
+        endpoint = resolve_endpoint(item, body.endpoint)
+        workflow_ids = normalize_workflow_ids(item, body.workflow_ids)
+        material = pack_secret(
+            credential=body.credential.get_secret_value(),
+            endpoint=endpoint,
+            scheme=body.scheme,
+            account=body.account,
+            allowed_workflow_ids=workflow_ids,
+        )
         record = await vault.put(
             user.uid,
             connector_id,
-            ConnectorSecret(body.credential.get_secret_value(), body.kind),
+            ConnectorSecret(material, body.kind),
         )
+        await vault.mark(user.uid, connector_id, status="verifying")
+        try:
+            tool_count = await verifier.verify(
+                item,
+                {
+                    "credential": body.credential.get_secret_value(),
+                    "endpoint": endpoint,
+                    "scheme": body.scheme,
+                    "account": body.account,
+                },
+                allowed_workflow_ids=workflow_ids,
+            )
+        except HostedConnectorError as exc:
+            record = await vault.mark(
+                user.uid,
+                connector_id,
+                status="needs_attention",
+                error_code=exc.code,
+            )
+        else:
+            record = await vault.mark(
+                user.uid,
+                connector_id,
+                status="ready",
+                tool_count=tool_count,
+            )
+    except HostedConnectorError as exc:
+        raise HTTPException(status_code=422, detail=exc.code) from exc
     except CredentialVaultError as exc:
         raise HTTPException(status_code=503, detail="could not store connection") from exc
     return public_connection(record)

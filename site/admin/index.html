@@ -7,9 +7,9 @@
   <meta name="theme-color" content="#f7f9fc">
   <title>Rally Admin · Secure connections</title>
   <link rel="icon" href="../rally-symbol.png">
-  <link rel="stylesheet" href="styles.css?v=20260830b">
+  <link rel="stylesheet" href="styles.css?v=20260830d">
   <script src="config.js" defer></script>
-  <script src="app.js" defer></script>
+  <script src="app.js?v=20260830d" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to connections</a>
@@ -58,17 +58,17 @@
 
       <div class="connection-heading"><div><p class="eyebrow">Business systems</p><h2>Grant the minimum. Verify before use.</h2></div><p>A stored credential is not automatically a live connection. Rally keeps each adapter disabled until authenticated discovery proves exactly what it can do.</p></div>
       <div class="connection-grid" data-connection-grid>
-        <article class="connection-card is-pending" data-connector="google-workspace"><header><img src="../brandmarks/google.svg" alt=""><span class="connection-state">OAuth required</span></header><h3>Google Workspace</h3><p>Drive, Docs, Sheets, Slides, Calendar, Gmail, Chat, and contacts.</p><footer><span>OAuth</span><button type="button" disabled>OAuth next</button></footer></article>
-        <article class="connection-card is-pending" data-connector="slack"><header><img src="../brandmarks/slack.svg" alt=""><span class="connection-state">OAuth required</span></header><h3>Slack</h3><p>Search decisions, understand history, and prepare governed team updates.</p><footer><span>OAuth</span><button type="button" disabled>OAuth next</button></footer></article>
-        <article class="connection-card" data-connector="github" data-kind="bearer_token"><header><img src="../brandmarks/github.svg" alt=""><span class="connection-state">Not secured</span></header><h3>GitHub</h3><p>Repositories, issues, pull requests, and Actions through the locked-down MCP path.</p><footer><span>Token</span><button type="button">Secure credential</button></footer></article>
-        <article class="connection-card" data-connector="cloudflare" data-kind="api_key"><header><img src="../brandmarks/cloudflare.svg" alt=""><span class="connection-state">Not secured</span></header><h3>Cloudflare</h3><p>Observability, DNS, Workers, storage, and security under an explicit scope.</p><footer><span>API token</span><button type="button">Secure credential</button></footer></article>
-        <article class="connection-card" data-connector="n8n" data-kind="api_key"><header><img src="../brandmarks/n8n.svg" alt=""><span class="connection-state">Not secured</span></header><h3>n8n</h3><p>Only administrator-approved workflows exposed as bounded company tools.</p><footer><span>API key</span><button type="button">Secure credential</button></footer></article>
-        <article class="connection-card" data-connector="stripe" data-kind="api_key"><header><img src="../brandmarks/stripe.svg" alt=""><span class="connection-state">Not secured</span></header><h3>Stripe</h3><p>Customers, subscriptions, payments, and reports with money movement gated.</p><footer><span>Restricted key</span><button type="button">Secure credential</button></footer></article>
-        <article class="connection-card is-pending" data-connector="atlassian"><header><img src="../brandmarks/atlassian.svg" alt=""><span class="connection-state">OAuth required</span></header><h3>Atlassian</h3><p>Jira, Confluence, and Compass context in one accountable assignment.</p><footer><span>OAuth</span><button type="button" disabled>OAuth next</button></footer></article>
-        <article class="connection-card is-pending" data-connector="salesforce"><header><img src="../brandmarks/salesforce.svg" alt=""><span class="connection-state">OAuth required</span></header><h3>Salesforce</h3><p>Customer, pipeline, and service records through a read-first SObject boundary.</p><footer><span>OAuth</span><button type="button" disabled>OAuth next</button></footer></article>
-        <article class="connection-card" data-connector="hyperagent" data-kind="bearer_token"><header><img src="../brandmarks/hyperagent.svg" alt=""><span class="connection-state">Not secured</span></header><h3>HyperAgent</h3><p>Delegate eligible creative work through a verified agent interface.</p><footer><span>Token</span><button type="button">Secure credential</button></footer></article>
+        <article class="connection-card is-pending" data-connector="google-workspace"><header><img src="../brandmarks/google.svg" alt=""><span class="connection-state">App setup needed</span></header><h3>Google Workspace</h3><p>Drive, Docs, Sheets, Slides, Calendar, Gmail, Chat, and contacts.</p><footer><span>Provider app</span><button type="button" data-primary-action>See setup</button></footer></article>
+        <article class="connection-card is-pending" data-connector="slack"><header><img src="../brandmarks/slack.svg" alt=""><span class="connection-state">App setup needed</span></header><h3>Slack</h3><p>Search decisions, understand history, and prepare governed team updates.</p><footer><span>Provider app</span><button type="button" data-primary-action>See setup</button></footer></article>
+        <article class="connection-card" data-connector="github" data-kind="bearer_token"><header><img src="../brandmarks/github.svg" alt=""><span class="connection-state">Token required</span></header><h3>GitHub</h3><p>Repositories, issues, pull requests, and Actions through the locked-down MCP path.</p><footer><span>Fine-grained token</span><button type="button" data-primary-action>Connect</button></footer></article>
+        <article class="connection-card" data-connector="cloudflare" data-kind="api_key"><header><img src="../brandmarks/cloudflare.svg" alt=""><span class="connection-state">OAuth ready</span></header><h3>Cloudflare</h3><p>Observability, DNS, Workers, storage, and security under an explicit scope.</p><footer><button class="token-alternative" type="button" data-token-action>Use token</button><button type="button" data-primary-action>Connect</button></footer></article>
+        <article class="connection-card" data-connector="n8n" data-kind="api_key"><header><img src="../brandmarks/n8n.svg" alt=""><span class="connection-state">OAuth ready</span></header><h3>n8n</h3><p>Only administrator-approved workflows exposed as bounded company tools.</p><footer><button class="token-alternative" type="button" data-token-action>Use token</button><button type="button" data-primary-action>Connect</button></footer></article>
+        <article class="connection-card" data-connector="stripe" data-kind="api_key"><header><img src="../brandmarks/stripe.svg" alt=""><span class="connection-state">OAuth ready</span></header><h3>Stripe</h3><p>Customers, subscriptions, payments, and reports with money movement gated.</p><footer><button class="token-alternative" type="button" data-token-action>Use key</button><button type="button" data-primary-action>Connect</button></footer></article>
+        <article class="connection-card" data-connector="atlassian" data-kind="bearer_token"><header><img src="../brandmarks/atlassian.svg" alt=""><span class="connection-state">OAuth ready</span></header><h3>Atlassian</h3><p>Jira, Confluence, and Compass context in one accountable assignment.</p><footer><button class="token-alternative" type="button" data-token-action>Use key</button><button type="button" data-primary-action>Connect</button></footer></article>
+        <article class="connection-card is-pending" data-connector="salesforce"><header><img src="../brandmarks/salesforce.svg" alt=""><span class="connection-state">App setup needed</span></header><h3>Salesforce</h3><p>Customer, pipeline, and service records through a read-first SObject boundary.</p><footer><span>Provider app</span><button type="button" data-primary-action>See setup</button></footer></article>
+        <article class="connection-card" data-connector="hyperagent"><header><img src="../brandmarks/hyperagent.svg" alt=""><span class="connection-state">OAuth ready</span></header><h3>HyperAgent</h3><p>Review agent threads and pending approvals through a verified agent interface.</p><footer><span>Hosted OAuth</span><button type="button" data-primary-action>Connect</button></footer></article>
       </div>
-      <p class="vault-boundary"><b>Honest boundary:</b> credential storage is live only after Google sign-in and the KMS control plane respond. “Secured” means encrypted at rest—not yet discovered, approved, or executable.</p>
+      <p class="vault-boundary"><b>Honest boundary:</b> “Ready” means Rally completed provider authorization, discovered the live MCP tools, and applied the safe preset. An encrypted credential alone never enables an adapter.</p>
     </section>
   </main>
 
@@ -77,15 +77,33 @@
   <dialog class="credential-dialog" data-credential-dialog aria-labelledby="credential-title">
     <form method="dialog" data-credential-form>
       <button class="dialog-close" type="button" aria-label="Close" data-dialog-close>×</button>
-      <p class="eyebrow">Tenant-isolated vault</p>
+      <p class="eyebrow" data-dialog-eyebrow>Tenant-isolated vault</p>
       <h2 id="credential-title">Secure a credential</h2>
       <p data-dialog-copy>The value travels once over HTTPS to Rally’s isolated Google Cloud control plane and is encrypted before Firestore persists it.</p>
-      <label for="credential-value">Credential value</label>
-      <input id="credential-value" name="credential" type="password" autocomplete="off" spellcheck="false" required maxlength="65536">
-      <div class="dialog-safety"><span>✓</span><p>Never stored in this browser. Never returned by the API. Never placed in model context.</p></div>
+      <ol class="activation-rail" aria-label="Connection stages">
+        <li class="is-active"><span>1</span>Authorize</li><li><span>2</span>Verify</li><li><span>3</span>Ready</li>
+      </ol>
+      <div class="dialog-field" data-endpoint-field hidden>
+        <label for="connector-endpoint">MCP server URL</label>
+        <input id="connector-endpoint" name="endpoint" type="url" inputmode="url" autocomplete="url" spellcheck="false" maxlength="2048" placeholder="https://company.app.n8n.cloud/mcp-server/http">
+        <small>Copy the exact MCP server URL shown in the provider’s connection settings.</small>
+      </div>
+      <div class="dialog-field" data-workflow-field hidden>
+        <label for="workflow-ids">Approved workflow IDs</label>
+        <textarea id="workflow-ids" name="workflow_ids" rows="3" autocomplete="off" spellcheck="false" maxlength="16448" placeholder="workflow-id-1, workflow-id-2"></textarea>
+        <small>Rally will reject every n8n workflow outside this explicit list, even if the provider credential could reach it.</small>
+      </div>
+      <div class="dialog-field" data-credential-field hidden>
+        <label for="credential-value" data-credential-label>Credential value</label>
+        <input id="credential-value" name="credential" type="password" autocomplete="off" spellcheck="false" maxlength="65536">
+        <a class="provider-guide" href="#" target="_blank" rel="noopener noreferrer" data-token-guide>Open provider instructions <span aria-hidden="true">↗</span></a>
+      </div>
+      <div class="dialog-safety" data-dialog-safety><span>✓</span><p>Never stored in this browser. Never returned by the API. Never placed in model context.</p></div>
       <p class="form-status" data-form-status role="status"></p>
-      <button class="primary-button" type="submit">Encrypt and secure</button>
+      <button class="primary-button" type="submit" data-dialog-submit>Encrypt and verify</button>
+      <a class="primary-button primary-link" href="#" target="_blank" rel="noopener noreferrer" data-setup-link hidden>Open provider setup <span aria-hidden="true">↗</span></a>
     </form>
   </dialog>
+  <div class="connection-toast" role="status" aria-live="polite" data-connection-toast hidden></div>
 </body>
 </html>

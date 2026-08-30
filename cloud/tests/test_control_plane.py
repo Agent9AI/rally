@@ -10,12 +10,23 @@ from credential_vault import MemoryConnectorVault
 from user_auth import UserIdentity
 
 
+class PassingVerifier:
+    async def verify(self, item, material, **kwargs):
+        assert item.id == "github"
+        assert material["credential"] == "extremely-secret"
+        assert kwargs["allowed_workflow_ids"] == ()
+        return 7
+
+
 @pytest.fixture
 def web_control_plane():
     vault = MemoryConnectorVault()
     identity = UserIdentity(uid="google-user-one", email="owner@example.com", name="Owner")
     control_plane.app.dependency_overrides[control_plane.require_user] = lambda: identity
     control_plane.app.dependency_overrides[control_plane.get_vault] = lambda: vault
+    control_plane.app.dependency_overrides[control_plane.get_connection_verifier] = lambda: (
+        PassingVerifier()
+    )
     yield httpx.ASGITransport(app=control_plane.app), vault
     control_plane.app.dependency_overrides.clear()
 
@@ -35,8 +46,9 @@ async def test_account_and_connection_round_trip_never_echoes_secret(web_control
     assert account.status_code == 200
     assert account.json()["uid"] == "google-user-one"
     assert stored.status_code == 200
-    assert stored.json()["status"] == "stored_unverified"
-    assert stored.json()["verified"] is False
+    assert stored.json()["status"] == "ready"
+    assert stored.json()["verified"] is True
+    assert stored.json()["tool_count"] == 7
     assert "extremely-secret" not in stored.text
     assert "extremely-secret" not in listed.text
     assert disconnected.json()["disconnected"] is True
@@ -85,9 +97,7 @@ async def test_control_plane_is_no_store_and_denies_unauthenticated_requests(mon
         lambda token: identity if token == "signed-google-token" else None,
     )
     monkeypatch.setenv("RALLY_ADMIN_RETURN_URL", "https://rally.agent9.dev/admin/")
-    form = urlencode(
-        {"credential": "signed-google-token", "g_csrf_token": "csrf-value"}
-    )
+    form = urlencode({"credential": "signed-google-token", "g_csrf_token": "csrf-value"})
 
     try:
         async with httpx.AsyncClient(
@@ -111,17 +121,13 @@ async def test_control_plane_is_no_store_and_denies_unauthenticated_requests(mon
                     "cookie": "g_csrf_token=csrf-value",
                 },
             )
-            code = parse_qs(urlsplit(callback.headers["location"]).fragment)[
-                "rally-login-code"
-            ][0]
+            code = parse_qs(urlsplit(callback.headers["location"]).fragment)["rally-login-code"][0]
             assert code not in repr(auth_store._codes)
             assert all(len(token_hash) == 64 for token_hash in auth_store._codes)
             exchanged = await client.post("/v1/auth/exchange", json={"code": code})
             session_token = exchanged.json()["session_token"]
             replayed = await client.post("/v1/auth/exchange", json={"code": code})
-            account = await client.get(
-                "/v1/me", headers={"X-Rally-Session": session_token}
-            )
+            account = await client.get("/v1/me", headers={"X-Rally-Session": session_token})
             ambiguous = await client.get(
                 "/v1/me",
                 headers={
@@ -130,9 +136,7 @@ async def test_control_plane_is_no_store_and_denies_unauthenticated_requests(mon
                 },
             )
             now[0] += dt.timedelta(minutes=31)
-            expired = await client.get(
-                "/v1/me", headers={"X-Rally-Session": session_token}
-            )
+            expired = await client.get("/v1/me", headers={"X-Rally-Session": session_token})
             expiring_code = await auth_store.issue_code(identity)
             assert expiring_code not in repr(auth_store._codes)
             now[0] += dt.timedelta(minutes=3)

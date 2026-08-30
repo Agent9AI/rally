@@ -12,7 +12,9 @@ delivery repeats, and autonomous loops eventually behave unexpectedly.
 | Stolen or omitted app credential | Secret Manager-backed token; constant-time check; fail closed | `cloud/service.py` |
 | Cross-tenant credential access | Verified Google `sub` ownership, tenant-derived document IDs, and owner-hash checks | `cloud/user_auth.py`; `cloud/credential_vault.py` |
 | Redirect login replay or CSRF | Exact callback route, Google's double-submit CSRF check, atomic one-use code, hashed short-lived session, Firestore TTL | `src/worker/index.js`; `cloud/auth_sessions.py`; control-plane tests |
+| Connector OAuth replay, mix-up, or SSRF | Hashed one-use PKCE state, exact callback, provider-pinned HTTPS metadata/token hosts, redirect refusal, encrypted ten-minute flow, atomic consume | `src/worker/index.js`; `cloud/connector_oauth.py`; OAuth tests |
 | Connector credential disclosure | Unique AES-256-GCM data key per connection, wrapped by Cloud KMS; ciphertext-only Firestore records | `cloud/credential_vault.py`; KMS tests |
+| Over-broad connector consent | Provider-specific minimum OAuth scopes plus exact live-tool intersection with committed safe presets | `cloud/hosted_connectors.py`; `cloud/connector_presets.py` |
 | Rejected credential reflected by API | Redacted `SecretStr` input plus a non-reflective validation handler | `cloud/control_plane.py`; control-plane tests |
 | Prompt injection changes policy | ADK is advisory; runner reconciles every transition | `cloud/rally_adk/agent.py`; `src/envelope.py` |
 | Agent approves its own work | Owner/verifier invariant enforced in code | checklist tests |

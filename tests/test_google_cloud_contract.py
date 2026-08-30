@@ -81,6 +81,11 @@ class TestGoogleCloudContract(unittest.TestCase):
         self.assertIn('/auth/google/callback', control_plane)
         self.assertIn('resource "google_firestore_field" "auth_code_ttl"', terraform)
         self.assertIn('resource "google_firestore_field" "auth_session_ttl"', terraform)
+        self.assertIn(
+            'resource "google_firestore_field" "connector_oauth_flow_ttl"',
+            terraform,
+        )
+        self.assertIn("connector_oauth.py", dockerfile)
         self.assertIn("hashlib.sha256", auth_sessions)
         self.assertIn("async_transactional", auth_sessions)
         self.assertIn("auth_sessions.py", dockerfile)

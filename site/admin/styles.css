@@ -15,12 +15,12 @@
 * { box-sizing: border-box; }
 html { min-height: 100%; }
 body { min-height: 100vh; margin: 0; color: var(--ink); background: var(--canvas); font-family: Roboto, Arial, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
-button, input { font: inherit; }
+button, input, textarea { font: inherit; }
 button { color: inherit; }
 p { color: var(--muted); line-height: 1.6; }
 h1, h2, h3, p { margin-top: 0; }
 h1, h2, h3 { font-family: Arial, system-ui, sans-serif; }
-button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid rgba(36,107,253,.24); outline-offset: 3px; }
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px solid rgba(36,107,253,.24); outline-offset: 3px; }
 [hidden] { display: none !important; }
 .skip-link { position: fixed; z-index: 100; top: -60px; left: 18px; padding: 12px 16px; color: #fff; border-radius: 8px; background: var(--blue); }
 .skip-link:focus { top: 18px; }
@@ -89,17 +89,22 @@ main { max-width: 1320px; margin: 0 auto; padding: 68px 28px 100px; }
 .connection-card { min-height: 260px; display: flex; flex-direction: column; padding: 24px; border: 1px solid var(--line); border-radius: 22px; background: #fff; transition: border-color .18s, box-shadow .18s, transform .18s; }
 .connection-card:hover { border-color: #b7c6db; box-shadow: 0 14px 36px rgba(16,35,63,.07); transform: translateY(-2px); }
 .connection-card.is-secured { border-color: #a8dcc2; background: linear-gradient(180deg, #f2fbf6, #fff 44%); }
+.connection-card.needs-attention { border-color: #efcf83; background: linear-gradient(180deg, #fff9e9, #fff 44%); }
+.connection-card.is-returned { border-color: var(--blue); box-shadow: 0 0 0 5px rgba(36,107,253,.1), 0 18px 44px rgba(16,35,63,.1); }
 .connection-card header { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .connection-card header img { width: 42px; height: 42px; padding: 8px; object-fit: contain; border: 1px solid var(--line-soft); border-radius: 13px; background: #fff; }
 .connection-state { color: var(--quiet); border-radius: 999px; background: #f0f3f8; padding: 7px 9px; font-size: .59rem; font-weight: 700; letter-spacing: .045em; text-transform: uppercase; }
 .is-secured .connection-state { color: var(--green); background: var(--green-soft); }
+.needs-attention .connection-state { color: #8a5a00; background: #fff1c7; }
 .connection-card h3 { margin: 27px 0 8px; font-size: 1.13rem; }
 .connection-card > p { margin: 0; font-size: .79rem; line-height: 1.55; }
 .connection-card footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: auto; padding-top: 22px; }
 .connection-card footer > span { color: var(--quiet); font-size: .65rem; text-transform: uppercase; }
-.connection-card button { padding: 8px 11px; cursor: pointer; color: #174ea6; border: 0; border-radius: 10px; background: var(--blue-soft); font-size: .72rem; font-weight: 650; }
-.connection-card button:hover { color: #fff; background: var(--blue); }
+.connection-card button { min-width: 92px; padding: 9px 14px; cursor: pointer; color: #fff; border: 1px solid var(--blue); border-radius: 999px; background: var(--blue); box-shadow: 0 3px 10px rgba(36,107,253,.16); font-size: .72rem; font-weight: 700; }
+.connection-card button:hover { border-color: #1554d8; background: #1554d8; box-shadow: 0 5px 16px rgba(36,107,253,.24); }
 .connection-card button:disabled { cursor: not-allowed; color: var(--quiet); background: #f0f3f8; }
+.connection-card .token-alternative { min-width: 0; margin-right: auto; padding-left: 0; color: #5d6f88; border-color: transparent; background: transparent; box-shadow: none; font-size: .66rem; }
+.connection-card .token-alternative:hover { color: var(--blue); background: transparent; text-decoration: underline; text-underline-offset: 3px; }
 .connection-card.is-pending { background: #fbfcfe; }
 .vault-boundary { max-width: 1000px; margin: 28px 0 0; padding: 18px 20px; border-left: 3px solid #63d2a5; border-radius: 0 14px 14px 0; background: #eef6f3; font-size: .76rem; }
 .credential-dialog { width: min(520px, calc(100vw - 32px)); padding: 0; color: var(--ink); border: 0; border-radius: 26px; background: #fff; box-shadow: 0 30px 90px rgba(16,35,63,.26); }
@@ -110,6 +115,17 @@ main { max-width: 1320px; margin: 0 auto; padding: 68px 28px 100px; }
 .dialog-close { position: absolute; top: 18px; right: 18px; width: 36px; height: 36px; cursor: pointer; border: 0; border-radius: 50%; background: #f0f3f8; font-size: 1.35rem; }
 .credential-dialog label { display: block; margin-bottom: 8px; font-size: .74rem; font-weight: 650; }
 .credential-dialog input { width: 100%; min-height: 50px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: #f9fbfd; }
+.credential-dialog textarea { width: 100%; min-height: 84px; resize: vertical; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: #f9fbfd; }
+.dialog-field { margin: 0 0 17px; }
+.dialog-field small { display: block; margin-top: 7px; color: var(--quiet); font-size: .67rem; line-height: 1.45; }
+.provider-guide { display: inline-flex; align-items: center; gap: 5px; margin-top: 9px; color: #315b91; text-decoration: none; font-size: .7rem; font-weight: 650; }
+.provider-guide:hover { color: var(--blue); text-decoration: underline; text-underline-offset: 3px; }
+.activation-rail { display: grid; grid-template-columns: repeat(3, 1fr); margin: 0 0 24px; padding: 0; overflow: hidden; border: 1px solid var(--line-soft); border-radius: 14px; list-style: none; }
+.activation-rail li { position: relative; display: flex; align-items: center; gap: 7px; padding: 11px 10px; color: var(--quiet); background: #f8fafc; font-size: .65rem; font-weight: 700; }
+.activation-rail li + li { border-left: 1px solid var(--line-soft); }
+.activation-rail li span { width: 20px; height: 20px; display: grid; place-items: center; color: #64758c; border-radius: 50%; background: #e7ecf3; font-size: .6rem; }
+.activation-rail li.is-active { color: #174ea6; background: #edf3ff; }
+.activation-rail li.is-active span { color: #fff; background: var(--blue); }
 .dialog-safety { display: flex; gap: 10px; margin: 15px 0 20px; padding: 13px; border-radius: 12px; background: var(--green-soft); }
 .dialog-safety > span { color: var(--green); font-weight: 700; }
 .dialog-safety p { margin: 0; color: #3f725b; font-size: .7rem; line-height: 1.45; }
@@ -117,6 +133,13 @@ main { max-width: 1320px; margin: 0 auto; padding: 68px 28px 100px; }
 .primary-button { width: 100%; min-height: 50px; cursor: pointer; color: #fff; border: 0; border-radius: 999px; background: var(--blue); font-weight: 650; }
 .primary-button:hover { background: #1554d8; }
 .primary-button:disabled { cursor: wait; opacity: .62; }
+.primary-link { display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; }
+.connection-toast { position: fixed; z-index: 80; right: 26px; bottom: 26px; width: min(430px, calc(100vw - 36px)); padding: 17px 20px 17px 49px; color: #154f38; border: 1px solid #9bd6ba; border-radius: 17px; background: #effaf4; box-shadow: 0 18px 55px rgba(16,35,63,.18); font-size: .78rem; font-weight: 650; line-height: 1.45; }
+.connection-toast::before { content: "✓"; position: absolute; left: 18px; top: 16px; width: 21px; height: 21px; display: grid; place-items: center; color: #fff; border-radius: 50%; background: #24a36b; font-size: .68rem; }
+.connection-toast[data-tone="warning"] { color: #704b00; border-color: #e8c770; background: #fff8e4; }
+.connection-toast[data-tone="warning"]::before { content: "!"; background: #bd7900; }
+.connection-toast[data-tone="neutral"] { color: #42536a; border-color: #cbd4e0; background: #f6f8fb; }
+.connection-toast[data-tone="neutral"]::before { content: "·"; background: #65768c; }
 .admin-legal { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 24px clamp(20px,5vw,72px); color: #77869b; border-top: 1px solid var(--line); background: #fff; font-size: .78rem; }
 .admin-legal nav { display: flex; gap: 18px; }
 .admin-legal a { color: #51627c; text-decoration: none; }
@@ -149,5 +172,6 @@ main { max-width: 1320px; margin: 0 auto; padding: 68px 28px 100px; }
   .vault-summary > div:last-child { border-bottom: 0; }
   .connection-card { min-height: 230px; }
   .credential-dialog form { padding: 30px 22px 24px; }
+  .connection-toast { right: 18px; bottom: 18px; }
   .admin-legal { align-items: flex-start; flex-direction: column; }
 }
