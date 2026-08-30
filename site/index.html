@@ -18,7 +18,7 @@
     <meta name="rally-console-api" content="https://rally.agent9.dev/v1/console">
     <link rel="canonical" href="https://rally.agent9.dev/">
     <link rel="icon" href="rally-symbol.png" type="image/png">
-    <link rel="stylesheet" href="styles.css?v=20260830g">
+    <link rel="stylesheet" href="styles.css?v=20260830h">
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
@@ -59,7 +59,7 @@
           <aside class="mission-visual" aria-label="Rally turns one company goal into a verified outcome">
             <div class="mission-topbar">
               <span><i></i> Live coordination</span>
-              <b>One accountable team</b>
+              <b class="relay-label">Agent <i>→</i> Rally <i>→</i> Agent</b>
             </div>
 
             <div class="mission-goal">
@@ -68,24 +68,24 @@
               <small>Rally decomposes the outcome and assigns the right work.</small>
             </div>
 
-            <div class="mission-network" aria-label="Rally assigns work to Gemini and Claude, governs their access to approved company systems, collects evidence, and sends the result to OpenAI for independent verification">
+            <div class="mission-network" aria-label="Rally assigns work to Google Gemini and Anthropic Claude, governs their access to approved company systems, collects evidence, and sends the result to OpenAI Codex for independent verification">
               <span class="network-line line-gemini" aria-hidden="true"><i></i></span>
               <span class="network-line line-claude" aria-hidden="true"><i></i></span>
               <span class="network-line line-openai" aria-hidden="true"><i></i></span>
 
               <div class="model-node gemini-node">
                 <span class="model-avatar">G</span>
-                <p><small>Plan + research</small><strong>Gemini</strong></p>
+                <p><small>Google</small><strong>Gemini</strong></p>
                 <i class="node-state">Planning</i>
               </div>
               <div class="model-node claude-node">
                 <span class="model-avatar">C</span>
-                <p><small>Build + synthesize</small><strong>Claude</strong></p>
+                <p><small>Anthropic</small><strong>Claude</strong></p>
                 <i class="node-state">Using tools</i>
               </div>
               <div class="model-node openai-node">
                 <span class="model-avatar">O</span>
-                <p><small>Challenge + verify</small><strong>OpenAI</strong></p>
+                <p><small>OpenAI</small><strong>Codex</strong></p>
                 <i class="node-state">Verifying</i>
               </div>
 
@@ -100,7 +100,8 @@
                 <span class="core-orbit" aria-hidden="true"></span>
                 <img src="rally-symbol.png" alt="">
                 <strong>Rally</strong>
-                <small>governs every handoff</small>
+                <small class="sr-only">Rally governs, records, and routes every agent handoff.</small>
+                <span class="core-state" aria-hidden="true"><small class="core-state-default">governs handoffs</small><small class="core-state-accepted">handoff accepted</small><small class="core-state-routing">routing next turn</small></span>
               </div>
             </div>
 

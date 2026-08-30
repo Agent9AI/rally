@@ -145,6 +145,8 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px soli
 .mission-topbar span { display: inline-flex; align-items: center; gap: 8px; color: #b8f1d8; font-weight: 750; }
 .mission-topbar span i { width: 7px; height: 7px; border-radius: 50%; background: #50dc9b; box-shadow: 0 0 0 5px rgba(80,220,155,.1); animation: mission-live 2.4s ease-in-out infinite; }
 .mission-topbar b { font-size: .6rem; font-weight: 650; }
+.mission-topbar .relay-label { color: #a7b9d1; letter-spacing: .055em; }
+.mission-topbar .relay-label i { display: inline; width: auto; height: auto; margin: 0 2px; color: #6fa5ff; border-radius: 0; background: none; box-shadow: none; font-style: normal; animation: none; }
 .mission-goal { position: relative; z-index: 4; padding: 18px 20px; border: 1px solid rgba(142,177,232,.22); border-radius: 18px; background: rgba(255,255,255,.065); box-shadow: inset 0 1px 0 rgba(255,255,255,.045); }
 .mission-step-label { display: inline-flex; align-items: center; gap: 8px; color: #94a8c4; font-size: .6rem; font-weight: 700; text-transform: uppercase; letter-spacing: .075em; }
 .mission-step-label b { width: 20px; height: 20px; display: grid; place-items: center; color: #fff; border-radius: 7px; background: var(--blue); font-size: .6rem; }
@@ -168,7 +170,12 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px soli
 .rally-core img { width: 43px; height: 43px; margin-bottom: 3px; padding: 2px; border-radius: 13px; background: #fff; object-fit: contain; }
 .rally-core strong, .rally-core small { display: block; }
 .rally-core strong { font-size: .78rem; letter-spacing: -.01em; }
-.rally-core small { margin-top: 2px; color: #8ea2bf; font-size: .48rem; }
+.rally-core small { color: #8ea2bf; font-size: .48rem; }
+.core-state { position: relative; width: 100%; height: 10px; display: block; margin-top: 2px; }
+.core-state small { position: absolute; inset: 0; color: #8ea2bf; font-size: .44rem; line-height: 10px; text-align: center; opacity: 0; white-space: nowrap; }
+.core-state-default { animation: mission-core-state-default 14s linear infinite; }
+.core-state-accepted { color: #8ee2ba !important; animation: mission-core-state-accepted 14s linear infinite; }
+.core-state-routing { color: #9fc0f5 !important; animation: mission-core-state-routing 14s linear infinite; }
 .model-node { position: absolute; z-index: 6; min-width: 150px; display: grid; grid-template-columns: 35px 1fr; align-items: center; gap: 9px; padding: 10px 11px; border: 1px solid rgba(255,255,255,.11); border-radius: 14px; background: rgba(20,42,72,.96); box-shadow: 0 12px 28px rgba(0,0,0,.18); }
 .model-node::after { position: absolute; inset: -1px; pointer-events: none; border: 1px solid transparent; border-radius: inherit; content: ""; animation: mission-node 14s ease-in-out infinite; }
 .model-node .model-avatar { width: 35px; height: 35px; display: grid; place-items: center; color: #fff; border-radius: 11px; font-size: .68rem; font-weight: 800; }
@@ -187,14 +194,16 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px soli
 .openai-node::after, .openai-node .node-state { animation-delay: 8.7s; }
 .network-line { position: absolute; z-index: 1; top: 50%; left: 50%; width: 145px; height: 1px; overflow: visible; background: linear-gradient(90deg, rgba(120,168,255,.5), rgba(120,168,255,.07)); transform-origin: left center; }
 .network-line::after { position: absolute; top: -4px; left: 105px; width: 7px; height: 7px; border: 1px solid rgba(120,168,255,.46); border-radius: 50%; background: #102846; box-shadow: 0 0 0 3px rgba(36,107,253,.04); content: ""; animation: mission-policy-gate 14s ease-in-out infinite; }
-.network-line i, .line-claude::before { position: absolute; top: -3px; left: 0; width: 7px; height: 7px; border-radius: 50%; background: #78a8ff; box-shadow: 0 0 0 4px rgba(120,168,255,.1); animation: mission-packet 14s ease-in-out infinite; }
+.network-line i, .line-gemini::before, .line-claude::before, .line-openai::before { position: absolute; top: -3px; left: 0; width: 7px; height: 7px; border-radius: 50%; background: #78a8ff; box-shadow: 0 0 0 4px rgba(120,168,255,.1); animation: mission-packet 14s ease-in-out infinite; }
 .line-gemini { transform: rotate(215deg); }
 .line-gemini i, .line-gemini::after { animation-delay: 0s; }
+.line-gemini::before { background: #50dc9b; box-shadow: 0 0 0 4px rgba(80,220,155,.1); content: ""; animation-name: mission-return-packet; animation-delay: 1.4s; }
 .line-claude { transform: rotate(-35deg); }
 .line-claude i, .line-claude::after { animation-delay: 3.4s; }
-.line-claude::before { background: #50dc9b; box-shadow: 0 0 0 4px rgba(80,220,155,.1); content: ""; animation-name: mission-return-packet; animation-delay: 4.8s; }
+.line-claude::before { background: #50dc9b; box-shadow: 0 0 0 4px rgba(80,220,155,.1); content: ""; animation-name: mission-return-packet; animation-delay: 5.1s; }
 .line-openai { width: 112px; transform: rotate(90deg); }
 .line-openai i, .line-openai::after { animation-delay: 8.7s; }
+.line-openai::before { background: #50dc9b; box-shadow: 0 0 0 4px rgba(80,220,155,.1); content: ""; animation-name: mission-return-packet; animation-delay: 10.1s; }
 .mission-outcome { position: relative; z-index: 5; display: grid; grid-template-columns: 38px 1fr auto; align-items: center; gap: 11px; padding: 14px 15px; border: 1px solid rgba(80,220,155,.26); border-radius: 17px; background: linear-gradient(90deg, rgba(22,163,106,.17), rgba(22,163,106,.07)); box-shadow: 0 12px 30px rgba(0,0,0,.13); animation: mission-result 14s ease-in-out infinite; }
 .outcome-check { width: 36px; height: 36px; display: grid; place-items: center; color: #fff; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 6px rgba(80,220,155,.08); font-size: .9rem; font-weight: 800; }
 .mission-outcome small, .mission-outcome strong, .mission-outcome p { display: block; margin: 0; }
@@ -433,15 +442,15 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px soli
 @keyframes mission-live { 50% { opacity: .55; transform: scale(.82); } }
 @keyframes mission-packet {
   0% { left: 0; opacity: 0; transform: scale(.7); }
-  3% { opacity: 1; }
-  15% { left: calc(100% - 7px); opacity: 1; transform: scale(1); }
-  19%, 100% { left: calc(100% - 7px); opacity: 0; transform: scale(1.15); }
+  2% { opacity: 1; }
+  7% { left: calc(100% - 7px); opacity: 1; transform: scale(1); }
+  9%, 100% { left: calc(100% - 7px); opacity: 0; transform: scale(1.15); }
 }
 @keyframes mission-return-packet {
   0% { left: calc(100% - 7px); opacity: 0; transform: scale(.7); }
-  3% { opacity: 1; }
-  15% { left: 0; opacity: 1; transform: scale(1); }
-  19%, 100% { left: 0; opacity: 0; transform: scale(1.15); }
+  2% { opacity: 1; }
+  7% { left: 0; opacity: 1; transform: scale(1); }
+  9%, 100% { left: 0; opacity: 0; transform: scale(1.15); }
 }
 @keyframes mission-node {
   0%, 22%, 100% { border-color: transparent; box-shadow: none; }
@@ -468,8 +477,20 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px soli
   36%, 66% { opacity: 1; box-shadow: 0 0 18px rgba(120,168,255,.18); }
 }
 @keyframes mission-core-evidence {
-  0%, 48%, 71%, 100% { border-color: rgba(120,168,255,.42); box-shadow: 0 0 0 9px rgba(36,107,253,.08), 0 18px 38px rgba(0,0,0,.24); }
-  55%, 65% { border-color: rgba(80,220,155,.82); box-shadow: 0 0 0 9px rgba(80,220,155,.08), 0 0 30px rgba(80,220,155,.16), 0 18px 38px rgba(0,0,0,.24); }
+  0%, 12%, 25%, 44%, 57%, 66%, 75%, 87%, 100% { border-color: rgba(120,168,255,.42); box-shadow: 0 0 0 9px rgba(36,107,253,.08), 0 18px 38px rgba(0,0,0,.24); }
+  15%, 23%, 47%, 55%, 77%, 85% { border-color: rgba(80,220,155,.82); box-shadow: 0 0 0 9px rgba(80,220,155,.08), 0 0 30px rgba(80,220,155,.16), 0 18px 38px rgba(0,0,0,.24); }
+}
+@keyframes mission-core-state-default {
+  0%, 12%, 35%, 44%, 67%, 74%, 87%, 100% { opacity: 1; }
+  14%, 33%, 46%, 65%, 76%, 85% { opacity: 0; }
+}
+@keyframes mission-core-state-accepted {
+  0%, 12%, 25%, 44%, 57%, 74%, 87%, 100% { opacity: 0; }
+  15%, 23%, 47%, 55%, 77%, 85% { opacity: 1; }
+}
+@keyframes mission-core-state-routing {
+  0%, 23%, 35%, 55%, 67%, 100% { opacity: 0; }
+  26%, 33%, 58%, 65% { opacity: 1; }
 }
 @keyframes mission-result {
   0%, 76%, 100% { border-color: rgba(80,220,155,.22); box-shadow: 0 12px 30px rgba(0,0,0,.13); }

@@ -77,6 +77,11 @@ class TestProductSite(unittest.TestCase):
         self.assertNotIn('class="webmcp-cta"', self.html)
         self.assertIn('class="access-ring"', self.html)
         self.assertNotIn('class="mission-assets"', self.html)
+        self.assertIn("Agent <i>→</i> Rally <i>→</i> Agent", self.html)
+        self.assertIn("handoff accepted", self.html)
+        self.assertIn("routing next turn", self.html)
+        for provider, worker in (("Google", "Gemini"), ("Anthropic", "Claude"), ("OpenAI", "Codex")):
+            self.assertIn(f"<small>{provider}</small><strong>{worker}</strong>", self.html)
         self.assertNotIn('class="mission-context"', self.html)
         self.assertIn('name="rally-console-api"', self.html)
         self.assertIn('content="https://rally.agent9.dev/v1/console"', self.html)
