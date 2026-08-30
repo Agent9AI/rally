@@ -18,7 +18,7 @@
     <meta name="rally-console-api" content="https://rally.agent9.dev/v1/console">
     <link rel="canonical" href="https://rally.agent9.dev/">
     <link rel="icon" href="rally-symbol.png" type="image/png">
-    <link rel="stylesheet" href="styles.css?v=20260830f">
+    <link rel="stylesheet" href="styles.css?v=20260830g">
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
@@ -68,7 +68,7 @@
               <small>Rally decomposes the outcome and assigns the right work.</small>
             </div>
 
-            <div class="mission-network" aria-label="Gemini, Claude, and OpenAI working through Rally">
+            <div class="mission-network" aria-label="Rally assigns work to Gemini and Claude, governs their access to approved company systems, collects evidence, and sends the result to OpenAI for independent verification">
               <span class="network-line line-gemini" aria-hidden="true"><i></i></span>
               <span class="network-line line-claude" aria-hidden="true"><i></i></span>
               <span class="network-line line-openai" aria-hidden="true"><i></i></span>
@@ -76,17 +76,24 @@
               <div class="model-node gemini-node">
                 <span class="model-avatar">G</span>
                 <p><small>Plan + research</small><strong>Gemini</strong></p>
-                <i class="node-state">Working</i>
+                <i class="node-state">Planning</i>
               </div>
               <div class="model-node claude-node">
                 <span class="model-avatar">C</span>
                 <p><small>Build + synthesize</small><strong>Claude</strong></p>
-                <i class="node-state">Working</i>
+                <i class="node-state">Using tools</i>
               </div>
               <div class="model-node openai-node">
                 <span class="model-avatar">O</span>
                 <p><small>Challenge + verify</small><strong>OpenAI</strong></p>
-                <i class="node-state">Checking</i>
+                <i class="node-state">Verifying</i>
+              </div>
+
+              <div class="access-ring" aria-label="Approved systems scoped to this run: Google Workspace, BigQuery, and Slack">
+                <span class="access-ring-label"><b>Approved systems</b><small>Scoped for this run</small></span>
+                <span class="orbit-asset workspace-orbit"><i><img src="brandmarks/google.svg" alt=""></i><b>Workspace</b></span>
+                <span class="orbit-asset bigquery-orbit"><i><img src="brandmarks/bigquery.svg" alt=""></i><b>BigQuery</b></span>
+                <span class="orbit-asset slack-orbit"><i><img src="brandmarks/slack.svg" alt=""></i><b>Slack</b></span>
               </div>
 
               <div class="rally-core">
@@ -94,18 +101,6 @@
                 <img src="rally-symbol.png" alt="">
                 <strong>Rally</strong>
                 <small>governs every handoff</small>
-              </div>
-            </div>
-
-            <div class="mission-assets" aria-label="Company systems scoped to this example run: Google Workspace, BigQuery, and Slack">
-              <span class="asset-policy-mark" aria-hidden="true">
-                <svg viewBox="0 0 24 24"><path d="M12 3 19 6v5c0 4.7-2.8 8.1-7 10-4.2-1.9-7-5.3-7-10V6l7-3Z"/><path d="m9.2 12 1.8 1.8 3.9-4"/></svg>
-              </span>
-              <p class="mission-assets-title"><strong>Approved systems</strong><small>Scoped for this run</small></p>
-              <div class="mission-asset-list">
-                <span><i class="asset-avatar workspace-asset">G</i><b>Workspace</b></span>
-                <span><i class="asset-avatar bigquery-asset">BQ</i><b>BigQuery</b></span>
-                <span><i class="asset-avatar slack-asset">S</i><b>Slack</b></span>
               </div>
             </div>
 
