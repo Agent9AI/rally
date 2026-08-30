@@ -15,6 +15,7 @@ delivery repeats, and autonomous loops eventually behave unexpectedly.
 | Same-family rubber stamp | Startup refuses non-distinct model families | `src/agents.py`; tests |
 | Runaway turns or email spend | Turn, stagnation, rejection, per-run, hourly, daily ceilings | `src/runner.py`; `src/transport.py` |
 | Secret or prompt leakage in telemetry | Metadata-only OTel; no content capture | `cloud/telemetry.py`; Terraform env |
+| Credential committed to source control | Common secret-bearing files are ignored; repository secret scanning and push protection are enabled | `.gitignore`; GitHub security settings |
 | Agent writes into Rally itself | Isolated git workspace plus containment fingerprint | `src/runner.py` |
 | Failed handling deletes work | D1 acknowledgement occurs only after successful or intentionally quarantined handling | `src/runner.py`; reliability tests |
 | Token timing side channel | Worker hashes both candidates and uses Web Crypto `timingSafeEqual`; Cloud service uses `hmac.compare_digest` | Worker and Cloud service source |
@@ -24,6 +25,18 @@ delivery repeats, and autonomous loops eventually behave unexpectedly.
 Show IAM policy membership, service account roles, a Cloud Trace span, and
 structured log fields. Do not reveal the Secret Manager payload, identity
 token, application token, Resend key, ingest-token URL, or raw eval histories.
+
+## Credential handling
+
+- Never place provider keys, OAuth tokens, client secrets, refresh tokens,
+  service-account credentials, private keys, or customer credentials in source
+  files, fixtures, commits, issues, logs, screenshots, or demo evidence.
+- Store local operator and per-user connector credentials in the macOS Keychain.
+  Store deployed service credentials in the platform secret manager and expose
+  them only to the service identity that needs them.
+- Commit only empty examples such as `.env.example`. If a secret is ever
+  committed, revoke or rotate it immediately; removing it in a later commit is
+  not sufficient because Git history preserves it.
 
 ## Accepted boundaries
 
