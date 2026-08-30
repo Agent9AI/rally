@@ -49,7 +49,6 @@ class TestProductSite(unittest.TestCase):
             "Second Wind recovery",
             "Bounded recovery, not auto-approval",
             "Gemini 3.7 + ADK",
-            "Honest boundary:",
             "Rally runs one model at a time",
             "The authoritative runner dispatches the next model locally",
             "The handshake now speaks a standard",
@@ -86,6 +85,8 @@ class TestProductSite(unittest.TestCase):
         for provider, worker in (("Google", "Gemini"), ("Anthropic", "Claude"), ("OpenAI", "Codex")):
             self.assertIn(f"<small>{provider}</small><strong>{worker}</strong>", self.html)
         self.assertNotIn('class="mission-context"', self.html)
+        self.assertNotIn('class="connector-boundary"', self.html)
+        self.assertNotIn("Explore the source", self.html)
         self.assertIn('name="rally-console-api"', self.html)
         self.assertIn('content="https://rally.agent9.dev/v1/console"', self.html)
         self.assertIn('rel="canonical" href="https://rally.agent9.dev/"', self.html)
@@ -116,6 +117,9 @@ class TestProductSite(unittest.TestCase):
         with open(os.path.join(SITE, "styles.css")) as handle:
             styles = handle.read()
         self.assertIn("rally-handoff", styles)
+        self.assertIn("mission-control-rotate", styles)
+        self.assertIn('class="governance-marker"', self.html)
+        self.assertIn("mission-governance-marker", styles)
         self.assertIn("prefers-reduced-motion", styles)
         with open(os.path.join(SITE, ".well-known", "agent-card.json")) as handle:
             agent_card = json.load(handle)
