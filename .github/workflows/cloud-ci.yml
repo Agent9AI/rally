@@ -15,8 +15,8 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
-      - uses: astral-sh/setup-uv@v10
-      - uses: hashicorp/setup-terraform@v4
+      - uses: astral-sh/setup-uv@v10.0.1
+      - uses: hashicorp/setup-terraform@v4.0.1
       - run: uv sync --project cloud --frozen
       - run: uv run --project cloud ruff check cloud
       - run: uv run --project cloud pytest cloud/tests
