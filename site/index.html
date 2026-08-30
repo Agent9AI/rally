@@ -18,7 +18,7 @@
     <meta name="rally-console-api" content="https://rally.agent9.dev/v1/console">
     <link rel="canonical" href="https://rally.agent9.dev/">
     <link rel="icon" href="rally-symbol.png" type="image/png">
-    <link rel="stylesheet" href="styles.css?v=20260830c">
+    <link rel="stylesheet" href="styles.css?v=20260830d">
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
@@ -97,9 +97,32 @@
               </div>
             </div>
 
-            <div class="mission-context" aria-label="Approved company context">
-              <span>Approved context</span>
-              <b>Drive</b><b>BigQuery</b><b>Slack</b>
+            <div class="mission-assets" aria-label="Connected company assets approved for this example run">
+              <div class="mission-assets-heading">
+                <span class="asset-policy-mark" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" role="img"><path d="M12 3 19 6v5c0 4.7-2.8 8.1-7 10-4.2-1.9-7-5.3-7-10V6l7-3Z"/><path d="m9.2 12 1.8 1.8 3.9-4"/></svg>
+                </span>
+                <p><small>Connected company assets</small><strong>Approved for this run</strong></p>
+                <b>Per-user authority</b>
+              </div>
+              <div class="mission-asset-list">
+                <article aria-label="Google Workspace Drive and Docs, read access">
+                  <span class="asset-avatar workspace-asset">G</span>
+                  <p><strong><span class="asset-google-word">Google </span>Workspace</strong><small>Drive · Docs</small></p>
+                  <em>Read</em>
+                </article>
+                <article aria-label="BigQuery trusted data, read access">
+                  <span class="asset-avatar bigquery-asset">BQ</span>
+                  <p><strong>BigQuery</strong><small>Trusted data</small></p>
+                  <em>Read</em>
+                </article>
+                <article aria-label="Slack team decisions, search access">
+                  <span class="asset-avatar slack-asset">S</span>
+                  <p><strong>Slack</strong><small>Team decisions</small></p>
+                  <em>Search</em>
+                </article>
+              </div>
+              <p class="mission-assets-rule"><span>Policy gate</span> Only these scoped assets can enter the run.</p>
             </div>
 
             <div class="mission-outcome">

@@ -184,9 +184,28 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px soli
 .line-claude i { animation-delay: 1s; }
 .line-openai { width: 112px; transform: rotate(90deg); }
 .line-openai i { animation-delay: 2s; }
-.mission-context { position: relative; z-index: 4; display: flex; align-items: center; justify-content: center; gap: 7px; margin: -2px 8px 12px; color: #8499b6; font-size: .52rem; }
-.mission-context span { margin-right: 2px; text-transform: uppercase; letter-spacing: .07em; }
-.mission-context b { padding: 5px 8px; color: #b8c5d8; border: 1px solid rgba(255,255,255,.09); border-radius: 999px; background: rgba(255,255,255,.045); font-weight: 600; }
+.mission-assets { position: relative; z-index: 6; margin: -2px 0 13px; padding: 12px; border: 1px solid rgba(120,168,255,.2); border-radius: 17px; background: linear-gradient(110deg, rgba(18,42,73,.97), rgba(19,48,82,.92)); box-shadow: 0 12px 28px rgba(0,0,0,.14), inset 0 1px 0 rgba(255,255,255,.035); }
+.mission-assets::before { position: absolute; top: -16px; left: 50%; width: 1px; height: 16px; background: linear-gradient(rgba(120,168,255,0), rgba(120,168,255,.7)); content: ""; }
+.mission-assets::after { position: absolute; top: -4px; left: 50%; width: 7px; height: 7px; border: 2px solid #102846; border-radius: 50%; background: #78a8ff; box-shadow: 0 0 0 4px rgba(120,168,255,.09); content: ""; transform: translate(-43%, -50%); animation: mission-assets-pulse 3s ease-in-out infinite; }
+.mission-assets-heading { display: grid; grid-template-columns: 27px 1fr auto; align-items: center; gap: 9px; margin-bottom: 9px; }
+.asset-policy-mark { width: 27px; height: 27px; display: grid; place-items: center; border: 1px solid rgba(80,220,155,.22); border-radius: 9px; background: rgba(80,220,155,.09); }
+.asset-policy-mark svg { width: 15px; height: 15px; fill: none; stroke: #72dfad; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
+.mission-assets-heading p, .mission-assets-heading strong, .mission-assets-heading small { display: block; margin: 0; }
+.mission-assets-heading small { margin-bottom: 1px; color: #9bafca; font-size: .46rem; font-weight: 700; letter-spacing: .065em; text-transform: uppercase; }
+.mission-assets-heading strong { color: #fff; font-size: .64rem; }
+.mission-assets-heading > b { padding: 4px 7px; color: #b8f1d8; border: 1px solid rgba(80,220,155,.17); border-radius: 999px; background: rgba(22,163,106,.12); font-size: .42rem; font-weight: 750; letter-spacing: .055em; text-transform: uppercase; }
+.mission-asset-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+.mission-asset-list article { min-width: 0; display: grid; grid-template-columns: 27px minmax(0, 1fr) auto; align-items: center; gap: 7px; padding: 8px; border: 1px solid rgba(255,255,255,.075); border-radius: 11px; background: rgba(7,20,37,.34); }
+.asset-avatar { width: 27px; height: 27px; display: grid; place-items: center; color: #fff; border-radius: 8px; font-size: .48rem; font-style: normal; font-weight: 800; }
+.workspace-asset { background: #4285f4; box-shadow: inset -7px -7px 0 rgba(52,168,83,.22); }
+.bigquery-asset { background: #1a73e8; }
+.slack-asset { background: #71366f; }
+.mission-asset-list p, .mission-asset-list strong, .mission-asset-list small { min-width: 0; display: block; margin: 0; }
+.mission-asset-list strong { overflow: hidden; color: #f4f7fb; font-size: .5rem; text-overflow: ellipsis; white-space: nowrap; }
+.mission-asset-list small { margin-top: 1px; overflow: hidden; color: #8298b6; font-size: .42rem; text-overflow: ellipsis; white-space: nowrap; }
+.mission-asset-list em { padding: 3px 4px; color: #9ebdff; border-radius: 5px; background: rgba(66,133,244,.1); font-size: .36rem; font-style: normal; font-weight: 750; letter-spacing: .04em; text-transform: uppercase; }
+.mission-assets-rule { margin: 8px 1px 0; color: #7f94b1; font-size: .42rem; line-height: 1.3; }
+.mission-assets-rule span { margin-right: 5px; color: #a8bdd8; font-weight: 700; letter-spacing: .045em; text-transform: uppercase; }
 .mission-outcome { position: relative; z-index: 5; display: grid; grid-template-columns: 38px 1fr auto; align-items: center; gap: 11px; padding: 14px 15px; border: 1px solid rgba(80,220,155,.26); border-radius: 17px; background: linear-gradient(90deg, rgba(22,163,106,.17), rgba(22,163,106,.07)); box-shadow: 0 12px 30px rgba(0,0,0,.13); animation: mission-result 9s ease-in-out infinite; }
 .outcome-check { width: 36px; height: 36px; display: grid; place-items: center; color: #fff; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 6px rgba(80,220,155,.08); font-size: .9rem; font-weight: 800; }
 .mission-outcome small, .mission-outcome strong, .mission-outcome p { display: block; margin: 0; }
@@ -424,6 +443,7 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px soli
 }
 @keyframes mission-live { 50% { opacity: .55; transform: scale(.82); } }
 @keyframes mission-orbit { to { transform: translate(-50%, -50%) rotate(360deg); } }
+@keyframes mission-assets-pulse { 50% { background: #50dc9b; box-shadow: 0 0 0 7px rgba(80,220,155,.08); } }
 .core-orbit { animation-name: mission-core-orbit; }
 @keyframes mission-core-orbit { to { transform: rotate(360deg); } }
 @keyframes mission-packet {
@@ -705,7 +725,16 @@ details p a:hover { color: var(--blue-hover); text-decoration-color: currentColo
   .openai-node { bottom: 2px; }
   .network-line { width: 118px; }
   .line-openai { width: 105px; }
-  .mission-context { display: none; }
+  .mission-assets { margin-top: 4px; padding: 10px; }
+  .mission-assets-heading { grid-template-columns: 27px 1fr auto; gap: 7px; }
+  .mission-assets-heading > b { padding: 4px 5px; font-size: .36rem; }
+  .mission-asset-list { gap: 5px; }
+  .mission-asset-list article { grid-template-columns: 25px minmax(0, 1fr); gap: 6px; padding: 7px 6px; }
+  .asset-avatar { width: 25px; height: 25px; }
+  .mission-asset-list em { display: none; }
+  .mission-asset-list strong { font-size: .46rem; }
+  .mission-asset-list small { font-size: .39rem; }
+  .asset-google-word { display: none; }
   .mission-outcome { grid-template-columns: 36px 1fr; }
   .outcome-status { display: none; }
   .hero-proof { grid-template-columns: 1fr 1fr; margin-top: 54px; text-align: left; }

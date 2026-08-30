@@ -43,6 +43,10 @@ class TestProductSite(unittest.TestCase):
             "No model approves its own work",
             "OpenAI Codex",
             "Connections remain per user",
+            "Connected company assets",
+            "Approved for this run",
+            "Per-user authority",
+            "Only these scoped assets can enter the run",
             "Are AI and business-system connections shared between users?",
             "Second Wind recovery",
             "Bounded recovery, not auto-approval",
@@ -70,6 +74,8 @@ class TestProductSite(unittest.TestCase):
         self.assertIn('src="rally-logo.png"', self.html)
         self.assertIn('src="a2a-icon.svg"', self.html)
         self.assertIn('class="a2a-trust"', self.html)
+        self.assertIn('class="mission-assets"', self.html)
+        self.assertNotIn('class="mission-context"', self.html)
         self.assertIn('name="rally-console-api"', self.html)
         self.assertIn('content="https://rally.agent9.dev/v1/console"', self.html)
         self.assertIn('rel="canonical" href="https://rally.agent9.dev/"', self.html)
