@@ -108,6 +108,10 @@ main { max-width: 1320px; margin: 0 auto; padding: 68px 28px 100px; }
 .primary-button { width: 100%; min-height: 50px; cursor: pointer; color: #fff; border: 0; border-radius: 999px; background: var(--blue); font-weight: 650; }
 .primary-button:hover { background: #1554d8; }
 .primary-button:disabled { cursor: wait; opacity: .62; }
+.admin-legal { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 24px clamp(20px,5vw,72px); color: #77869b; border-top: 1px solid var(--line); background: #fff; font-size: .78rem; }
+.admin-legal nav { display: flex; gap: 18px; }
+.admin-legal a { color: #51627c; text-decoration: none; }
+.admin-legal a:hover { color: var(--blue); }
 @media (max-width: 980px) {
   .signin-shell { grid-template-columns: 1fr; gap: 44px; }
   .security-receipt { max-width: 680px; }
@@ -130,4 +134,5 @@ main { max-width: 1320px; margin: 0 auto; padding: 68px 28px 100px; }
   .vault-summary > div:last-child { border-bottom: 0; }
   .connection-card { min-height: 230px; }
   .credential-dialog form { padding: 30px 22px 24px; }
+  .admin-legal { align-items: flex-start; flex-direction: column; }
 }

@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Privacy Policy · Rally</title>
+  <meta name="description" content="How Rally collects, uses, protects, and shares account, run, connector, and technical data.">
+  <meta name="robots" content="index,follow">
+  <link rel="canonical" href="https://rally.agent9.dev/privacy/">
+  <link rel="icon" href="../rally-symbol.png" type="image/png">
+  <link rel="stylesheet" href="../legal.css?v=20260830a">
+</head>
+<body>
+  <a class="skip-link" href="#content">Skip to policy</a>
+  <header class="legal-header">
+    <a class="brand" href="../"><img src="../rally-symbol.png" alt=""><span>Rally</span></a>
+    <nav class="legal-nav" aria-label="Legal navigation"><a href="../privacy/" aria-current="page">Privacy</a><a href="../terms/">Terms</a><a class="back-link" href="../">Back to Rally</a></nav>
+  </header>
+  <main id="content">
+    <section class="legal-hero"><div class="legal-hero-inner">
+      <p class="eyebrow">Privacy at Rally</p><h1>Company context deserves a clear boundary.</h1>
+      <p class="legal-deck">This policy explains what Rally processes when people coordinate AI agents, connect company systems, and choose to publish evidence.</p>
+      <div class="legal-meta"><span>Effective August 30, 2026</span><span>Last updated August 30, 2026</span><span>Early access service</span></div>
+    </div></section>
+    <div class="legal-layout">
+      <aside class="legal-toc" aria-label="On this page"><p>On this page</p><a href="#scope">Scope and roles</a><a href="#data">Data we process</a><a href="#use">How we use data</a><a href="#sharing">When data moves</a><a href="#retention">Retention and deletion</a><a href="#security">Security</a><a href="#choices">Your choices and rights</a><a href="#international">International use</a><a href="#changes">Changes and contact</a></aside>
+      <article class="legal-content">
+        <div class="plain-summary" aria-label="Privacy summary">
+          <article><span>1</span><b>No advertising business</b><p>Rally does not sell personal information or use company content for targeted advertising.</p></article>
+          <article><span>2</span><b>Credentials stay outside model context</b><p>Hosted credentials are encrypted per connection and never returned through the customer API.</p></article>
+          <article><span>3</span><b>Public proof is deliberate</b><p>A run appears publicly only through Rally’s explicit, double-opt-in publication path.</p></article>
+        </div>
+        <section class="legal-section" id="scope">
+          <span class="section-number">01</span><h2>Scope and processing roles</h2>
+          <p>This Privacy Policy applies to the Rally website, hosted administration surface, Google-authenticated control plane, commission and run workflow, support communications, and any public run evidence at <strong>rally.agent9.dev</strong> (together, the “Service”). Rally is an independent Agent9 AI project.</p>
+          <p>When an organization uses Rally for its own workforce or business data, that organization generally decides why the data is processed and Rally processes it to provide the Service. For website visitors, account administration, security, and direct support, Agent9 AI determines the processing described here. A separate data-processing agreement may be required before production use involving regulated or sensitive data.</p>
+          <p>This policy does not replace the privacy terms of Google, Anthropic, OpenAI, Cloudflare, Resend, or a company system that an administrator chooses to connect.</p>
+        </section>
+        <section class="legal-section" id="data">
+          <span class="section-number">02</span><h2>Data Rally processes</h2>
+          <table class="data-table"><thead><tr><th>Category</th><th>Examples and source</th></tr></thead><tbody>
+            <tr><td>Account identity</td><td>Google account subject identifier, verified email, name, profile image, and Workspace domain supplied through Google Identity Services. Rally uses the stable Google subject—not the email address—as the hosted vault owner.</td></tr>
+            <tr><td>Organization and authority</td><td>Company name, team, commissioner identities, approved systems, connector scopes, policy presets, spending or turn limits, approval rules, and administrator choices.</td></tr>
+            <tr><td>Jobs and company content</td><td>Goals, instructions, messages, files, source material, tool inputs and outputs, model responses, artifacts, corrections, and human steering submitted during a run.</td></tr>
+            <tr><td>Credentials and connections</td><td>Provider tokens or keys an administrator deliberately imports, credential type, connector identity, status, and timestamps. Hosted credential values are encrypted before storage; local/self-hosted credentials may remain in provider tooling or the operating-system keychain.</td></tr>
+            <tr><td>Evidence and operations</td><td>Checklist state, owner and verifier identities, tool receipts, hashes, timestamps, retry and recovery events, residual risk, errors, and content-free tracing or logging metadata.</td></tr>
+            <tr><td>Website and security data</td><td>IP address, browser and device information, request time, referrer, abuse signals, and similar records ordinarily generated by Cloudflare, Google Cloud, and security infrastructure.</td></tr>
+            <tr><td>Communications</td><td>Email address, subject, message content, attachments, delivery events, and support correspondence when a person commissions work or contacts Rally.</td></tr>
+          </tbody></table>
+          <div class="callout"><b>Browser boundary.</b> Rally’s hosted admin keeps the Google ID token and a submitted credential in memory only. Rally does not intentionally write either value to local storage, session storage, page markup, or its source repository. Google Sign-In and infrastructure providers may use their own browser or security state under their policies.</div>
+        </section>
+        <section class="legal-section" id="use">
+          <span class="section-number">03</span><h2>How Rally uses data</h2><p>Rally processes data to:</p>
+          <ul><li>authenticate users, isolate each administrator’s connection vault, and enforce account or domain allowlists;</li><li>receive a goal, coordinate approved AI agents and tools, preserve state, recover bounded work, and return an independently checked result;</li><li>apply budgets, permissions, ownership, verification, human-approval, and other deterministic governance rules;</li><li>encrypt and manage connection credentials, discover provider capabilities, and prevent models from receiving raw credentials;</li><li>maintain evidence, prevent duplicate work, investigate failures or abuse, secure the Service, and support users;</li><li>improve reliability and product design using operational signals, feedback, and de-identified or aggregated information; and</li><li>comply with law, enforce the Terms, and protect Rally, users, providers, and the public.</li></ul>
+          <p>Where law requires a legal basis, Rally relies on performance of a contract, legitimate interests in operating and securing the Service, consent where requested, and compliance with legal obligations. Rally does not use customer content to train a Rally-owned foundation model.</p>
+        </section>
+        <section class="legal-section" id="sharing">
+          <span class="section-number">04</span><h2>When data moves</h2><p>Rally shares or transmits data only as needed for the Service, at an administrator’s direction, or as required by law:</p>
+          <ul><li><strong>Google Cloud and Google Identity Services</strong> provide authentication, Cloud Run, Firestore, Cloud KMS, Vertex AI, logging, and trace infrastructure.</li><li><strong>Cloudflare</strong> provides website delivery, Workers, D1, security, and related edge infrastructure.</li><li><strong>AI providers</strong> such as Google, Anthropic, and OpenAI receive the portions of a job dispatched to their selected model or agent under the organization’s configuration and the provider’s terms.</li><li><strong>Connected company systems</strong> receive tool requests and return data only when an administrator has enabled the connection and the run has matching authority.</li><li><strong>Communications providers</strong> such as Resend process commission, notification, and reply email.</li><li><strong>Professional advisers, authorities, or a successor operator</strong> may receive limited information when reasonably necessary for legal compliance, security, a transaction, or protection of rights, with appropriate safeguards.</li></ul>
+          <p>Rally does not sell personal information, rent customer lists, or share personal information for cross-context behavioral advertising. Providers process data under their own contracts and privacy terms; administrators should select providers and configure retention appropriate to their organization.</p>
+          <h3>Public run evidence</h3><p>Runs are private by default. The public console reads only an allowlisted, sanitized projection produced through a separate publication path. An operator must enable public publication and select the run; a normal run is not made public automatically. Public evidence may include a goal title, agent roles, checklist status, proof receipts, and residual risk, but should not include credentials, private paths, raw model reasoning, or unapproved company content.</p>
+        </section>
+        <section class="legal-section" id="retention">
+          <span class="section-number">05</span><h2>Retention and deletion</h2><p>Rally retains information for as long as reasonably needed to provide the Service, preserve an organization’s requested audit trail, meet security or legal obligations, resolve disputes, and enforce agreements. Retention can differ by deployment and by a connected provider’s settings.</p>
+          <ul><li><strong>Connector credentials</strong> remain until replaced, disconnected, or the account is deleted. Disconnecting removes Rally’s active encrypted record; administrators should also revoke the credential at the provider.</li><li><strong>Run state and evidence</strong> remain according to the customer’s deployment and retention configuration. Early-access users may request deletion where an in-product control is not yet available.</li><li><strong>Public evidence</strong> remains available until withdrawn or removed. Removing the Rally projection cannot erase copies independently cached or recorded by others.</li><li><strong>Security records and backups</strong> may persist for a limited period according to infrastructure-provider schedules, fraud prevention, and legal requirements.</li></ul>
+          <p>To request access, correction, export, unpublication, or deletion, email <a href="mailto:terry@agent9.dev?subject=Rally%20privacy%20request">terry@agent9.dev</a>. Rally may verify identity and organizational authority before acting.</p>
+        </section>
+        <section class="legal-section" id="security">
+          <span class="section-number">06</span><h2>Security and credential custody</h2><p>Rally uses administrative, technical, and organizational safeguards designed for the sensitivity of coordinated agent work. The hosted control plane is separate from the private coordinator. Customer routes verify audience-bound Google identity tokens. Each hosted connection receives a unique AES-256-GCM data-encryption key; Google Cloud KMS wraps that key, and Firestore stores ciphertext, a wrapped key, and non-secret metadata. The customer API never returns a stored credential.</p>
+          <p>Other controls include least-privilege service identities, bounded connector adapters, content-disabled telemetry, duplicate suppression, deterministic authority checks, independent verification, and hard execution limits. No security system is infallible. Users must protect their accounts, choose narrow provider credentials, review requested authority, revoke suspected credentials, and notify Rally promptly of an incident.</p>
+        </section>
+        <section class="legal-section" id="choices">
+          <span class="section-number">07</span><h2>Your choices and privacy rights</h2><p>Depending on location, a person may have rights to access, correct, delete, restrict, object to, or receive a copy of personal information, and to withdraw consent without affecting prior lawful processing. A person may also complain to a local data-protection authority. Rally will not discriminate for exercising applicable privacy rights.</p>
+          <p>Administrators can limit collection by choosing narrower connectors and scopes, keeping publication off, deleting connector records, revoking access at the provider, or discontinuing the Service. Organization-managed users should ordinarily direct requests to their employer first because the organization controls the work data.</p>
+        </section>
+        <section class="legal-section" id="international">
+          <span class="section-number">08</span><h2>International use and children</h2><p>Rally and its providers may process information in the United States and other countries where they operate. Those locations may have different data-protection laws. Where required, the responsible organization should put appropriate transfer safeguards and provider agreements in place before production use.</p><p>Rally is a business service and is not directed to children under 18. Do not submit children’s personal information. Contact Rally if you believe such information was provided.</p>
+        </section>
+        <section class="legal-section" id="changes">
+          <span class="section-number">09</span><h2>Changes and contact</h2><p>Rally may update this policy as the Service, providers, or law changes. The effective date will be revised, and material changes may also be communicated through the Service or an account contact. Continued use after an update is governed by the updated policy to the extent permitted by law.</p>
+          <p>Questions, privacy requests, or security concerns may be sent to:</p><p><strong>Agent9 AI · Rally Privacy</strong><br><a href="mailto:terry@agent9.dev">terry@agent9.dev</a><br><a href="https://rally.agent9.dev/">https://rally.agent9.dev/</a></p>
+        </section>
+      </article>
+    </div>
+  </main>
+  <footer class="legal-footer"><div><a class="brand" href="../"><img src="../rally-symbol.png" alt=""><span>Rally</span></a><small>Independent Agent9 AI project</small></div><nav aria-label="Footer"><a href="../privacy/">Privacy</a><a href="../terms/">Terms</a><a href="mailto:terry@agent9.dev">Contact</a></nav></footer>
+</body>
+</html>

@@ -191,6 +191,40 @@ class TestProductSite(unittest.TestCase):
         self.assertIn("https://accounts.google.com/gsi/client", security_headers)
         self.assertIn("https://*.a.run.app", security_headers)
         self.assertIn("87  runner + ingress + policy + site", self.html)
+        self.assertIn('href="privacy/"', self.html)
+        self.assertIn('href="terms/"', self.html)
+        self.assertNotIn('href="https://github.com/Agent9AI/rally"', self.html)
+        self.assertNotIn("github.com/Agent9AI/rally", self.html)
+        legal_css = os.path.join(SITE, "legal.css")
+        privacy_page = os.path.join(SITE, "privacy", "index.html")
+        terms_page = os.path.join(SITE, "terms", "index.html")
+        for legal_asset in (legal_css, privacy_page, terms_page):
+            self.assertTrue(os.path.exists(legal_asset), legal_asset)
+            self.assertGreater(os.path.getsize(legal_asset), 1000)
+        with open(privacy_page) as handle:
+            privacy = handle.read()
+        with open(terms_page) as handle:
+            terms = handle.read()
+        for phrase in (
+            "Google account subject identifier",
+            "unique AES-256-GCM data-encryption key",
+            "Rally does not sell personal information",
+            "Public run evidence",
+            "Retention and deletion",
+            "terry@agent9.dev",
+        ):
+            self.assertIn(phrase, privacy)
+        for phrase in (
+            "Autonomy requires accountable use",
+            "Connect only what you control",
+            "Human accountability remains",
+            "Apache License 2.0",
+            "Disclaimers, responsibility, and liability",
+            "terry@agent9.dev",
+        ):
+            self.assertIn(phrase, terms)
+        self.assertIn('href="../privacy/"', admin_html)
+        self.assertIn('href="../terms/"', admin_html)
         with open(os.path.join(ROOT, "studio", "og-card.html")) as handle:
             card = handle.read()
         for phrase in ("THE ACCOUNTABLE AI TEAM", "Your AIs, finally", "196", "6/6", "0"):
