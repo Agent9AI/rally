@@ -7,10 +7,12 @@ widen an in-flight run.
 """
 from __future__ import annotations
 
-import json
 import hashlib
+import json
 import os
+import re
 import subprocess
+import urllib.parse
 from typing import Dict, Iterable, List, Tuple
 
 
@@ -18,6 +20,50 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEFAULT_REGISTRY = os.path.join(ROOT, "config", "connectors.json")
 DEFAULT_LOCAL = os.path.join(ROOT, "config", "connectors.local.json")
 RISK_CLASSES = {"read", "verify_first", "human_approval", "deny"}
+KEYCHAIN_SERVICE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
+TOOL_PREFIX = re.compile(r"^[a-z][a-z0-9_-]{0,31}$")
+GOOGLE_WORKSPACE_ENDPOINTS = {
+    "gmail": "https://gmailmcp.googleapis.com/mcp/v1",
+    "drive": "https://drivemcp.googleapis.com/mcp/v1",
+    "docs": "https://docsmcp.googleapis.com/mcp/v1",
+    "sheets": "https://sheetsmcp.googleapis.com/mcp/v1",
+    "slides": "https://slidesmcp.googleapis.com/mcp/v1",
+    "calendar": "https://calendarmcp.googleapis.com/mcp/v1",
+    "chat": "https://chatmcp.googleapis.com/mcp/v1",
+    "people": "https://people.googleapis.com/mcp/v1",
+}
+PINNED_PROVIDER_ENDPOINTS = {
+    "slack": "https://mcp.slack.com/mcp",
+    "github": "https://api.githubcopilot.com/mcp",
+}
+GOOGLE_WORKSPACE_READ_SCOPES = [
+    "https://www.googleapis.com/auth/gmail.readonly",
+    "https://www.googleapis.com/auth/drive.readonly",
+    "https://www.googleapis.com/auth/documents.readonly",
+    "https://www.googleapis.com/auth/spreadsheets.readonly",
+    "https://www.googleapis.com/auth/presentations.readonly",
+    "https://www.googleapis.com/auth/calendar.calendarlist.readonly",
+    "https://www.googleapis.com/auth/calendar.events.freebusy",
+    "https://www.googleapis.com/auth/calendar.events.readonly",
+    "https://www.googleapis.com/auth/chat.spaces.readonly",
+    "https://www.googleapis.com/auth/chat.memberships.readonly",
+    "https://www.googleapis.com/auth/chat.messages.readonly",
+    "https://www.googleapis.com/auth/chat.users.readstate.readonly",
+    "https://www.googleapis.com/auth/directory.readonly",
+    "https://www.googleapis.com/auth/userinfo.profile",
+    "https://www.googleapis.com/auth/contacts.readonly",
+]
+GITHUB_TOOLSETS = ["context", "repos", "issues", "pull_requests", "users"]
+SLACK_READ_SCOPES = [
+    "search:read.public",
+    "search:read.files",
+    "search:read.users",
+    "files:read",
+    "channels:history",
+    "channels:read",
+    "users:read",
+    "users:read.email",
+]
 
 
 class ConnectorConfigError(RuntimeError):
@@ -59,6 +105,7 @@ def load_catalog(cfg: Dict) -> Tuple[Dict[str, Dict], str]:
             raise ConnectorConfigError("duplicate connector id: %s" % connector_id)
         if entry.get("runtime") not in {"gateway", "roadmap"}:
             raise ConnectorConfigError("%s has an invalid runtime state" % connector_id)
+        _validate_catalog_entry(entry)
         catalog[connector_id] = entry
     return catalog, path
 
@@ -95,13 +142,149 @@ def installation_settings(cfg: Dict, subject: str = "local") -> Dict:
     }
 
 
+def _validate_endpoint(item: Dict, value: str) -> str:
+    """Constrain provider endpoints before an agent-capable client can reach them."""
+    try:
+        parsed = urllib.parse.urlsplit(value)
+        port = parsed.port
+    except ValueError as exc:
+        raise ConnectorConfigError("%s has an invalid endpoint" % item["id"]) from exc
+    host = (parsed.hostname or "").rstrip(".").casefold()
+    if parsed.scheme != "https" or not host:
+        raise ConnectorConfigError("%s endpoint must use HTTPS" % item["id"])
+    if parsed.username or parsed.password or parsed.query or parsed.fragment:
+        raise ConnectorConfigError(
+            "%s endpoint cannot contain credentials, a query, or a fragment" % item["id"]
+        )
+    if port not in (None, 443):
+        raise ConnectorConfigError("%s endpoint must use port 443" % item["id"])
+    allowed_hosts = [str(name).casefold() for name in item.get("allowed_endpoint_hosts", [])]
+    allowed_suffixes = [
+        str(name).lstrip(".").casefold() for name in item.get("allowed_endpoint_suffixes", [])
+    ]
+    suffix_match = any(host.endswith("." + suffix) for suffix in allowed_suffixes)
+    if (allowed_hosts or allowed_suffixes) and host not in allowed_hosts and not suffix_match:
+        raise ConnectorConfigError(
+            "%s endpoint host %s is outside its provider allowlist" % (item["id"], host)
+        )
+    exact_paths = [str(path) for path in item.get("allowed_endpoint_exact_paths", [])]
+    if exact_paths and parsed.path not in exact_paths:
+        raise ConnectorConfigError(
+            "%s endpoint path is outside its provider allowlist" % item["id"]
+        )
+    allowed_prefixes = [str(path) for path in item.get("allowed_endpoint_paths", [])]
+    if allowed_prefixes and not any(parsed.path.startswith(path) for path in allowed_prefixes):
+        raise ConnectorConfigError(
+            "%s endpoint path is outside its provider allowlist" % item["id"]
+        )
+    return urllib.parse.urlunsplit(("https", parsed.netloc, parsed.path, "", ""))
+
+
+def _dispatch(item: Dict) -> Dict:
+    raw = item.get("dispatch")
+    if raw is None:
+        return {}
+    if item.get("id") != "google-workspace" or not isinstance(raw, dict):
+        raise ConnectorConfigError("%s has invalid dispatch metadata" % item["id"])
+    if set(raw) != {"strategy", "separator", "services"}:
+        raise ConnectorConfigError("google-workspace has unknown dispatch metadata")
+    if raw.get("strategy") != "tool_prefix" or raw.get("separator") != ".":
+        raise ConnectorConfigError("google-workspace must dispatch by dotted tool prefix")
+    services = raw.get("services")
+    if not isinstance(services, dict) or services != GOOGLE_WORKSPACE_ENDPOINTS:
+        raise ConnectorConfigError(
+            "google-workspace must pin all eight official service endpoints"
+        )
+    for prefix, endpoint in services.items():
+        if not TOOL_PREFIX.fullmatch(prefix):
+            raise ConnectorConfigError("google-workspace has an invalid tool prefix")
+        if _validate_endpoint(item, endpoint) != endpoint:
+            raise ConnectorConfigError(
+                "google-workspace service endpoint is not in canonical form"
+            )
+    return raw
+
+
+def _validate_auth(item: Dict) -> None:
+    auth = item.get("auth")
+    if not isinstance(auth, dict):
+        raise ConnectorConfigError("%s has no gateway authentication metadata" % item["id"])
+    auth_type = auth.get("type")
+    if auth_type not in {"oauth_2_1", "google_adc", "external_bearer"}:
+        raise ConnectorConfigError("%s has an unsupported gateway auth type" % item["id"])
+    if auth_type in {"oauth_2_1", "external_bearer"}:
+        service = auth.get("keychain_service")
+        if not isinstance(service, str) or not KEYCHAIN_SERVICE.fullmatch(service):
+            raise ConnectorConfigError("%s has an invalid Keychain service" % item["id"])
+    status = auth.get("authorization_status")
+    if status is not None and status != "customer_required":
+        raise ConnectorConfigError("%s has an invalid customer authorization status" % item["id"])
+    if item.get("id") in {"google-workspace", "slack"}:
+        required = {
+            "type": "oauth_2_1",
+            "registration": "pre_registered",
+            "client_type": "confidential",
+            "dynamic_client_registration": False,
+            "authorization_status": "customer_required",
+        }
+        if any(auth.get(name) != value for name, value in required.items()):
+            raise ConnectorConfigError(
+                "%s requires pre-registered confidential customer OAuth" % item["id"]
+            )
+    if item.get("id") == "salesforce" and (
+        auth.get("registration") != "pre_registered"
+        or auth.get("client_type") != "public_or_confidential"
+        or auth.get("dynamic_client_registration") is not False
+        or status != "customer_required"
+    ):
+        raise ConnectorConfigError(
+            "salesforce requires a customer External Client App registration"
+        )
+    if item.get("id") == "google-workspace" and auth.get(
+        "scopes"
+    ) != GOOGLE_WORKSPACE_READ_SCOPES:
+        raise ConnectorConfigError("google-workspace must use its pinned read-only scopes")
+    if item.get("id") == "slack" and auth.get("scopes") != SLACK_READ_SCOPES:
+        raise ConnectorConfigError("slack must use its pinned public/read-only scopes")
+    if item.get("id") == "github" and (
+        auth_type != "external_bearer"
+        or status != "customer_required"
+        or auth.get("toolsets") != GITHUB_TOOLSETS
+    ):
+        raise ConnectorConfigError(
+            "github requires an external bearer token and pinned read-only toolsets"
+        )
+
+
+def _validate_catalog_entry(item: Dict) -> None:
+    if item.get("runtime") != "gateway":
+        return
+    if item.get("transport") != "streamable_http":
+        raise ConnectorConfigError("%s gateway transport must be streamable_http" % item["id"])
+    _validate_auth(item)
+    dispatch = _dispatch(item)
+    endpoint = _endpoint(item, {})
+    pinned = PINNED_PROVIDER_ENDPOINTS.get(item["id"])
+    if pinned is not None and endpoint != pinned:
+        raise ConnectorConfigError("%s provider endpoint does not match its pin" % item["id"])
+    if not endpoint and not dispatch and not (
+        item.get("endpoint_env") or item.get("allow_endpoint_override")
+    ):
+        raise ConnectorConfigError("%s gateway has no endpoint" % item["id"])
+
+
 def _endpoint(item: Dict, override: Dict) -> str:
     if override.get("endpoint"):
-        return str(override["endpoint"])
+        if not item.get("allow_endpoint_override", False):
+            raise ConnectorConfigError(
+                "%s uses a provider-pinned endpoint and cannot be overridden" % item["id"]
+            )
+        return _validate_endpoint(item, str(override["endpoint"]))
     if item.get("endpoint"):
-        return str(item["endpoint"])
+        return _validate_endpoint(item, str(item["endpoint"]))
     env_name = item.get("endpoint_env")
-    return os.environ.get(env_name, "") if env_name else ""
+    value = os.environ.get(env_name, "") if env_name else ""
+    return _validate_endpoint(item, value) if value else ""
 
 
 def catalog_rows(cfg: Dict, subject: str = "local") -> List[Dict]:
@@ -129,7 +312,9 @@ def configured_connector(cfg: Dict, connector_id: str,
     settings = installation_settings(cfg, subject)
     override = settings["overrides"].get(connector_id, {})
     auth = dict(item.get("auth") or {})
-    if auth.get("type") == "oauth_2_1" and auth.get("keychain_service"):
+    if auth.get("type") in {"oauth_2_1", "external_bearer"} and auth.get(
+        "keychain_service"
+    ):
         auth["keychain_service"] = "%s-%s" % (
             auth["keychain_service"], settings["profile_id"]
         )
@@ -157,12 +342,64 @@ def _tool_policy(connector_id: str, override: Dict) -> Dict[str, Dict]:
             raise ConnectorConfigError(
                 "%s tool %s has invalid risk class %s" % (connector_id, name, risk)
             )
+        constraints = rule.get("constraints") or {}
+        if not isinstance(constraints, dict):
+            raise ConnectorConfigError(
+                "%s tool %s constraints must be an object" % (connector_id, name)
+            )
+        unknown = set(constraints) - {"arguments", "max_argument_bytes", "max_result_bytes"}
+        if unknown:
+            raise ConnectorConfigError(
+                "%s tool %s has unknown constraint(s): %s" % (
+                    connector_id, name, ", ".join(sorted(unknown))
+                )
+            )
+        argument_rules = constraints.get("arguments") or {}
+        if not isinstance(argument_rules, dict):
+            raise ConnectorConfigError(
+                "%s tool %s argument constraints must be an object" % (connector_id, name)
+            )
+        normalized_arguments: Dict[str, Dict] = {}
+        for argument, raw_constraint in argument_rules.items():
+            constraint = dict(raw_constraint or {})
+            unknown_argument = set(constraint) - {"required", "allowed_values", "max_length"}
+            if unknown_argument:
+                raise ConnectorConfigError(
+                    "%s tool %s argument %s has unknown constraint(s)" % (
+                        connector_id, name, argument
+                    )
+                )
+            if "allowed_values" in constraint and not isinstance(
+                constraint["allowed_values"], list
+            ):
+                raise ConnectorConfigError("allowed_values must be a list")
+            if "max_length" in constraint and (
+                not isinstance(constraint["max_length"], int)
+                or constraint["max_length"] < 1
+            ):
+                raise ConnectorConfigError("max_length must be a positive integer")
+            normalized_arguments[str(argument)] = constraint
+        normalized_constraints: Dict = {}
+        if normalized_arguments:
+            normalized_constraints["arguments"] = normalized_arguments
+        for limit_name in ("max_argument_bytes", "max_result_bytes"):
+            if limit_name in constraints:
+                limit = constraints[limit_name]
+                if not isinstance(limit, int) or limit < 1:
+                    raise ConnectorConfigError(
+                        "%s tool %s %s must be a positive integer" % (
+                            connector_id, name, limit_name
+                        )
+                    )
+                normalized_constraints[limit_name] = limit
         policy[str(name)] = {"risk": risk}
+        if normalized_constraints:
+            policy[str(name)]["constraints"] = normalized_constraints
     return policy
 
 
 def authority_snapshot(cfg: Dict, run_id: str, receipt_path: str,
-                       subject: str = "local") -> Dict:
+                       subject: str = "local", approval_path: str = "") -> Dict:
     """Return the secret-free, deny-by-default authority frozen for one run."""
     catalog, catalog_path = load_catalog(cfg)
     settings = installation_settings(cfg, subject)
@@ -189,16 +426,19 @@ def authority_snapshot(cfg: Dict, run_id: str, receipt_path: str,
                     connector_id, settings["profile_id"]
                 )
             )
-        active.append({
+        active_connector = {
             "id": connector_id,
             "name": item["name"],
             "transport": item.get("transport", "streamable_http"),
             "endpoint": endpoint,
-            "endpoint_required": not bool(endpoint),
+            "endpoint_required": not bool(endpoint or resolved.get("dispatch")),
             "auth": resolved["auth"],
             "tool_policy": _tool_policy(connector_id, override),
             "docs_url": item.get("docs_url", ""),
-        })
+        }
+        if resolved.get("dispatch"):
+            active_connector["dispatch"] = resolved["dispatch"]
+        active.append(active_connector)
     return {
         "schema_version": "rally.connector-authority/v1",
         "run_id": run_id,
@@ -206,11 +446,15 @@ def authority_snapshot(cfg: Dict, run_id: str, receipt_path: str,
         "default_decision": "deny",
         "policy": {
             "require_explicit_tool_allowlist": True,
-            "human_approval_tools_enabled": False,
+            "human_approval_tools_enabled": True,
             "record_content": False,
         },
         "connectors": active,
         "receipt_path": os.path.abspath(receipt_path),
+        "approval_path": os.path.abspath(
+            approval_path or os.path.join(os.path.dirname(receipt_path),
+                                          "connector-approvals.json")
+        ),
         "catalog_path": os.path.relpath(catalog_path, ROOT),
     }
 
@@ -230,8 +474,11 @@ def prepare_run(run_id: str, run_dir: str, cfg: Dict,
     """Write the MCP config and one user's frozen policy snapshot."""
     policy_path = os.path.join(run_dir, "connector-authority.json")
     receipt_path = os.path.join(run_dir, "connector-receipts.jsonl")
+    approval_path = os.path.join(run_dir, "connector-approvals.json")
     mcp_path = os.path.join(run_dir, "connector-mcp.json")
-    authority = authority_snapshot(cfg, run_id, receipt_path, subject)
+    authority = authority_snapshot(
+        cfg, run_id, receipt_path, subject, approval_path=approval_path
+    )
     _atomic_json(policy_path, authority)
     gateway = os.path.join(ROOT, "bin", "rally-connectors")
     _atomic_json(mcp_path, {
@@ -263,6 +510,7 @@ def prepare_run(run_id: str, run_dir: str, cfg: Dict,
         "policy_path": policy_path,
         "mcp_config_path": mcp_path,
         "receipt_path": receipt_path,
+        "approval_path": approval_path,
     }
 
 

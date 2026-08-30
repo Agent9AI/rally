@@ -18,7 +18,7 @@
     <meta name="rally-console-api" content="https://rally.agent9.dev/v1/console">
     <link rel="canonical" href="https://rally.agent9.dev/">
     <link rel="icon" href="rally-symbol.png" type="image/png">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=20260830b">
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
@@ -259,42 +259,42 @@
         <div class="section-heading"><p class="eyebrow">Ten connector paths · one policy boundary</p><h2>Give Rally a desk in the systems you already run.</h2><p>Each user connects only the accounts they are authorized to use. Administrators set organization-wide resource boundaries and decide what Rally may read, draft, execute, or hold for approval. BigQuery, Atlassian, and Salesforce stay together in the third row; Hyperagent adds an external agent workforce below them.</p></div>
         <div class="connector-grid">
           <article>
-            <div class="connector-top"><span class="connector-icon workspace-icon">G</span><span class="roadmap-chip">Broadest reach</span></div>
+            <div class="connector-top"><span class="connector-icon workspace-icon">G</span><span class="roadmap-chip ready-chip">8-service gateway</span></div>
             <h3>Google Workspace</h3>
             <p>Work across Gmail, Drive, Docs, Sheets, Slides, Calendar, Chat, and company contacts using Google’s remote MCP servers.</p>
-            <div class="connector-policy"><span>Default</span><b>Read + draft</b><span>Send/share</span><b>Human approval</b></div>
+            <div class="connector-policy"><span>Safe preset</span><b>Read only</b><span>Draft/send/share</span><b>Denied</b></div>
             <a href="https://developers.google.com/workspace/guides/configure-mcp-servers">Official connector path ↗</a>
           </article>
           <article>
-            <div class="connector-top"><span class="connector-icon slack-icon">S</span><span class="roadmap-chip">Team memory</span></div>
+            <div class="connector-top"><span class="connector-icon slack-icon">S</span><span class="roadmap-chip ready-chip">Gateway ready</span></div>
             <h3>Slack</h3>
             <p>Search decisions, understand project history, prepare updates, and request approvals where the team already works.</p>
-            <div class="connector-policy"><span>Default</span><b>Search + draft</b><span>Post/create</span><b>Verify first</b></div>
+            <div class="connector-policy"><span>Safe preset</span><b>Public search + read</b><span>Private/post/create</span><b>Denied</b></div>
             <a href="https://docs.slack.dev/ai/slack-mcp-server/">Official connector path ↗</a>
           </article>
           <article>
-            <div class="connector-top"><span class="connector-icon github-icon">GH</span><span class="roadmap-chip">Live wedge</span></div>
+            <div class="connector-top"><span class="connector-icon github-icon">GH</span><span class="roadmap-chip ready-chip">Gateway ready</span></div>
             <h3>GitHub</h3>
             <p>Investigate code, manage issues and pull requests, monitor Actions, and prepare changes through the official MCP server.</p>
-            <div class="connector-policy"><span>Default</span><b>Issues + pull requests</b><span>Merge</span><b>Human gate</b></div>
+            <div class="connector-policy"><span>Safe preset</span><b>Read-only + lockdown</b><span>Write/merge</span><b>Server denied</b></div>
             <a href="https://github.com/github/github-mcp-server">Official connector path ↗</a>
           </article>
           <article>
-            <div class="connector-top"><span class="connector-icon cloudflare-icon">C</span><span class="roadmap-chip">Web operations</span></div>
+            <div class="connector-top"><span class="connector-icon cloudflare-icon">C</span><span class="roadmap-chip ready-chip">Gateway ready</span></div>
             <h3>Cloudflare</h3>
-            <p>Operate sites, DNS, Workers, storage, observability, and security through Cloudflare’s OAuth-capable MCP servers.</p>
-            <div class="connector-policy"><span>Default</span><b>Read + diagnose</b><span>Writes</span><b>Verify first</b></div>
+            <p>Start with Worker logs and metrics through Cloudflare’s narrow, OAuth-capable Observability MCP server.</p>
+            <div class="connector-policy"><span>Default</span><b>Observability reads</b><span>Broad API execute</span><b>Denied</b></div>
             <a href="https://developers.cloudflare.com/agents/model-context-protocol/cloudflare/servers-for-cloudflare/">Official connector path ↗</a>
           </article>
           <article>
-            <div class="connector-top"><span class="connector-icon n8n-icon">n8n</span><span class="roadmap-chip">Long-tail reach</span></div>
+            <div class="connector-top"><span class="connector-icon n8n-icon">n8n</span><span class="roadmap-chip ready-chip">Gateway ready</span></div>
             <h3>n8n</h3>
             <p>Turn only the workflows an administrator explicitly exposes into bounded tools across the rest of the company stack.</p>
             <div class="connector-policy"><span>Default</span><b>Approved workflows</b><span>New access</span><b>Admin controlled</b></div>
             <a href="https://docs.n8n.io/connect/connect-to-n8n-mcp-server/">Official connector path ↗</a>
           </article>
           <article>
-            <div class="connector-top"><span class="connector-icon stripe-icon">S</span><span class="roadmap-chip">Revenue</span></div>
+            <div class="connector-top"><span class="connector-icon stripe-icon">S</span><span class="roadmap-chip ready-chip">Gateway ready</span></div>
             <h3>Stripe</h3>
             <p>Investigate payments, subscriptions, customers, and reports, with money-moving actions behind explicit confirmation.</p>
             <div class="connector-policy"><span>Default</span><b>Read + report</b><span>Refund/write</span><b>Human approval</b></div>
@@ -317,9 +317,9 @@
           <article>
             <div class="connector-top"><span class="connector-icon salesforce-icon">SF</span><span class="roadmap-chip ready-chip">Gateway ready</span></div>
             <h3>Salesforce</h3>
-            <p>Reason across customer, pipeline, service, Data 360, and Tableau context through Salesforce-hosted MCP servers and tenant authorization.</p>
-            <div class="connector-policy"><span>Default</span><b>Query + analyze</b><span>Record writes</span><b>Human gate</b></div>
-            <a href="https://developer.salesforce.com/blogs/2026/06/the-salesforce-developers-guide-to-the-summer-26-release">Official connector path ↗</a>
+            <p>Query customer, pipeline, and service records through Salesforce’s read-only hosted SObject MCP server.</p>
+            <div class="connector-policy"><span>Safe preset</span><b>Schema + SOQL/SOSL</b><span>Record writes</span><b>No mutation endpoint</b></div>
+            <a href="https://developer.salesforce.com/docs/platform/hosted-mcp-servers/references/reference/sobject-reads.html">Official connector path ↗</a>
           </article>
           <article class="connector-featured">
             <div class="connector-featured-copy">
@@ -335,7 +335,7 @@
             </div>
           </article>
         </div>
-        <p class="connector-boundary"><b>Honest boundary:</b> email, cross-model execution, Google governance, public evidence, and Rally’s A2A v1.0 boundary are live. BigQuery’s official endpoint has passed authenticated MCP discovery; its six tools remain denied until an administrator approves a read-only allowlist. Atlassian, Salesforce, and Hyperagent are runtime-ready but not called connected until each user completes provider authentication and live discovery. The other six remain the product sequence.</p>
+        <p class="connector-boundary"><b>Honest boundary:</b> all ten cards now have pinned, deny-by-default runtime adapters and exact safe presets. BigQuery’s official endpoint has passed authenticated MCP discovery; every other account remains disconnected until that user completes its provider setup, authentication, and live discovery. Google Workspace and Slack require customer app registration, Salesforce requires an External Client App, and GitHub requires a customer-owned token. Adapter ready never means account connected.</p>
       </section>
 
       <section class="section architecture-section" id="proof">
@@ -355,10 +355,10 @@
           </article>
           <article class="test-card">
             <div class="card-header"><div><span class="terminal-icon">›_</span><b>Release gates</b></div><span class="status-chip complete">Green</span></div>
-            <pre><code>80  runner + ingress + policy + site
-25  Cloud, A2A + connector gateway
+            <pre><code>86  runner + ingress + policy + site
+94  Cloud, A2A + connector security
 ───
-105 automated tests
+180 automated tests
 
 ✓ Terraform validated
 ✓ Worker bundle verified
@@ -393,8 +393,9 @@
           <details><summary>How does A2A fit—and is Rally A2A compatible?</summary><p>Yes. Rally publishes an A2A v1.0 Agent Card and accepts tasks over JSON-RPC and HTTP+JSON; official SDK clients exercise both paths. A2A enables discovery and task exchange. Rally adds the controls around the work: authority, durable state, recovery, evidence, and independent verification. The protocol was <a href="https://developers.googleblog.com/en/a2a-a-new-era-of-agent-interoperability/">introduced by Google</a> and now advances under <a href="https://a2a-protocol.org/latest/blog/2026/08/27/a-new-chapter-for-a2a-joining-the-agentic-ai-foundation/">Linux Foundation open governance</a>. Compatibility is not certification or endorsement.</p></details>
           <details><summary>What stays private?</summary><p>Commissioner identity, worktree paths, mail IDs, raw prompts, credentials, and cloud request keys never enter the public console record.</p></details>
           <details><summary>Are AI and business-system connections shared between users?</summary><p>No. Each user authorizes their own provider accounts. Rally selects a separate one-way connection profile from the authenticated commissioner, namespaces OAuth storage to that profile, and freezes only that user’s approved systems and tools into the run.</p></details>
+          <details><summary>Can Rally connect a custom MCP server?</summary><p>Not through an arbitrary URL box. Custom remote MCP is a Labs path that must pass HTTPS and network admission, OAuth origin checks, bounded discovery, schema fingerprint review, exact tool policy, payload ceilings, and one-time approval for writes. WebMCP is complementary: it may later expose Rally actions to a human-present browser, but it does not replace the asynchronous server-side gateway.</p></details>
           <details><summary>What does “give Rally a job” mean?</summary><p>Ask for a finished professional outcome—such as a sourced market briefing, an executive presentation, a customer-risk review, or a launch plan—then grant only the sources, limits, and approval rules that outcome needs.</p></details>
-          <details><summary>Are the business connectors live?</summary><p>The gateway is, and BigQuery has completed a real authenticated handshake with Google’s official MCP endpoint and discovered six tools. All six remain denied until an administrator approves a read-only allowlist. Atlassian, Salesforce, and Hyperagent have runnable per-user OAuth adapters but are not presented as connected before their provider checks pass. Google Workspace, Slack, GitHub, Cloudflare, n8n, and Stripe remain researched official paths in the product sequence.</p></details>
+          <details><summary>Are the business connectors live?</summary><p>The governed gateway and all ten provider adapters are implemented. BigQuery has completed a real authenticated handshake with Google’s official MCP endpoint and discovered six tools. The other accounts are intentionally shown as disconnected until each user completes provider setup, authentication, live discovery, and an exact safe preset. Rally never turns “adapter exists” into “customer account connected.”</p></details>
         </div>
       </section>
 
@@ -438,6 +439,6 @@
       </section>
     </dialog>
 
-    <script src="app.js"></script>
+    <script src="app.js?v=20260830b"></script>
   </body>
 </html>

@@ -4,8 +4,10 @@ Rally exposes one MCP server to every worker: `rally-connectors`. The gateway is
 not a bag of credentials. It is a run-scoped policy boundary between a model and
 each customer system.
 
-BigQuery, Atlassian, Salesforce, and Hyperagent are implemented as the first
-runtime adapters. They are committed **disabled**. A customer connection becomes usable
+All ten catalogued providers—Google Workspace, Slack, GitHub, Cloudflare
+Observability, n8n Cloud, Stripe, BigQuery, Atlassian, Salesforce, and
+Hyperagent—have runnable gateway adapters. They are committed **disabled**.
+A customer connection becomes usable
 only after all four gates pass:
 
 1. the user authenticates their own Google ADC or browser OAuth profile;
@@ -15,7 +17,14 @@ only after all four gates pass:
 
 Everything else defaults to deny. Retrieved connector content is untrusted
 input. Arguments and results are hashed into receipts; their content is not
-copied into the receipt log.
+copied into the receipt log. Provider endpoints are HTTPS- and hostname-pinned,
+redirects are refused, discovery is bounded to 128 tools/512 KiB, arguments to
+256 KiB, and returned model-visible data to 1 MiB. Per-tool policy may narrow
+those ceilings and constrain exact resource IDs before a network call.
+
+The gateway ships named provider-safe presets. A preset is an exact tool
+allowlist with smaller payload bounds; it is not a wildcard and never follows
+future provider catalog growth automatically.
 
 ## Per-user isolation
 
@@ -51,6 +60,106 @@ Antigravity's MCP configuration is global. Before enabling a Rally connector,
 disable every other enabled MCP server for this worker profile. Rally preflight
 will refuse to run if a model could bypass the gateway.
 
+### Google Workspace
+
+Workspace is one Rally connector backed by eight official, pinned Google MCP
+services. Rally qualifies discovered tools by service (`gmail.search_threads`,
+`drive.search_files`, and so on) and dispatches each call only to that service.
+The read-minimal preset requests 15 read-only Google scopes and contains no
+draft, send, share, create, update, or delete tool.
+
+```bash
+./bin/rally connectors --profile person@company.com register-client google-workspace
+./bin/rally connectors --profile person@company.com enable google-workspace \
+  --preset read-minimal
+./bin/rally connectors --profile person@company.com auth google-workspace
+```
+
+The administrator must first enable the eight Workspace MCP services, configure
+Google OAuth, and register Rally's local callback URI. The client registration
+and user token stay in that profile's macOS Keychain namespace.
+
+### Slack
+
+Slack requires a confidential OAuth client belonging to an internal app or a
+Marketplace app; Slack prohibits unlisted apps from using its MCP server. The
+initial Rally preset requests only public search, file/channel reads, and user
+lookup scopes—no private-message search or mutation scope.
+
+```bash
+./bin/rally connectors --profile person@company.com register-client slack
+./bin/rally connectors --profile person@company.com enable slack \
+  --preset read-minimal
+./bin/rally connectors --profile person@company.com auth slack
+```
+
+### GitHub
+
+GitHub's remote MCP server requires a token obtained by Rally's host application;
+the server does not perform OAuth itself. Import a dedicated GitHub App/OAuth
+token or fine-grained PAT, then use the fixed read-only preset:
+
+```bash
+./bin/rally connectors --profile person@company.com import-token github
+./bin/rally connectors --profile person@company.com enable github \
+  --preset read-only
+./bin/rally connectors --profile person@company.com doctor github
+```
+
+Every GitHub request carries provider-enforced read-only and lockdown headers
+plus the pinned `context`, `repos`, `issues`, `pull_requests`, and `users`
+toolsets. A local policy edit cannot weaken those headers.
+
+### Cloudflare Observability
+
+Rally starts with Cloudflare's narrow Observability MCP server rather than the
+broad API server whose `execute` tool can perform reads or writes. Authenticate,
+review the live schemas, and allow only the three read-oriented tools:
+
+```bash
+./bin/rally connectors --profile person@company.com auth cloudflare
+./bin/rally connectors --profile person@company.com enable cloudflare \
+  --preset observability
+```
+
+The pinned endpoint is `https://observability.mcp.cloudflare.com/mcp`. The
+general Cloudflare API MCP server remains outside this preset until Rally can
+classify the underlying API method, not merely the wrapper tool name.
+
+### n8n Cloud
+
+Rally accepts only the tenant-scoped HTTPS endpoint
+`https://<tenant>.app.n8n.cloud/mcp-server/http`. Arbitrary self-hosted URLs are
+not accepted through this adapter. n8n exposes workflows at the user level, so
+administrators must disable automatic exposure and bind each allowed tool call
+to explicit workflow IDs using Rally's argument constraints.
+
+```bash
+./bin/rally connectors --profile person@company.com enable n8n \
+  --endpoint 'https://YOUR-TENANT.app.n8n.cloud/mcp-server/http' \
+  --preset workflow-bounded \
+  --workflow-id 'EXACT-WORKFLOW-ID'
+./bin/rally connectors --profile person@company.com auth n8n
+```
+
+Discovery alone grants no execution. `execute_workflow` belongs behind human
+approval; search, creation, editing, publishing, archiving, agent mutation, and
+data-table writes remain denied by default.
+
+### Stripe
+
+Stripe's pinned hosted endpoint supports OAuth 2.1 with dynamic registration:
+
+```bash
+./bin/rally connectors --profile person@company.com auth stripe
+./bin/rally connectors --profile person@company.com enable stripe \
+  --preset read-minimal
+```
+
+Broad customer/financial reads, writes, refunds, reports, feedback submission,
+and money movement are not part of the minimal preset. Sandbox and live Stripe
+connections must be authorized and reviewed separately.
+
 ### BigQuery
 
 BigQuery may use the local OS user's Application Default Credentials identity—no
@@ -66,18 +175,17 @@ The identity needs `roles/mcp.toolUser` plus the minimum BigQuery permissions
 for the chosen job. Google's read-oriented starting point is
 `roles/bigquery.jobUser` and `roles/bigquery.dataViewer`; narrow dataset access
 further where possible. The first live doctor check on 2026-08-29 negotiated
-MCP successfully and returned six tools. Enable the five read-safe tools
-explicitly; keep the broader `execute_sql` tool gated:
+MCP successfully and returned six tools. The built-in starting preset is
+narrower: four metadata tools and no SQL execution surface.
 
 ```bash
 ./bin/rally connectors enable bigquery \
-  --tool list_dataset_ids=read \
-  --tool get_dataset_info=read \
-  --tool list_table_ids=read \
-  --tool get_table_info=read \
-  --tool execute_sql_readonly=read \
-  --tool execute_sql=human_approval
+  --preset metadata-only
 ```
+
+An administrator can later add `execute_sql_readonly=read` with explicit
+project/dataset constraints. The broader `execute_sql` remains denied unless a
+separate gated policy is deliberately configured.
 
 For a separate commissioner profile, stage that user's ADC file and include
 `--profile person@company.com --credential-file /private/path/to/adc.json` on
@@ -89,8 +197,7 @@ file itself must remain private and outside the repository.
 ```bash
 ./bin/rally connectors --profile person@company.com auth atlassian
 ./bin/rally connectors --profile person@company.com enable atlassian \
-  --tool DISCOVERED_SEARCH_TOOL=read \
-  --tool DISCOVERED_GET_TOOL=read
+  --preset read-minimal
 ```
 
 The first command performs OAuth 2.1 in the browser, stores OAuth state in the
@@ -100,16 +207,17 @@ for the demo.
 
 ### Salesforce
 
-Salesforce's hosted MCP endpoint is tenant/server-specific. Stage that endpoint,
-then authenticate and discover tools:
+Salesforce's read-only hosted SObject MCP server is selected explicitly. Create
+and activate a Salesforce External Client App, store its consumer key (and
+secret when required), then authenticate and discover tools:
 
 ```bash
+./bin/rally connectors --profile person@company.com register-client salesforce \
+  --public-client
 ./bin/rally connectors --profile person@company.com enable salesforce \
-  --endpoint 'https://YOUR-SALESFORCE-MCP-ENDPOINT' 
+  --endpoint 'https://api.salesforce.com/platform/mcp/v1/platform/sobject-reads' \
+  --preset sobject-reads
 ./bin/rally connectors --profile person@company.com auth salesforce
-./bin/rally connectors --profile person@company.com enable salesforce \
-  --tool DISCOVERED_QUERY_TOOL=read \
-  --tool DISCOVERED_DESCRIBE_TOOL=read
 ```
 
 OAuth state is stored in that user's namespaced Keychain service. Do not
@@ -126,19 +234,31 @@ threads, start a background thread, follow up, upload an attachment, and poll
 for the result.
 
 Authenticate first, inspect the live tool schemas, then enable the read-only
-surface. Starting or continuing external work remains behind the real
-pre-execution gate and therefore fails closed in this release:
+surface. Starting or continuing external work belongs behind Rally's exact,
+single-use human approval gate:
 
 ```bash
 ./bin/rally connectors --profile person@company.com auth hyperagent
 ./bin/rally connectors --profile person@company.com enable hyperagent \
-  --tool list_agents=read \
-  --tool list_threads=read \
-  --tool get_thread=read \
-  --tool create_thread=human_approval \
-  --tool send_message=human_approval \
-  --tool create_attachment_upload=human_approval
+  --preset read-minimal
 ```
+
+`resolve_approval` is never autonomous. The person must inspect and approve the
+exact pending Hyperagent action; Rally then consumes that approval once.
+
+For an explicitly allowlisted `human_approval` tool, the first call creates a
+private, expiring request and returns its content-free ID. The administrator can
+inspect and approve that exact call:
+
+```bash
+./bin/rally connectors approvals runs/RUN-ID --status pending
+./bin/rally connectors review runs/RUN-ID APPROVAL-ID
+./bin/rally connectors approve runs/RUN-ID APPROVAL-ID --as human-operator
+```
+
+The agent retries with that approval ID. Rally binds it to the run, connector,
+tool, and complete argument digest, then consumes it before the network call;
+reuse, argument substitution, expiry, and concurrent replay fail closed.
 
 This connection is distinct from Hyperagent's optional ChatGPT subscription
 connection. Rally authorizes the user's Hyperagent MCP account; it never
@@ -149,9 +269,14 @@ receives or brokers the user's ChatGPT entitlement through Hyperagent.
 ```bash
 ./bin/rally connectors --profile person@company.com list
 ./bin/rally connectors --profile person@company.com doctor bigquery
+./bin/rally connectors --profile person@company.com doctor cloudflare
+./bin/rally connectors --profile person@company.com doctor stripe
 ./bin/rally connectors --profile person@company.com doctor atlassian
 ./bin/rally connectors --profile person@company.com doctor salesforce
 ./bin/rally connectors --profile person@company.com doctor hyperagent
+./bin/rally connectors --profile person@company.com doctor google-workspace
+./bin/rally connectors --profile person@company.com doctor slack
+./bin/rally connectors --profile person@company.com doctor github
 ./bin/rally --check
 make test
 make cloud-test
@@ -159,9 +284,10 @@ make cloud-test
 
 `doctor` is evidence: it authenticates, initializes an MCP session, and lists
 the tools the provider actually returned. An enabled connector with zero read
-tools remains discovery-only. `verify_first` and `human_approval` policies are
-represented but fail closed in this release because a genuine pre-execution
-approval workflow has not shipped; they are never treated as post-hoc review.
+tools remains discovery-only. `human_approval` tools use the shipped exact,
+expiring, one-time approval ledger. `verify_first` continues to fail closed
+until an independent pre-execution verifier is selected; it is never treated as
+post-hoc review.
 
 ## Run receipts
 
@@ -174,7 +300,13 @@ arguments, and returned business data are excluded.
 
 Official references:
 
+- [Google Workspace remote MCP servers](https://developers.google.com/workspace/guides/configure-mcp-servers)
+- [Slack hosted MCP server](https://docs.slack.dev/ai/slack-mcp-server/)
+- [GitHub remote MCP host guide](https://github.com/github/github-mcp-server/blob/main/docs/host-integration.md)
+- [Cloudflare remote MCP servers](https://github.com/cloudflare/mcp-server-cloudflare)
+- [n8n instance-level MCP](https://docs.n8n.io/connect/connect-to-n8n-mcp-server/)
+- [Stripe hosted MCP server](https://docs.stripe.com/mcp)
 - [BigQuery remote MCP server](https://docs.cloud.google.com/bigquery/docs/use-bigquery-mcp)
 - [Atlassian Rovo MCP server](https://www.atlassian.com/platform/rovo-mcp)
-- [Salesforce hosted MCP servers](https://developer.salesforce.com/blogs/2026/06/the-salesforce-developers-guide-to-the-summer-26-release)
+- [Salesforce SObject Reads server](https://developer.salesforce.com/docs/platform/hosted-mcp-servers/references/reference/sobject-reads.html)
 - [Hyperagent hosted OAuth MCP server](https://www.hyperagent.com/docs/concepts/agents/invocations/mcp-server/)

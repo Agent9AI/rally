@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import getpass
 import json
 import os
 import subprocess
@@ -17,9 +18,113 @@ sys.path.insert(0, os.path.join(ROOT, "src"))
 
 import connectors
 
+from connector_approvals import (
+    ApprovalError,
+    get_for_review,
+    list_public,
+)
+from connector_approvals import (
+    approve as approve_request,
+)
+from connector_credentials import (
+    ConnectorCredentialError,
+    OAuthClientCredentials,
+    OAuthTokenMaterial,
+    ProfileKeychainStore,
+    delete_profile_credentials,
+)
 from connector_gateway import ConnectorGatewayError, discover_tools
+from connector_presets import ConnectorPresetError, build_connector_preset
 
 DEFAULT_CONFIG = os.path.join(ROOT, "config", "rally.json")
+
+
+def _credential_store(
+    cfg: dict[str, Any], connector_id: str, subject: str
+) -> ProfileKeychainStore:
+    connector = connectors.configured_connector(cfg, connector_id, subject)
+    service = (connector.get("auth") or {}).get("keychain_service")
+    if not service:
+        raise connectors.ConnectorConfigError(
+            f"{connector_id} does not use profile Keychain credentials"
+        )
+    return ProfileKeychainStore.from_namespaced_service(service)
+
+
+def register_oauth_client(
+    cfg: dict[str, Any], connector_id: str, subject: str, public_client: bool
+) -> int:
+    connector = connectors.configured_connector(cfg, connector_id, subject)
+    if (connector.get("auth") or {}).get("registration") != "pre_registered":
+        raise connectors.ConnectorConfigError(
+            f"{connector_id} does not require a pre-registered OAuth client"
+        )
+    client_id = input("OAuth client ID: ").strip()
+    client_secret = None if public_client else getpass.getpass("OAuth client secret: ")
+    _credential_store(cfg, connector_id, subject).save_client(
+        OAuthClientCredentials(client_id, client_secret or None)
+    )
+    print(f"stored {connector_id} OAuth client registration for this isolated profile")
+    return 0
+
+
+def import_bearer_token(cfg: dict[str, Any], connector_id: str, subject: str) -> int:
+    connector = connectors.configured_connector(cfg, connector_id, subject)
+    if (connector.get("auth") or {}).get("type") != "external_bearer":
+        raise connectors.ConnectorConfigError(
+            f"{connector_id} does not accept an externally obtained bearer token"
+        )
+    token = getpass.getpass("Bearer token (stored only in macOS Keychain): ")
+    _credential_store(cfg, connector_id, subject).save_tokens(OAuthTokenMaterial(token))
+    print(f"stored {connector_id} bearer token for this isolated profile")
+    return 0
+
+
+def disconnect_credentials(cfg: dict[str, Any], connector_id: str, subject: str) -> int:
+    deleted = delete_profile_credentials(_credential_store(cfg, connector_id, subject))
+    print(
+        f"disconnected {connector_id} for this profile"
+        if deleted
+        else f"{connector_id} had no stored profile credentials"
+    )
+    return 0
+
+
+def _approval_path(run_dir: str) -> str:
+    policy_path = os.path.join(os.path.abspath(run_dir), "connector-authority.json")
+    try:
+        with open(policy_path) as handle:
+            authority = json.load(handle)
+    except (OSError, ValueError) as exc:
+        raise ConnectorGatewayError(f"cannot read run connector authority: {exc}") from exc
+    path = authority.get("approval_path")
+    if not path:
+        raise ConnectorGatewayError("this run has no human-approval ledger")
+    return str(path)
+
+
+def list_approvals(run_dir: str, status: str | None) -> int:
+    print(json.dumps(list_public(_approval_path(run_dir), status=status), indent=2))
+    return 0
+
+
+def review_approval(run_dir: str, approval_id: str) -> int:
+    print(json.dumps(get_for_review(_approval_path(run_dir), approval_id), indent=2))
+    return 0
+
+
+def approve(run_dir: str, approval_id: str, human_identity: str) -> int:
+    print(
+        json.dumps(
+            approve_request(
+                _approval_path(run_dir),
+                approval_id,
+                human_identity=human_identity,
+            ),
+            indent=2,
+        )
+    )
+    return 0
 
 
 def load_config(path: str) -> dict[str, Any]:
@@ -32,7 +137,10 @@ def print_catalog(cfg: dict[str, Any], subject: str) -> int:
     print(f"Rally connector catalog · profile {settings['profile_id']}")
     print(f"{'CONNECTOR':18} {'RUNTIME':13} {'ENABLED':10} ENDPOINT")
     for item in connectors.catalog_rows(cfg, subject):
-        endpoint = item.get("configured_endpoint") or "setup required"
+        endpoint = item.get("configured_endpoint")
+        if not endpoint and item.get("dispatch"):
+            endpoint = f"{len(item['dispatch']['services'])} pinned services"
+        endpoint = endpoint or "setup required"
         enabled = "yes" if item["enabled"] else "no"
         print(f"{item['id']:18} {item['runtime']:13} {enabled:10} {endpoint}")
     print("\nCredentials are held by Google ADC or macOS Keychain, never these files.")
@@ -54,8 +162,14 @@ def _parse_tool(values: list[str]) -> dict[str, dict[str, str]]:
 
 
 def enable_connector(
-    cfg: dict[str, Any], connector_id: str, endpoint: str, tools: list[str],
-    subject: str, credential_file: str = "",
+    cfg: dict[str, Any],
+    connector_id: str,
+    endpoint: str,
+    tools: list[str],
+    subject: str,
+    credential_file: str = "",
+    preset: str = "",
+    workflow_ids: list[str] | None = None,
 ) -> int:
     item = connectors.configured_connector(cfg, connector_id, subject)
     if item["runtime"] != "gateway":
@@ -71,15 +185,25 @@ def enable_connector(
         override["endpoint"] = endpoint
     if credential_file:
         override["credential_file"] = os.path.abspath(os.path.expanduser(credential_file))
-    if tools:
+    if preset and tools:
+        raise connectors.ConnectorConfigError("use either --preset or --tool, not both")
+    if preset:
+        override["tools"] = build_connector_preset(
+            connector_id,
+            preset,
+            allowed_workflow_ids=workflow_ids,
+        )
+    elif tools:
         override["tools"] = _parse_tool(tools)
     overrides[connector_id] = override
     path = connectors.save_local_settings(cfg, enabled, overrides, subject)
     resolved = connectors.configured_connector(cfg, connector_id, subject)
     print(f"enabled {connector_id} for {settings['profile_id']} in {path}")
-    if not resolved.get("endpoint"):
+    if not resolved.get("endpoint") and not resolved.get("dispatch"):
         print("next: provide its tenant MCP endpoint with --endpoint")
-    if not (override.get("tools") or {}):
+    if preset:
+        print(f"policy preset: {preset} ({len(override['tools'])} exact tools)")
+    elif not (override.get("tools") or {}):
         print("discovery only: no remote tool can execute until --tool allowlists are added")
     return 0
 
@@ -176,7 +300,7 @@ async def inspect_connector(
         raise connectors.ConnectorConfigError(
             f"{connector_id} is catalogued but its gateway adapter is not shipped"
         )
-    if not connector.get("endpoint"):
+    if not connector.get("endpoint") and not connector.get("dispatch"):
         raise connectors.ConnectorConfigError(
             f"{connector_id} needs a tenant MCP endpoint; use connectors enable {connector_id} --endpoint URL"
         )
@@ -229,8 +353,44 @@ def build_parser() -> argparse.ArgumentParser:
         help="profile-specific Google ADC file (required for non-local BigQuery profiles)",
     )
     enable.add_argument("--tool", action="append", default=[], metavar="NAME=RISK")
+    enable.add_argument(
+        "--preset", default="", help="provider-safe preset such as read-minimal"
+    )
+    enable.add_argument(
+        "--workflow-id",
+        action="append",
+        default=[],
+        help="n8n workflow ID permitted by workflow-bounded (repeatable)",
+    )
     disable = sub.add_parser("disable", help="remove connector authority from future runs")
     disable.add_argument("connector_id")
+    register = sub.add_parser(
+        "register-client", help="store a provider-issued OAuth client registration"
+    )
+    register.add_argument("connector_id")
+    register.add_argument(
+        "--public-client", action="store_true", help="registration has no client secret"
+    )
+    token = sub.add_parser(
+        "import-token", help="store an externally obtained bearer token without echoing it"
+    )
+    token.add_argument("connector_id")
+    disconnect = sub.add_parser(
+        "disconnect", help="delete this profile's stored connector credentials"
+    )
+    disconnect.add_argument("connector_id")
+    approvals = sub.add_parser("approvals", help="list content-free run approvals")
+    approvals.add_argument("run_dir")
+    approvals.add_argument(
+        "--status", choices=("pending", "approved", "consumed", "expired")
+    )
+    review = sub.add_parser("review", help="privately inspect one exact approval request")
+    review.add_argument("run_dir")
+    review.add_argument("approval_id")
+    approve_command = sub.add_parser("approve", help="approve one exact request once")
+    approve_command.add_argument("run_dir")
+    approve_command.add_argument("approval_id")
+    approve_command.add_argument("--as", dest="human_identity", required=True)
     return parser
 
 
@@ -245,14 +405,36 @@ def main() -> int:
         if args.command == "enable":
             return enable_connector(
                 cfg, args.connector_id, args.endpoint, args.tool,
-                args.profile, args.credential_file,
+                args.profile, args.credential_file, args.preset, args.workflow_id,
             )
         if args.command == "disable":
             return disable_connector(cfg, args.connector_id, args.profile)
+        if args.command == "register-client":
+            return register_oauth_client(
+                cfg, args.connector_id, args.profile, args.public_client
+            )
+        if args.command == "import-token":
+            return import_bearer_token(cfg, args.connector_id, args.profile)
+        if args.command == "disconnect":
+            return disconnect_credentials(cfg, args.connector_id, args.profile)
+        if args.command == "approvals":
+            return list_approvals(args.run_dir, args.status)
+        if args.command == "review":
+            return review_approval(args.run_dir, args.approval_id)
+        if args.command == "approve":
+            return approve(args.run_dir, args.approval_id, args.human_identity)
         return asyncio.run(inspect_connector(
             cfg, args.connector_id, args.command == "auth", args.profile
         ))
-    except (connectors.ConnectorConfigError, ConnectorGatewayError, OSError, ValueError) as exc:
+    except (
+        ApprovalError,
+        ConnectorCredentialError,
+        ConnectorPresetError,
+        connectors.ConnectorConfigError,
+        ConnectorGatewayError,
+        OSError,
+        ValueError,
+    ) as exc:
         print(f"connector setup failed: {exc}", file=sys.stderr)
         return 1
 

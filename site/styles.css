@@ -203,8 +203,8 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px soli
 .hero-proof span { display: block; margin-top: 8px; color: var(--muted); font-size: .76rem; line-height: 1.35; text-transform: uppercase; letter-spacing: .055em; }
 
 .story-section { max-width: 1320px; margin: 0 auto; padding: 118px 32px 130px; }
-.story-heading { max-width: 930px; margin-bottom: 58px; }
-.story-heading h2 { max-width: 900px; }
+.story-heading { max-width: 1240px; margin-bottom: 58px; }
+.story-heading h2 { max-width: none; white-space: nowrap; }
 .story-heading h2 span { color: var(--blue); }
 .story-heading > p:not(.eyebrow) { max-width: 790px; font-size: 1.12rem; }
 .story-heading > p:last-child { margin-bottom: 0; }
@@ -630,6 +630,7 @@ details p a:hover { color: var(--blue-hover); text-decoration-color: currentColo
   .mission-visual { width: 100%; max-width: 680px; min-height: 630px; }
   .hero-conversion { width: 100%; max-width: 680px; }
   .story-section { padding-top: 96px; padding-bottom: 100px; }
+  .story-heading h2 { white-space: normal; }
   .story-flow { grid-template-columns: 1fr; gap: 14px; }
   .story-flow article { min-height: 260px; }
   .story-step { margin-bottom: 34px; }

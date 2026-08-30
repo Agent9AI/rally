@@ -4,43 +4,142 @@
     {
       "id": "google-workspace",
       "name": "Google Workspace",
-      "runtime": "roadmap",
+      "runtime": "gateway",
       "category": "Company work",
+      "transport": "streamable_http",
+      "allowed_endpoint_hosts": [
+        "gmailmcp.googleapis.com",
+        "drivemcp.googleapis.com",
+        "docsmcp.googleapis.com",
+        "sheetsmcp.googleapis.com",
+        "slidesmcp.googleapis.com",
+        "calendarmcp.googleapis.com",
+        "chatmcp.googleapis.com",
+        "people.googleapis.com"
+      ],
+      "allowed_endpoint_exact_paths": ["/mcp/v1"],
+      "dispatch": {
+        "strategy": "tool_prefix",
+        "separator": ".",
+        "services": {
+          "gmail": "https://gmailmcp.googleapis.com/mcp/v1",
+          "drive": "https://drivemcp.googleapis.com/mcp/v1",
+          "docs": "https://docsmcp.googleapis.com/mcp/v1",
+          "sheets": "https://sheetsmcp.googleapis.com/mcp/v1",
+          "slides": "https://slidesmcp.googleapis.com/mcp/v1",
+          "calendar": "https://calendarmcp.googleapis.com/mcp/v1",
+          "chat": "https://chatmcp.googleapis.com/mcp/v1",
+          "people": "https://people.googleapis.com/mcp/v1"
+        }
+      },
+      "auth": {
+        "type": "oauth_2_1",
+        "registration": "pre_registered",
+        "client_type": "confidential",
+        "dynamic_client_registration": false,
+        "authorization_status": "customer_required",
+        "keychain_service": "rally-connector-google-workspace",
+        "scopes": [
+          "https://www.googleapis.com/auth/gmail.readonly",
+          "https://www.googleapis.com/auth/drive.readonly",
+          "https://www.googleapis.com/auth/documents.readonly",
+          "https://www.googleapis.com/auth/spreadsheets.readonly",
+          "https://www.googleapis.com/auth/presentations.readonly",
+          "https://www.googleapis.com/auth/calendar.calendarlist.readonly",
+          "https://www.googleapis.com/auth/calendar.events.freebusy",
+          "https://www.googleapis.com/auth/calendar.events.readonly",
+          "https://www.googleapis.com/auth/chat.spaces.readonly",
+          "https://www.googleapis.com/auth/chat.memberships.readonly",
+          "https://www.googleapis.com/auth/chat.messages.readonly",
+          "https://www.googleapis.com/auth/chat.users.readstate.readonly",
+          "https://www.googleapis.com/auth/directory.readonly",
+          "https://www.googleapis.com/auth/userinfo.profile",
+          "https://www.googleapis.com/auth/contacts.readonly"
+        ]
+      },
       "docs_url": "https://developers.google.com/workspace/guides/configure-mcp-servers"
     },
     {
       "id": "slack",
       "name": "Slack",
-      "runtime": "roadmap",
+      "runtime": "gateway",
       "category": "Team memory",
+      "transport": "streamable_http",
+      "endpoint": "https://mcp.slack.com/mcp",
+      "auth": {
+        "type": "oauth_2_1",
+        "registration": "pre_registered",
+        "client_type": "confidential",
+        "dynamic_client_registration": false,
+        "authorization_status": "customer_required",
+        "keychain_service": "rally-connector-slack",
+        "scopes": [
+          "search:read.public",
+          "search:read.files",
+          "search:read.users",
+          "files:read",
+          "channels:history",
+          "channels:read",
+          "users:read",
+          "users:read.email"
+        ]
+      },
       "docs_url": "https://docs.slack.dev/ai/slack-mcp-server/"
     },
     {
       "id": "github",
       "name": "GitHub",
-      "runtime": "roadmap",
+      "runtime": "gateway",
       "category": "Engineering",
+      "transport": "streamable_http",
+      "endpoint": "https://api.githubcopilot.com/mcp",
+      "auth": {
+        "type": "external_bearer",
+        "authorization_status": "customer_required",
+        "keychain_service": "rally-connector-github",
+        "toolsets": ["context", "repos", "issues", "pull_requests", "users"]
+      },
       "docs_url": "https://github.com/github/github-mcp-server"
     },
     {
       "id": "cloudflare",
       "name": "Cloudflare",
-      "runtime": "roadmap",
+      "runtime": "gateway",
       "category": "Web operations",
+      "transport": "streamable_http",
+      "endpoint": "https://observability.mcp.cloudflare.com/mcp",
+      "auth": {
+        "type": "oauth_2_1",
+        "keychain_service": "rally-connector-cloudflare"
+      },
       "docs_url": "https://developers.cloudflare.com/agents/model-context-protocol/cloudflare/servers-for-cloudflare/"
     },
     {
       "id": "n8n",
       "name": "n8n",
-      "runtime": "roadmap",
+      "runtime": "gateway",
       "category": "Workflow reach",
+      "transport": "streamable_http",
+      "allow_endpoint_override": true,
+      "allowed_endpoint_suffixes": ["app.n8n.cloud"],
+      "allowed_endpoint_exact_paths": ["/mcp-server/http"],
+      "auth": {
+        "type": "oauth_2_1",
+        "keychain_service": "rally-connector-n8n"
+      },
       "docs_url": "https://docs.n8n.io/connect/connect-to-n8n-mcp-server/"
     },
     {
       "id": "stripe",
       "name": "Stripe",
-      "runtime": "roadmap",
+      "runtime": "gateway",
       "category": "Revenue",
+      "transport": "streamable_http",
+      "endpoint": "https://mcp.stripe.com",
+      "auth": {
+        "type": "oauth_2_1",
+        "keychain_service": "rally-connector-stripe"
+      },
       "docs_url": "https://docs.stripe.com/mcp"
     },
     {
@@ -52,7 +151,7 @@
       "endpoint": "https://bigquery.googleapis.com/mcp",
       "auth": {
         "type": "google_adc",
-        "scopes": ["https://www.googleapis.com/auth/cloud-platform"]
+        "scopes": ["https://www.googleapis.com/auth/bigquery"]
       },
       "docs_url": "https://docs.cloud.google.com/bigquery/docs/use-bigquery-mcp"
     },
@@ -62,7 +161,7 @@
       "runtime": "gateway",
       "category": "Work and knowledge",
       "transport": "streamable_http",
-      "endpoint": "https://mcp.atlassian.com/v1/mcp",
+      "endpoint": "https://mcp.atlassian.com/v1/mcp/authv2",
       "auth": {
         "type": "oauth_2_1",
         "keychain_service": "rally-connector-atlassian"
@@ -76,8 +175,18 @@
       "category": "Customer truth",
       "transport": "streamable_http",
       "endpoint_env": "RALLY_SALESFORCE_MCP_URL",
+      "allow_endpoint_override": true,
+      "allowed_endpoint_hosts": ["api.salesforce.com"],
+      "allowed_endpoint_exact_paths": [
+        "/platform/mcp/v1/platform/sobject-reads",
+        "/platform/mcp/v1/sandbox/platform/sobject-reads"
+      ],
       "auth": {
         "type": "oauth_2_1",
+        "registration": "pre_registered",
+        "client_type": "public_or_confidential",
+        "dynamic_client_registration": false,
+        "authorization_status": "customer_required",
         "keychain_service": "rally-connector-salesforce"
       },
       "docs_url": "https://developer.salesforce.com/blogs/2026/06/the-salesforce-developers-guide-to-the-summer-26-release"

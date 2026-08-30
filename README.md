@@ -10,11 +10,12 @@ The current release proves that contract with three provider-native workers.
 Gemini, Claude, and OpenAI Codex, from **different model families**, rotate around
 one shared checklist. A person commissions the run once. The models execute and
 review. Deterministic policy—not any model's confidence—decides when it ends.
-The next product layer connects the systems where company work lives. BigQuery,
-Atlassian, and Salesforce now have a runnable, deny-by-default MCP gateway and
-administrator setup path; they remain disabled until a customer authenticates
-and explicitly allowlists tools. Google Workspace, Slack, GitHub, Cloudflare,
-n8n, and Stripe remain researched roadmap paths.
+The next product layer connects the systems where company work lives.
+All ten catalogued systems—Google Workspace, Slack, GitHub, Cloudflare
+Observability, n8n Cloud, Stripe, BigQuery, Atlassian, Salesforce, and
+Hyperagent—now have runnable, deny-by-default adapters. They remain disabled
+until a customer completes that provider's required app/token setup,
+authenticates, proves live discovery, and explicitly selects a safe tool preset.
 
 The fleet uses the **Claude CLI** (`claude -p`), **Antigravity CLI** (`agy -p`)
 pinned to Gemini, and **Codex CLI** (`codex exec`) pinned to OpenAI. Each runs
@@ -114,22 +115,22 @@ still cannot finish, Rally tells you exactly where and why.
 
 | Piece | State |
 |---|---|
-| Turn loop, state machine, console projection, guards | working, 80 core/product tests |
+| Turn loop, state machine, console projection, guards | working, 86 product/integration tests |
 | Claude + Gemini CLI execution | working, live multi-turn runs completed |
 | OpenAI Codex CLI execution | working, live authenticated preflight passed with per-user ChatGPT sign-in |
 | Executive turn emails + report | working through Resend |
 | Ingress Worker (D1) | deployed, signed webhook and round trip verified |
 | Judge console | live Pages UI backed by a double-sanitized D1 run projection; professional proof run `r-20260830-447f2f` is public |
 | `rally@updates.agent9.dev` route | working; replies return to the commissioner |
-| Connector gateway | BigQuery live MCP handshake + six-tool discovery verified; Atlassian, Salesforce, and Hyperagent runtime adapters ready for per-user auth; per-run authority, explicit tool policy, content-free receipts |
-| Product + Cloud test suite | 105 automated tests passing |
+| Connector gateway | BigQuery live MCP handshake + six-tool discovery verified; ten pinned runtime adapters; provider-safe presets; exact one-time human approvals; per-run authority, payload ceilings, and content-free receipts |
+| Product + Cloud test suite | 180 automated tests passing |
 | Google ADK coordinator | implemented; live eval 6/6, both metrics 1.00 |
 | Cloud Run + Firestore + Trace | deployed privately in `rally-agent9-2026`; authenticated commission, replay, Firestore, logs, and content-free trace verified |
 | A2A v1.0 boundary | Agent Card, JSON-RPC, HTTP+JSON, SSE streaming, polling, listing, Firestore tasks, and dual-auth tested with official SDK clients |
 
-The current release candidate has **105 automated tests**: 80 deterministic
-runner, ingress, policy, bridge, connector, and site tests plus 25 Cloud, A2A,
-and connector-gateway service tests.
+The current release candidate has **180 automated tests**: 86 deterministic
+runner, ingress, policy, bridge, connector, and site tests plus 94 Cloud, A2A,
+credential, preset, approval, and connector-gateway service tests.
 The separate live ADK scorecard remains 6/6 at 1.00 trajectory and 1.00 quality.
 
 ### Why the models have different jobs
@@ -154,7 +155,7 @@ identity, and observability plane—not a decorative API call.
 ```bash
 make check                    # pins, binaries, credentials, limits
 make dry                      # exercise the loop, no tokens spent
-make test                     # 80 local policy, ingress, connector, recovery, and site tests
+make test                     # 86 local policy, ingress, connector, recovery, and site tests
 make cloud-test               # Cloud coordinator tests + lint
 make cloud-eval               # live ADK eval; exact trajectory + quality gates
 
@@ -185,7 +186,8 @@ See [docs/RUNBOOK.md](docs/RUNBOOK.md) to operate it, including how to stop a ru
 | [docs/VIDEO-PRODUCTION.md](docs/VIDEO-PRODUCTION.md) | Short-film and unedited-run capture package. |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Google Cloud topology, trust boundaries, and failure behavior. |
 | [docs/A2A.md](docs/A2A.md) | A2A v1.0 discovery, bindings, security, state mapping, and verification. |
-| [docs/CONNECTORS.md](docs/CONNECTORS.md) | Governed MCP gateway, BigQuery/Atlassian/Salesforce/Hyperagent setup, policy, and receipts. |
+| [docs/CONNECTORS.md](docs/CONNECTORS.md) | Governed MCP gateway, ten runtime adapters, setup, policy, approvals, and receipts. |
+| [docs/CUSTOM-MCP.md](docs/CUSTOM-MCP.md) | Labs admission contract for custom remote MCP and WebMCP boundary. |
 | [docs/assets/rally-architecture.svg](docs/assets/rally-architecture.svg) | Presentation-ready architecture diagram. |
 | [docs/EVALUATION.md](docs/EVALUATION.md) | Live ADK eval design, scores, and the behavior it improved. |
 | [docs/HACKATHON.md](docs/HACKATHON.md) | Judge-facing positioning and submission checklist. |

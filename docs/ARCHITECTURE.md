@@ -99,15 +99,18 @@ launched with a run-specific strict MCP config. Codex ignores the user's global
 configuration and receives only the run gateway. Antigravity preflight refuses
 connector runs unless the Rally gateway is its only enabled MCP server. The
 gateway reads an immutable, secret-free authority snapshot, discovers tools from
-the approved BigQuery, Atlassian, Salesforce, or Hyperagent endpoint, denies every tool not
+the approved provider-pinned runtime endpoint, denies every tool not
 explicitly allowlisted, and records content-free call receipts.
 
 The authenticated commissioner selects a one-way connector profile. Enabled
 systems, tool policies, OAuth Keychain services, and non-local Google ADC files
 are isolated by that profile before the immutable run snapshot is created.
 Google ADC or OAuth state stays behind the gateway; no model receives a provider
-token. `verify_first` and `human_approval` tools fail closed
-until Rally has a genuine pre-execution approval workflow. See
+token. `human_approval` tools create an exact, expiring request bound to the
+run, connector, tool, and complete argument digest; a human approves it and the
+gateway consumes it once before the network call. Replay and substitution fail
+closed. `verify_first` remains unavailable until an independent pre-execution
+verifier is selected. See
 [`CONNECTORS.md`](CONNECTORS.md) for the administrator sequence.
 
 ## Observability without prompt leakage

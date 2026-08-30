@@ -48,7 +48,7 @@ engineering leader can audit.
 |---|---|---|
 | Innovation & operational utility (40%) | Email-native access plus cross-family verification converts agents from personal copilots into a shared, accountable team service | Send one email; show provider-native worker turns and final evidence |
 | Technical architecture (30%) | ADK + Gemini on IAM-protected Cloud Run, atomic Firestore idempotency, Secret Manager, Cloud Trace, signed edge webhook, deterministic state machine | Architecture diagram, Terraform, trace/log, verification state |
-| Demo & production readiness (30%) | Deployed path, live eval gate, bounded costs, polished emails, human stop/steer, reproducible repo | 6/6 eval, 105 tests, live Cloud Run health, complete email thread |
+| Demo & production readiness (30%) | Deployed path, live eval gate, bounded costs, polished emails, human stop/steer, reproducible repo | 6/6 eval, 180 tests, live Cloud Run health, complete email thread |
 
 ## Model assignment rationale
 
@@ -134,7 +134,7 @@ lowering a threshold.
 - Authenticated fleet catalog for cross-department discovery and governance
 - Dual-auth Cloud Run boundary and least-privilege runtime identity
 - Metadata-only GenAI observability
-- 105 automated tests plus six live ADK eval cases at 1.00/1.00
+- 180 automated tests plus six live ADK eval cases at 1.00/1.00
 - Validated Terraform and a demo-ready operator workflow
 
 ### What we learned
@@ -148,11 +148,13 @@ preservation, not just whether the final answer sounds good.
 
 Onboard Rally through one administrator-controlled connection center. Every
 model entitlement and business-system connection belongs to one user profile;
-Rally never pools a provider seat or connector token. The first
-runnable gateway adapters are BigQuery, Atlassian, Salesforce, and Hyperagent, with Google
-ADC or OAuth, live discovery, per-run allowlists, and content-free receipts.
-Next, promote the researched Google Workspace, Slack, GitHub, Cloudflare, n8n,
-and Stripe paths into that same boundary. Each connection declares what Rally
+Rally never pools a provider seat or connector token. All ten catalogued
+business systems now have runnable gateway adapters with Google ADC, OAuth, or
+external bearer authentication, live discovery, per-run allowlists,
+provider-safe presets, exact human approvals, and content-free receipts.
+Customer app registration and live authorization still have to be completed
+independently for Google Workspace, Slack, GitHub, and Salesforce; Rally never
+calls those accounts connected before their provider checks pass. Each connection declares what Rally
 may read and which actions require a real pre-execution gate. Use the shipped
 A2A v1.0 boundary to admit
 additional external agents without moving policy, ownership, or verification
