@@ -80,6 +80,7 @@ class TestProductSite(unittest.TestCase):
         self.assertNotIn('class="mission-assets"', self.html)
         self.assertIn("Agent <i>→</i> Rally <i>→</i> Agent", self.html)
         self.assertIn("One governed handoff moves sequentially", self.html)
+        self.assertEqual(self.html.count('class="story-kicker"'), 3)
         self.assertIn("handoff accepted", self.html)
         self.assertIn("routing next turn", self.html)
         for provider, worker in (("Google", "Gemini"), ("Anthropic", "Claude"), ("OpenAI", "Codex")):
