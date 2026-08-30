@@ -18,7 +18,7 @@
     <meta name="rally-console-api" content="https://rally.agent9.dev/v1/console">
     <link rel="canonical" href="https://rally.agent9.dev/">
     <link rel="icon" href="rally-symbol.png" type="image/png">
-    <link rel="stylesheet" href="styles.css?v=20260830h">
+    <link rel="stylesheet" href="styles.css?v=20260830i">
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
@@ -73,23 +73,23 @@
               <span class="network-line line-claude" aria-hidden="true"><i></i></span>
               <span class="network-line line-openai" aria-hidden="true"><i></i></span>
 
-              <div class="model-node gemini-node">
+              <div class="model-node gemini-node" data-layer="agent-workforce">
                 <span class="model-avatar">G</span>
                 <p><small>Google</small><strong>Gemini</strong></p>
                 <i class="node-state">Planning</i>
               </div>
-              <div class="model-node claude-node">
+              <div class="model-node claude-node" data-layer="agent-workforce">
                 <span class="model-avatar">C</span>
                 <p><small>Anthropic</small><strong>Claude</strong></p>
                 <i class="node-state">Using tools</i>
               </div>
-              <div class="model-node openai-node">
+              <div class="model-node openai-node" data-layer="agent-workforce">
                 <span class="model-avatar">O</span>
                 <p><small>OpenAI</small><strong>Codex</strong></p>
                 <i class="node-state">Verifying</i>
               </div>
 
-              <div class="access-ring" aria-label="Approved systems scoped to this run: Google Workspace, BigQuery, and Slack">
+              <div class="access-ring" data-layer="approved-systems" aria-label="Approved systems scoped to this run: Google Workspace, BigQuery, and Slack">
                 <span class="access-ring-label"><b>Approved systems</b><small>Scoped for this run</small></span>
                 <span class="orbit-asset workspace-orbit"><i><img src="brandmarks/google.svg" alt=""></i><b>Workspace</b></span>
                 <span class="orbit-asset bigquery-orbit"><i><img src="brandmarks/bigquery.svg" alt=""></i><b>BigQuery</b></span>

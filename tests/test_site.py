@@ -76,6 +76,8 @@ class TestProductSite(unittest.TestCase):
         self.assertIn('class="webmcp-trust-badge"', self.html)
         self.assertNotIn('class="webmcp-cta"', self.html)
         self.assertIn('class="access-ring"', self.html)
+        self.assertIn('data-layer="approved-systems"', self.html)
+        self.assertEqual(self.html.count('data-layer="agent-workforce"'), 3)
         self.assertNotIn('class="mission-assets"', self.html)
         self.assertIn("Agent <i>→</i> Rally <i>→</i> Agent", self.html)
         self.assertIn("handoff accepted", self.html)
