@@ -103,7 +103,7 @@ class TestProductSite(unittest.TestCase):
         self.assertIn('entry.kind === "recovery"', app)
         with open(os.path.join(ROOT, "studio", "og-card.html")) as handle:
             card = handle.read()
-        for phrase in ("THE ACCOUNTABLE AI TEAM", "Your AIs, finally", "105", "6/6", "0"):
+        for phrase in ("THE ACCOUNTABLE AI TEAM", "Your AIs, finally", "180", "6/6", "0"):
             self.assertIn(phrase, card)
         self.assertNotIn("99 TESTS", card)
 

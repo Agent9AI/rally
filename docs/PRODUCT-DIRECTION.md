@@ -47,7 +47,7 @@ human. Then run a genuine job and inspect the receipts.
 This is clearer than “request a managed pilot,” which describes a sales process
 rather than a customer outcome.
 
-## Connection sequence
+## Business-system connection sequence
 
 | Priority | Connector | Why it earns native support | Authentication and minimum first scope | Required action policy | Status |
 |---|---|---|---|---|---|
@@ -60,7 +60,28 @@ rather than a customer outcome.
 | 7 | BigQuery | It gives Rally a governed analytical surface for the large datasets and background research emphasized by the hackathon brief. | Google ADC or workload identity against Google's official remote MCP endpoint. Start with metadata; grant `roles/mcp.toolUser` plus the narrowest dataset roles. | The built-in preset exposes four metadata tools and no SQL. Bounded read-only SQL is a separate administrator decision. | Runtime adapter shipped; live MCP handshake and six-tool discovery verified 2026-08-29; metadata-only preset shipped |
 | 8 | Atlassian | Jira, Confluence, and Compass combine planned work, institutional knowledge, and service ownership—the context professionals otherwise carry between assistants. | OAuth 2.1 through Atlassian's hosted Rovo MCP server, restricted to selected sites and products. | Search and retrieval may be read-only. Create, edit, transition, and notification tools remain excluded. | Runtime adapter and read-minimal preset shipped; customer auth and live discovery pending |
 | 9 | Salesforce | CRM and service records provide the customer and revenue truth required for high-value operating work. | Customer External Client App plus OAuth to Salesforce's read-only SObject server. | Six bounded schema, SOQL, SOSL, identity, recent-record, and relationship tools; no mutation endpoint. | Runtime adapter and SObject Reads preset shipped; customer app, endpoint, auth, and live discovery pending |
-| 10 | Hyperagent | Existing external agent workforces can accept long-running delegated jobs while Rally retains outcome verification. | Per-user OAuth to Hyperagent's hosted MCP server. | Agent/thread listing and result reads only in the first preset; start/send/upload require exact approval; `resolve_approval` is never autonomous. | Runtime adapter and read-minimal preset shipped; customer auth and live discovery pending |
+
+## External agent network
+
+Business connectors give Rally tools and context. External agent systems are
+different: they accept delegated work and return task state or artifacts. Keep
+them in a separate **agent network** surface so customers can distinguish
+"Rally may read this system" from "Rally may commission this workforce."
+
+| System | Interoperability path | Rally decision | Required boundary | Status |
+|---|---|---|---|---|
+| Gemini, Claude, OpenAI Codex | Provider-native CLI workers | Core workforce | Per-user provider sign-in, distinct model-family identity, shared checklist, no self-approval | Shipped and live-authenticated |
+| Hyperagent | Hosted OAuth MCP | Support as a managed external workforce | Read agent/thread state by default; start, send, and upload require exact approval; never resolve Hyperagent approvals autonomously | Gateway adapter and read-minimal preset shipped; customer auth pending |
+| Hermes Agent | Native bidirectional A2A v1.0 | Highest-priority external peer | Customer-hosted HTTPS endpoint, Agent Card pin, per-peer bearer identity, bounded task/turn limits, Rally-owned durable task mirror and independent verification | Official interface verified; Rally outbound A2A admission not yet shipped |
+| OpenClaw | Native authenticated A2A v1.0 | Support after Hermes through the same A2A admission boundary | Expose only selected agent IDs; unique peer token; 1 MiB request/64 KiB text ceilings; Rally persists task state because OpenClaw's A2A task store is memory-only | Official interface verified; Rally outbound A2A admission not yet shipped |
+| Prime Intellect | CLI/SDK for sandboxes, environments, compute, evaluation, and training | Do not present as an agent peer | Evaluate later as isolated execution infrastructure; require API-key isolation, explicit spend ceilings, and workload teardown | No stable A2A or hosted agent-delegation contract verified |
+
+This avoids bespoke local-runtime adapters for Hermes and OpenClaw. Rally can
+reuse the Google-originated A2A protocol it already implements, while retaining
+its own authority, receipts, Second Wind recovery, and verification invariant.
+An adapter is not labeled connected until a real customer-owned endpoint passes
+Agent Card discovery, authentication, task submission, polling, failure, and
+replay tests.
 
 ## Why MCP fits—but is not the security policy
 
@@ -143,3 +164,14 @@ independent verification or human gate
 - [Salesforce hosted MCP servers](https://developer.salesforce.com/blogs/2026/06/the-salesforce-developers-guide-to-the-summer-26-release)
   expose Salesforce platform capabilities through tenant-authorized MCP
   endpoints, including CRM data and custom platform actions.
+- [Hermes Agent A2A](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/a2a)
+  provides bidirectional A2A v1.0, official-SDK interoperability, per-peer
+  bearer identities, signed push notifications, audit logging, and anti-loop
+  limits.
+- [OpenClaw A2A](https://docs.openclaw.ai/channels/a2a) provides authenticated
+  A2A v1.0 discovery, submission, and polling with per-peer session isolation;
+  its current task store is memory-only and therefore cannot replace Rally's
+  durable ledger.
+- [Prime Intellect CLI and SDK](https://github.com/PrimeIntellect-ai/prime)
+  exposes compute, sandboxes, environments, evaluation, and training rather
+  than a stable remotely callable agent peer.

@@ -3,7 +3,7 @@
 ## Overview
 
 Rally is an asynchronous engineering operations agent. A human sends a request
-by email; Rally turns it into a bounded checklist, coordinates two model
+by email; Rally turns it into a bounded checklist, coordinates three model
 families, requires independent verification, and returns an executive-ready
 evidence report.
 
@@ -64,7 +64,7 @@ the protocol cannot become a less-governed side door.
 
 - A commission reaches Cloud Run and produces a durable run record.
 - Gemini/ADK creates a bounded task envelope without writing code itself.
-- Rally’s two-agent loop completes or halts with an explicit reason.
+- Rally’s three-family worker rotation completes or halts with an explicit reason.
 - Every completion claim has independent evidence.
 - The demo visibly proves Gemini, ADK, Cloud Run, state persistence, and the
   alternating verification turns.

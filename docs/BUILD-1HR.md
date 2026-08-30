@@ -1,5 +1,12 @@
 # The first hour
 
+> **Historical implementation record — August 28, 2026.** This document
+> preserves Rally's original one-hour proof plan and its deliberate cuts; it is
+> not the current architecture or operator runbook. The production-shaped
+> release now has three model families, durable D1 intake, Google Cloud
+> coordination, A2A v1.0, and governed connectors. See the root `README.md`,
+> `docs/ARCHITECTURE.md`, and `docs/JUDGE-PACKET.md` for current state.
+
 The smallest build that proves the thesis, using only components already
 verified working. Everything here is a deliberate cut, not an omission, and each
 cut names what it defers.

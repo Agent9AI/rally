@@ -17,7 +17,7 @@ jobs:
         run: python3 -m unittest discover -s tests -v
       - name: Worker syntax
         run: node --check src/worker/index.js
-      - name: Config is valid JSON and pins two families
+      - name: Config is valid JSON and pins every configured model family
         run: |
           python3 - <<'PY'
           import json, sys
