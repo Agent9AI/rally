@@ -132,7 +132,8 @@ the private coordinator boundary:
 terraform -chdir=cloud/infra apply \
   -var='deploy_service=true' \
   -var='deploy_control_plane=true' \
-  -var='image_uri=us-east1-docker.pkg.dev/rally-agent9-2026/rally/rally-google-coordinator:<commit-sha>' \
+  -var='image_uri=us-east1-docker.pkg.dev/rally-agent9-2026/rally/rally-google-coordinator:<proven-coordinator-sha>' \
+  -var='control_plane_image_uri=us-east1-docker.pkg.dev/rally-agent9-2026/rally/rally-google-coordinator:<control-plane-sha>' \
   -var='google_web_client_id=<public-client-id>' \
   -var='control_plane_allowed_user_emails=["you@example.com"]'
 ```
@@ -143,6 +144,10 @@ coordinator, access the coordinator's Secret Manager token, or call Vertex AI.
 The API returns connection metadata only. A newly imported credential is
 `stored_unverified` until Rally performs capability discovery and applies a
 safe execution preset.
+
+The separate immutable image variables keep a control-plane release from
+changing the private coordinator revision. Omit `control_plane_image_uri` only
+when both services intentionally use the exact same image.
 
 ## Cost posture
 

@@ -70,3 +70,7 @@ memory. It never writes either value to cookies, local storage, session storage,
 HTML, logs, or repository files. The API never returns credential material and
 replaces FastAPI's default validation detail with a non-reflective error so an
 invalid oversized secret cannot be echoed.
+
+The browser sends that identity in `X-Rally-ID-Token`, not `Authorization`.
+Cloud Run reserves the latter for its own IAM token processing; the dedicated
+application header ensures the Google Sign-In token reaches Rally's verifier.

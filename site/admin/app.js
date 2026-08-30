@@ -30,7 +30,7 @@
   async function api(path, options = {}) {
     if (!idToken) throw new Error("Sign in again to continue");
     const headers = new Headers(options.headers || {});
-    headers.set("Authorization", `Bearer ${idToken}`);
+    headers.set("X-Rally-ID-Token", idToken);
     if (options.body) headers.set("Content-Type", "application/json");
     const response = await fetch(`${safeApiBase()}${path}`, { ...options, headers });
     if (response.status === 401) {

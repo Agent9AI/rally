@@ -101,6 +101,8 @@ claim, verified email, and any configured account or Workspace-domain
 allowlist. That service identity can read connection metadata and use one KMS
 key, but it cannot invoke the private coordinator. A compromised browser token
 therefore cannot be exchanged for Rally's machine-to-machine authority.
+The browser carries its ID token in `X-Rally-ID-Token` so Cloud Run does not
+mistake application identity for a service-to-service IAM credential.
 
 Each hosted connector credential is encrypted with a newly generated 256-bit
 AES-GCM data key and user/connector-bound associated data. Google Cloud KMS

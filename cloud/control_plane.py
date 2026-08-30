@@ -46,7 +46,7 @@ app.add_middleware(
     allow_origins=list(allowed_origins),
     allow_credentials=False,
     allow_methods=["GET", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type", "X-Request-ID"],
+    allow_headers=["Content-Type", "X-Rally-ID-Token", "X-Request-ID"],
     max_age=600,
 )
 

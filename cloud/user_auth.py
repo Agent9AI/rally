@@ -95,13 +95,10 @@ def verify_google_id_token(token: str) -> UserIdentity:
 
 
 def require_user(
-    authorization: str | None = Header(default=None, alias="Authorization"),
+    identity_token: str | None = Header(default=None, alias="X-Rally-ID-Token"),
 ) -> UserIdentity:
-    """FastAPI dependency that accepts exactly one HTTPS bearer credential."""
+    """Accept a GIS ID token without colliding with Cloud Run IAM auth."""
 
-    if not authorization:
+    if not identity_token:
         raise _unauthorized()
-    scheme, separator, token = authorization.partition(" ")
-    if not separator or scheme.casefold() != "bearer" or not token or " " in token:
-        raise _unauthorized("invalid authorization header")
-    return verify_google_id_token(token)
+    return verify_google_id_token(identity_token)

@@ -61,6 +61,7 @@ class TestGoogleCloudContract(unittest.TestCase):
 
     def test_customer_control_plane_is_separate_and_kms_encrypted(self):
         terraform = (ROOT / "cloud" / "infra" / "main.tf").read_text()
+        variables = (ROOT / "cloud" / "infra" / "variables.tf").read_text()
         control_plane = (ROOT / "cloud" / "control_plane.py").read_text()
         vault = (ROOT / "cloud" / "credential_vault.py").read_text()
         identity = (ROOT / "cloud" / "user_auth.py").read_text()
@@ -69,7 +70,11 @@ class TestGoogleCloudContract(unittest.TestCase):
         self.assertIn('resource "google_kms_crypto_key" "connector_credentials"', terraform)
         self.assertIn('role     = "roles/run.invoker"', terraform)
         self.assertIn('member   = "allUsers"', terraform)
+        self.assertIn('variable "control_plane_image_uri"', variables)
+        self.assertIn('var.control_plane_image_uri != ""', terraform)
         self.assertIn("Depends(require_user)", control_plane)
+        self.assertIn('alias="X-Rally-ID-Token"', identity)
+        self.assertIn('"X-Rally-ID-Token"', control_plane)
         self.assertIn("verify_oauth2_token", identity)
         self.assertIn("AESGCM", vault)
         self.assertIn("wrapped_dek", vault)

@@ -27,6 +27,12 @@ variable "image_uri" {
   type        = string
 }
 
+variable "control_plane_image_uri" {
+  description = "Immutable control-plane image URI; defaults to image_uri when omitted."
+  type        = string
+  default     = ""
+}
+
 variable "deploy_service" {
   description = "Create Cloud Run only after the immutable image has been pushed."
   type        = bool

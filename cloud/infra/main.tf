@@ -298,7 +298,11 @@ resource "google_cloud_run_v2_service" "control_plane" {
     }
 
     containers {
-      image   = var.image_uri
+      image = (
+        var.control_plane_image_uri != ""
+        ? var.control_plane_image_uri
+        : var.image_uri
+      )
       command = ["uv"]
       args = [
         "run",

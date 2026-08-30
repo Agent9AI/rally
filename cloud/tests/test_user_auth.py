@@ -73,15 +73,22 @@ def test_email_and_workspace_allowlists_are_independent(monkeypatch):
     assert domain_error.value.status_code == 403
 
 
-def test_missing_or_malformed_bearer_header_is_rejected():
+def test_dedicated_identity_header_is_required(monkeypatch):
     with pytest.raises(HTTPException) as missing:
         user_auth.require_user(None)
-    with pytest.raises(HTTPException) as malformed:
-        user_auth.require_user("Basic secret")
+
+    expected = user_auth.UserIdentity(uid="google-user-123", email="terry@example.com")
+    received = []
+    monkeypatch.setattr(
+        user_auth,
+        "verify_google_id_token",
+        lambda token: received.append(token) or expected,
+    )
 
     assert missing.value.status_code == 401
-    assert malformed.value.status_code == 401
     assert missing.value.headers == {"WWW-Authenticate": "Bearer"}
+    assert user_auth.require_user("signed-token") == expected
+    assert received == ["signed-token"]
 
 
 def test_unconfigured_identity_is_unavailable(monkeypatch):

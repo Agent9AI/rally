@@ -44,10 +44,15 @@ private coordinator and enables the separate control plane:
 terraform -chdir=cloud/infra apply \
   -var='deploy_service=true' \
   -var='deploy_control_plane=true' \
-  -var='image_uri=us-east1-docker.pkg.dev/rally-agent9-2026/rally/rally-google-coordinator:<commit-sha>' \
+  -var='image_uri=us-east1-docker.pkg.dev/rally-agent9-2026/rally/rally-google-coordinator:<proven-coordinator-sha>' \
+  -var='control_plane_image_uri=us-east1-docker.pkg.dev/rally-agent9-2026/rally/rally-google-coordinator:<control-plane-sha>' \
   -var='google_web_client_id=<public-client-id>' \
   -var='control_plane_allowed_user_emails=["you@example.com"]'
 ```
+
+The separate image variables prevent a control-plane release from silently
+replacing the private coordinator revision. If both services intentionally use
+the same immutable image, `control_plane_image_uri` may be omitted.
 
 Use an initial email allowlist for the first operator test. Put Terraform's
 `control_plane_url` and the same public client ID in `site/admin/config.js`, run

@@ -186,6 +186,8 @@ class TestProductSite(unittest.TestCase):
         self.assertNotIn("sessionStorage", admin_app)
         self.assertIn("credentialInput.value = \"\"", admin_app)
         self.assertIn("https://accounts.google.com/gsi/client", admin_app)
+        self.assertIn('headers.set("X-Rally-ID-Token", idToken)', admin_app)
+        self.assertNotIn('headers.set("Authorization"', admin_app)
         with open(os.path.join(SITE, "_headers")) as handle:
             security_headers = handle.read()
         self.assertIn("https://accounts.google.com/gsi/client", security_headers)
