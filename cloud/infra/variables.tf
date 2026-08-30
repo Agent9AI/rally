@@ -33,6 +33,44 @@ variable "deploy_service" {
   default     = false
 }
 
+variable "deploy_control_plane" {
+  description = "Create the public user-authenticated control-plane service."
+  type        = bool
+  default     = false
+}
+
+variable "control_plane_service_name" {
+  description = "Public Cloud Run service that owns customer identity and connections."
+  type        = string
+  default     = "rally-control-plane"
+}
+
+variable "google_web_client_id" {
+  description = "Public Google Identity Services web client ID accepted by Rally."
+  type        = string
+  default     = ""
+
+  validation {
+    condition = (
+      var.google_web_client_id == "" ||
+      can(regex("^[0-9]+-[A-Za-z0-9_-]+\\.apps\\.googleusercontent\\.com$", var.google_web_client_id))
+    )
+    error_message = "google_web_client_id must be empty or a Google OAuth web client ID."
+  }
+}
+
+variable "control_plane_allowed_origins" {
+  description = "Exact browser origins permitted to call the public control plane."
+  type        = list(string)
+  default     = ["https://rally.agent9.dev"]
+}
+
+variable "control_plane_allowed_user_emails" {
+  description = "Optional initial account allowlist; empty enables any verified Google account."
+  type        = list(string)
+  default     = []
+}
+
 variable "operator_member" {
   description = "Human allowed to mint short-lived tokens as the local invoker identity."
   type        = string

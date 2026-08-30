@@ -59,6 +59,21 @@ class TestGoogleCloudContract(unittest.TestCase):
         self.assertIn('"--audiences"', bridge)
         self.assertIn('"--impersonate-service-account"', bridge)
 
+    def test_customer_control_plane_is_separate_and_kms_encrypted(self):
+        terraform = (ROOT / "cloud" / "infra" / "main.tf").read_text()
+        control_plane = (ROOT / "cloud" / "control_plane.py").read_text()
+        vault = (ROOT / "cloud" / "credential_vault.py").read_text()
+        identity = (ROOT / "cloud" / "user_auth.py").read_text()
+
+        self.assertIn('resource "google_cloud_run_v2_service" "control_plane"', terraform)
+        self.assertIn('resource "google_kms_crypto_key" "connector_credentials"', terraform)
+        self.assertIn('role     = "roles/run.invoker"', terraform)
+        self.assertIn('member   = "allUsers"', terraform)
+        self.assertIn("Depends(require_user)", control_plane)
+        self.assertIn("verify_oauth2_token", identity)
+        self.assertIn("AESGCM", vault)
+        self.assertIn("wrapped_dek", vault)
+
 
 if __name__ == "__main__":
     unittest.main()

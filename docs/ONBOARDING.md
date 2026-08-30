@@ -51,6 +51,22 @@ dashboard link is not a completed integration. Rally will label a button
 Until then, the public site offers managed onboarding and accurately describes
 the self-host flow.
 
+## Hosted control-plane slice
+
+Rally now has a separate Google-authenticated administration surface for the
+part that can be made self-service safely: account identity and encrypted
+credential custody. Sign-in uses Google Identity Services; a unique AES-GCM key
+protects each connection; Google Cloud KMS wraps that key; and Firestore stores
+only ciphertext and non-secret metadata. The browser retains no session or
+credential in persistent storage.
+
+The vault intentionally reports `stored_unverified`, not `connected`. Token- or
+key-based adapters may accept a credential only after sign-in. OAuth-only
+providers remain visibly unavailable until their registered application,
+state-bound callback, PKCE flow, consent scopes, revocation, and live capability
+check are complete. This preserves the no-fake-Connect rule while letting the
+security foundation ship independently.
+
 ## Company activation checklist
 
 - Rally team name, address, and administrator selected

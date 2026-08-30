@@ -3,6 +3,16 @@ output "service_url" {
   value       = try(google_cloud_run_v2_service.coordinator[0].uri, null)
 }
 
+output "control_plane_url" {
+  description = "Google-user-authenticated Rally control-plane URL."
+  value       = try(google_cloud_run_v2_service.control_plane[0].uri, null)
+}
+
+output "connector_kms_key" {
+  description = "KMS key that wraps one random data-encryption key per connector credential."
+  value       = google_kms_crypto_key.connector_credentials.id
+}
+
 output "service_account" {
   description = "Least-privilege Cloud Run runtime identity."
   value       = google_service_account.coordinator.email

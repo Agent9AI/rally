@@ -5,8 +5,10 @@ description = "Google ADK and Cloud Run execution path for Rally"
 requires-python = ">=3.11,<3.14"
 dependencies = [
   "a2a-sdk[fastapi]>=1,<2",
+  "cryptography>=45,<47",
   "fastapi>=0.115,<1",
   "google-adk>=1.15,<2",
+  "google-cloud-kms>=3.5,<4",
   "google-cloud-firestore>=2.16,<3",
   "google-cloud-logging>=3.12,<4",
   "mcp>=1.29,<2",

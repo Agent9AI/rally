@@ -94,6 +94,20 @@ audience to the exact Cloud Run URL, and reads the application token from macOS
 Keychain. Neither credential is stored in config, Firestore, email, logs, or
 git.
 
+Customer administration uses a distinct boundary. Google Identity Services
+issues a browser ID token for Rally's registered web audience. The public
+control plane verifies the signature, issuer, expiry, audience, stable `sub`
+claim, verified email, and any configured account or Workspace-domain
+allowlist. That service identity can read connection metadata and use one KMS
+key, but it cannot invoke the private coordinator. A compromised browser token
+therefore cannot be exchanged for Rally's machine-to-machine authority.
+
+Each hosted connector credential is encrypted with a newly generated 256-bit
+AES-GCM data key and user/connector-bound associated data. Google Cloud KMS
+wraps that data key; Firestore receives only the ciphertext, wrapped key,
+non-secret status, and a one-way owner hash. No model-facing API exposes a
+decrypt operation.
+
 ## Connector execution boundary
 
 Every worker receives one local MCP surface, `rally-connectors`. Claude is

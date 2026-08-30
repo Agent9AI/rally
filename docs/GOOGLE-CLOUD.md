@@ -1,8 +1,9 @@
 # Google Cloud execution path
 
-Google Cloud is Rally's durable governance plane. The implementation uses
-Gemini 3.7 on Vertex AI through Google ADK, Cloud Run, Firestore, Secret Manager,
-Cloud Logging, Cloud Trace, Artifact Registry, and Cloud Build.
+Google Cloud is Rally's durable governance and customer-credential plane. The
+implementation uses Gemini 3.7 on Vertex AI through Google ADK, two isolated
+Cloud Run services, Firestore, Secret Manager, Cloud KMS, Cloud Logging, Cloud
+Trace, Artifact Registry, and Cloud Build.
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for trust boundaries and
 [EVALUATION.md](EVALUATION.md) for the live ADK scorecard.
@@ -47,6 +48,11 @@ Terraform creates:
 - a dedicated least-privilege Cloud Run invoker identity
 - permission for `imterryim@gmail.com` to mint only short-lived tokens as that
   invoker identity
+- a separate least-privilege customer control-plane identity
+- a rotating Cloud KMS key that wraps a unique AES-256-GCM data key for each
+  user's connector credential
+- an optional public Cloud Run control plane whose customer routes still
+  require verified, audience-bound Google ID tokens
 
 ### Approved two-phase deployment
 
@@ -105,6 +111,38 @@ Then set `google_cloud.enabled` to `true`, put the Terraform `service_url` in
 ```bash
 ./bin/rally --config config/rally.demo.json --check --smoke
 ```
+
+## Customer sign-in and credential vault
+
+Rally's hosted admin is intentionally separate from the private execution
+service. Google Identity Services supplies a short-lived ID token to the
+browser; Rally verifies its signature, issuer, expiration, audience, and
+verified email, then uses Google's immutable `sub` claim as the tenant key.
+The token stays in JavaScript memory and is never written to browser storage.
+
+Google Web OAuth clients must be registered in Cloud Console. Create `Rally
+Web`, authorize `https://rally.agent9.dev` as a JavaScript origin, and retain
+only its public client ID. Do not create, transmit, or commit a client secret
+for this sign-in flow.
+
+Once the public client ID exists, activate the control plane without changing
+the private coordinator boundary:
+
+```bash
+terraform -chdir=cloud/infra apply \
+  -var='deploy_service=true' \
+  -var='deploy_control_plane=true' \
+  -var='image_uri=us-east1-docker.pkg.dev/rally-agent9-2026/rally/rally-google-coordinator:<commit-sha>' \
+  -var='google_web_client_id=<public-client-id>' \
+  -var='control_plane_allowed_user_emails=["you@example.com"]'
+```
+
+Review the plan interactively. The control-plane identity can read/write its
+Firestore collection and encrypt/decrypt with one KMS key; it cannot invoke the
+coordinator, access the coordinator's Secret Manager token, or call Vertex AI.
+The API returns connection metadata only. A newly imported credential is
+`stored_unverified` until Rally performs capability discovery and applies a
+safe execution preset.
 
 ## Cost posture
 

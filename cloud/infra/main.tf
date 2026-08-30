@@ -7,6 +7,7 @@ locals {
     "firestore.googleapis.com",
     "iam.googleapis.com",
     "iamcredentials.googleapis.com",
+    "cloudkms.googleapis.com",
     "logging.googleapis.com",
     "run.googleapis.com",
     "secretmanager.googleapis.com",
@@ -56,6 +57,14 @@ resource "google_service_account" "local_invoker" {
   depends_on = [google_project_service.required]
 }
 
+resource "google_service_account" "control_plane" {
+  project      = var.project_id
+  account_id   = "rally-control-plane"
+  display_name = "Rally customer identity and connection control plane"
+
+  depends_on = [google_project_service.required]
+}
+
 resource "google_service_account_iam_member" "operator_token_creator" {
   service_account_id = google_service_account.local_invoker.name
   role               = "roles/iam.serviceAccountTokenCreator"
@@ -70,6 +79,17 @@ resource "google_project_iam_member" "coordinator" {
   member  = "serviceAccount:${google_service_account.coordinator.email}"
 }
 
+resource "google_project_iam_member" "control_plane" {
+  for_each = toset([
+    "roles/datastore.user",
+    "roles/logging.logWriter",
+  ])
+
+  project = var.project_id
+  role    = each.value
+  member  = "serviceAccount:${google_service_account.control_plane.email}"
+}
+
 resource "google_firestore_database" "rally" {
   project                     = var.project_id
   name                        = "(default)"
@@ -81,6 +101,30 @@ resource "google_firestore_database" "rally" {
   deletion_policy             = "ABANDON"
 
   depends_on = [google_project_service.required]
+}
+
+resource "google_kms_key_ring" "connector_vault" {
+  project  = var.project_id
+  name     = "rally-connector-vault"
+  location = var.region
+
+  depends_on = [google_project_service.required]
+}
+
+resource "google_kms_crypto_key" "connector_credentials" {
+  name            = "connector-credentials"
+  key_ring        = google_kms_key_ring.connector_vault.id
+  rotation_period = "7776000s"
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+resource "google_kms_crypto_key_iam_member" "control_plane" {
+  crypto_key_id = google_kms_crypto_key.connector_credentials.id
+  role          = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
+  member        = "serviceAccount:${google_service_account.control_plane.email}"
 }
 
 resource "random_password" "service_token" {
@@ -219,4 +263,119 @@ resource "google_cloud_run_v2_service_iam_member" "invoker" {
   name     = google_cloud_run_v2_service.coordinator[0].name
   role     = "roles/run.invoker"
   member   = "serviceAccount:${google_service_account.local_invoker.email}"
+}
+
+resource "google_cloud_run_v2_service" "control_plane" {
+  count = var.deploy_control_plane ? 1 : 0
+
+  lifecycle {
+    precondition {
+      condition     = var.google_web_client_id != ""
+      error_message = "google_web_client_id is required before deploying the control plane."
+    }
+  }
+
+  project             = var.project_id
+  name                = var.control_plane_service_name
+  location            = var.region
+  ingress             = "INGRESS_TRAFFIC_ALL"
+  deletion_protection = false
+
+  labels = {
+    product    = "rally"
+    surface    = "customer-control-plane"
+    managed-by = "terraform"
+  }
+
+  template {
+    service_account                  = google_service_account.control_plane.email
+    timeout                          = "30s"
+    max_instance_request_concurrency = 40
+
+    scaling {
+      min_instance_count = 0
+      max_instance_count = 2
+    }
+
+    containers {
+      image   = var.image_uri
+      command = ["uv"]
+      args = [
+        "run",
+        "--no-sync",
+        "uvicorn",
+        "control_plane:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8080",
+      ]
+
+      resources {
+        limits = {
+          cpu    = "1"
+          memory = "512Mi"
+        }
+        cpu_idle          = true
+        startup_cpu_boost = true
+      }
+
+      env {
+        name  = "GOOGLE_CLOUD_PROJECT"
+        value = var.project_id
+      }
+      env {
+        name  = "RALLY_VAULT_BACKEND"
+        value = "google_kms"
+      }
+      env {
+        name  = "RALLY_KMS_KEY"
+        value = google_kms_crypto_key.connector_credentials.id
+      }
+      env {
+        name  = "RALLY_GOOGLE_WEB_CLIENT_IDS"
+        value = var.google_web_client_id
+      }
+      env {
+        name  = "RALLY_ALLOWED_ORIGINS"
+        value = join(",", var.control_plane_allowed_origins)
+      }
+      env {
+        name  = "RALLY_ALLOWED_USER_EMAILS"
+        value = join(",", var.control_plane_allowed_user_emails)
+      }
+
+      startup_probe {
+        initial_delay_seconds = 2
+        timeout_seconds       = 3
+        period_seconds        = 5
+        failure_threshold     = 12
+        http_get {
+          path = "/healthz"
+          port = 8080
+        }
+      }
+    }
+  }
+
+  traffic {
+    type    = "TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST"
+    percent = 100
+  }
+
+  depends_on = [
+    google_firestore_database.rally,
+    google_kms_crypto_key_iam_member.control_plane,
+    google_project_iam_member.control_plane,
+  ]
+}
+
+resource "google_cloud_run_v2_service_iam_member" "control_plane_public" {
+  count = var.deploy_control_plane ? 1 : 0
+
+  project  = var.project_id
+  location = var.region
+  name     = google_cloud_run_v2_service.control_plane[0].name
+  role     = "roles/run.invoker"
+  member   = "allUsers"
 }

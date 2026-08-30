@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#f7f9fc">
+  <title>Rally Admin · Secure connections</title>
+  <link rel="icon" href="../rally-symbol.png">
+  <link rel="stylesheet" href="styles.css?v=20260830a">
+  <script src="config.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to connections</a>
+  <header class="admin-header">
+    <a class="brand" href="../" aria-label="Rally homepage"><img src="../rally-symbol.png" alt=""><span>Rally</span></a>
+    <div class="header-trust"><span class="trust-dot"></span><span>Google-protected control plane</span></div>
+    <button class="text-button" type="button" data-sign-out hidden>Sign out</button>
+  </header>
+
+  <main id="main">
+    <section class="signin-shell" data-signed-out>
+      <div class="signin-copy">
+        <p class="eyebrow">Rally admin</p>
+        <h1>Connect the company.<br><span>Keep the keys away from every AI.</span></h1>
+        <p class="lede">Sign in with your Google account to manage only your organization’s connection vault. Rally stores no credential in this browser.</p>
+        <div class="signin-action">
+          <div data-google-button></div>
+          <p class="configuration-note" data-configuration-note>Checking secure sign-in…</p>
+        </div>
+      </div>
+      <aside class="security-receipt" aria-label="Credential security architecture">
+        <div class="receipt-heading"><span class="shield">✓</span><div><p>Credential boundary</p><h2>Models get tools.<br>Never tokens.</h2></div></div>
+        <ol>
+          <li><span>1</span><div><b>Google verifies the account</b><small>The immutable Google subject—not an email address—owns the vault.</small></div></li>
+          <li><span>2</span><div><b>Rally encrypts per connection</b><small>A unique AES-GCM data key protects every credential.</small></div></li>
+          <li><span>3</span><div><b>Cloud KMS wraps the key</b><small>Firestore receives ciphertext and metadata, never usable secrets.</small></div></li>
+        </ol>
+        <p class="receipt-rule"><span>owner</span><b>≠</b><span>model context</span></p>
+      </aside>
+    </section>
+
+    <section class="dashboard" data-dashboard hidden>
+      <div class="dashboard-heading">
+        <div><p class="eyebrow">Connection vault</p><h1>Your approved systems.</h1><p>Secure credentials here first. Rally will not call a provider until its capability check and policy preset also pass.</p></div>
+        <div class="account-card"><img data-user-picture alt="" hidden><span class="account-initial" data-user-initial>R</span><div><b data-user-name>Rally administrator</b><small data-user-email></small></div></div>
+      </div>
+
+      <div class="vault-summary" aria-label="Vault status">
+        <div><span data-connection-count>0</span><p>credentials secured</p></div>
+        <div><span>9</span><p>bounded adapters</p></div>
+        <div><span>0</span><p>keys exposed to models</p></div>
+        <div class="kms-proof"><span>✓</span><p><b>Google Cloud KMS</b><small>Envelope encryption active</small></p></div>
+      </div>
+
+      <div class="connection-heading"><div><p class="eyebrow">Business systems</p><h2>Grant the minimum. Verify before use.</h2></div><p>A stored credential is not automatically a live connection. Rally keeps each adapter disabled until authenticated discovery proves exactly what it can do.</p></div>
+      <div class="connection-grid" data-connection-grid>
+        <article class="connection-card is-pending" data-connector="google-workspace"><header><img src="../brandmarks/google.svg" alt=""><span class="connection-state">OAuth required</span></header><h3>Google Workspace</h3><p>Drive, Docs, Sheets, Slides, Calendar, Gmail, Chat, and contacts.</p><footer><span>OAuth</span><button type="button" disabled>OAuth next</button></footer></article>
+        <article class="connection-card is-pending" data-connector="slack"><header><img src="../brandmarks/slack.svg" alt=""><span class="connection-state">OAuth required</span></header><h3>Slack</h3><p>Search decisions, understand history, and prepare governed team updates.</p><footer><span>OAuth</span><button type="button" disabled>OAuth next</button></footer></article>
+        <article class="connection-card" data-connector="github" data-kind="bearer_token"><header><img src="../brandmarks/github.svg" alt=""><span class="connection-state">Not secured</span></header><h3>GitHub</h3><p>Repositories, issues, pull requests, and Actions through the locked-down MCP path.</p><footer><span>Token</span><button type="button">Secure credential</button></footer></article>
+        <article class="connection-card" data-connector="cloudflare" data-kind="api_key"><header><img src="../brandmarks/cloudflare.svg" alt=""><span class="connection-state">Not secured</span></header><h3>Cloudflare</h3><p>Observability, DNS, Workers, storage, and security under an explicit scope.</p><footer><span>API token</span><button type="button">Secure credential</button></footer></article>
+        <article class="connection-card" data-connector="n8n" data-kind="api_key"><header><img src="../brandmarks/n8n.svg" alt=""><span class="connection-state">Not secured</span></header><h3>n8n</h3><p>Only administrator-approved workflows exposed as bounded company tools.</p><footer><span>API key</span><button type="button">Secure credential</button></footer></article>
+        <article class="connection-card" data-connector="stripe" data-kind="api_key"><header><img src="../brandmarks/stripe.svg" alt=""><span class="connection-state">Not secured</span></header><h3>Stripe</h3><p>Customers, subscriptions, payments, and reports with money movement gated.</p><footer><span>Restricted key</span><button type="button">Secure credential</button></footer></article>
+        <article class="connection-card is-pending" data-connector="atlassian"><header><img src="../brandmarks/atlassian.svg" alt=""><span class="connection-state">OAuth required</span></header><h3>Atlassian</h3><p>Jira, Confluence, and Compass context in one accountable assignment.</p><footer><span>OAuth</span><button type="button" disabled>OAuth next</button></footer></article>
+        <article class="connection-card is-pending" data-connector="salesforce"><header><img src="../brandmarks/salesforce.svg" alt=""><span class="connection-state">OAuth required</span></header><h3>Salesforce</h3><p>Customer, pipeline, and service records through a read-first SObject boundary.</p><footer><span>OAuth</span><button type="button" disabled>OAuth next</button></footer></article>
+        <article class="connection-card" data-connector="hyperagent" data-kind="bearer_token"><header><img src="../brandmarks/hyperagent.svg" alt=""><span class="connection-state">Not secured</span></header><h3>HyperAgent</h3><p>Delegate eligible creative work through a verified agent interface.</p><footer><span>Token</span><button type="button">Secure credential</button></footer></article>
+      </div>
+      <p class="vault-boundary"><b>Honest boundary:</b> credential storage is live only after Google sign-in and the KMS control plane respond. “Secured” means encrypted at rest—not yet discovered, approved, or executable.</p>
+    </section>
+  </main>
+
+  <dialog class="credential-dialog" data-credential-dialog aria-labelledby="credential-title">
+    <form method="dialog" data-credential-form>
+      <button class="dialog-close" type="button" aria-label="Close" data-dialog-close>×</button>
+      <p class="eyebrow">Tenant-isolated vault</p>
+      <h2 id="credential-title">Secure a credential</h2>
+      <p data-dialog-copy>The value travels once over HTTPS to Rally’s Google Cloud control plane.</p>
+      <label for="credential-value">Credential value</label>
+      <input id="credential-value" name="credential" type="password" autocomplete="off" spellcheck="false" required maxlength="65536">
+      <div class="dialog-safety"><span>✓</span><p>Never stored in this browser. Never returned by the API. Never placed in model context.</p></div>
+      <p class="form-status" data-form-status role="status"></p>
+      <button class="primary-button" type="submit">Encrypt and secure</button>
+    </form>
+  </dialog>
+</body>
+</html>

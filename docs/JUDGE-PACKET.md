@@ -91,7 +91,7 @@ stale owner from overwriting the new attempt.
 
 ## Judge-visible numbers
 
-- 180 automated deterministic tests: 86 product tests + 94 Cloud/A2A/connector tests
+- 196 automated deterministic tests: 87 product tests + 109 Cloud/A2A/connector tests
 - 6 live ADK evaluation cases
 - 1.00 tool trajectory score
 - 1.00 response-quality score

@@ -173,9 +173,26 @@ class TestProductSite(unittest.TestCase):
         self.assertIn("additionalProperties: false", app)
         self.assertIn("closedWebMcpInput", app)
         self.assertIn("maxLength: 2000", app)
+        admin_root = os.path.join(SITE, "admin")
+        for admin_asset in ("index.html", "app.js", "config.js", "styles.css"):
+            self.assertTrue(os.path.exists(os.path.join(admin_root, admin_asset)))
+        with open(os.path.join(admin_root, "index.html")) as handle:
+            admin_html = handle.read()
+        with open(os.path.join(admin_root, "app.js")) as handle:
+            admin_app = handle.read()
+        self.assertEqual(admin_html.count('class="connection-card'), 9)
+        self.assertIn("Google Cloud KMS", admin_html)
+        self.assertNotIn("localStorage", admin_app)
+        self.assertNotIn("sessionStorage", admin_app)
+        self.assertIn("credentialInput.value = \"\"", admin_app)
+        self.assertIn("https://accounts.google.com/gsi/client", admin_app)
+        with open(os.path.join(SITE, "_headers")) as handle:
+            security_headers = handle.read()
+        self.assertIn("https://accounts.google.com/gsi/client", security_headers)
+        self.assertIn("https://*.a.run.app", security_headers)
         with open(os.path.join(ROOT, "studio", "og-card.html")) as handle:
             card = handle.read()
-        for phrase in ("THE ACCOUNTABLE AI TEAM", "Your AIs, finally", "180", "6/6", "0"):
+        for phrase in ("THE ACCOUNTABLE AI TEAM", "Your AIs, finally", "196", "6/6", "0"):
             self.assertIn(phrase, card)
         self.assertNotIn("99 TESTS", card)
 

@@ -10,6 +10,9 @@ delivery repeats, and autonomous loops eventually behave unexpectedly.
 | Unauthorized commissioner | Sender allowlist outside prompt context | `src/ingress.py`; config owners |
 | Public Cloud Run invocation | IAM allows one Google principal | `cloud/infra/main.tf` |
 | Stolen or omitted app credential | Secret Manager-backed token; constant-time check; fail closed | `cloud/service.py` |
+| Cross-tenant credential access | Verified Google `sub` ownership, tenant-derived document IDs, and owner-hash checks | `cloud/user_auth.py`; `cloud/credential_vault.py` |
+| Connector credential disclosure | Unique AES-256-GCM data key per connection, wrapped by Cloud KMS; ciphertext-only Firestore records | `cloud/credential_vault.py`; KMS tests |
+| Rejected credential reflected by API | Redacted `SecretStr` input plus a non-reflective validation handler | `cloud/control_plane.py`; control-plane tests |
 | Prompt injection changes policy | ADK is advisory; runner reconciles every transition | `cloud/rally_adk/agent.py`; `src/envelope.py` |
 | Agent approves its own work | Owner/verifier invariant enforced in code | checklist tests |
 | Same-family rubber stamp | Startup refuses non-distinct model families | `src/agents.py`; tests |
@@ -31,9 +34,12 @@ token, application token, Resend key, ingest-token URL, or raw eval histories.
 - Never place provider keys, OAuth tokens, client secrets, refresh tokens,
   service-account credentials, private keys, or customer credentials in source
   files, fixtures, commits, issues, logs, screenshots, or demo evidence.
-- Store local operator and per-user connector credentials in the macOS Keychain.
-  Store deployed service credentials in the platform secret manager and expose
-  them only to the service identity that needs them.
+- Store local operator connector credentials in the macOS Keychain. The hosted
+  control plane creates a fresh AES-GCM data-encryption key per user connection,
+  asks Google Cloud KMS to wrap that key, and stores only ciphertext, the wrapped
+  key, and non-secret status metadata in Firestore. Store deployed application
+  credentials in Secret Manager and expose them only to the service identity
+  that needs them.
 - Commit only empty examples such as `.env.example`. If a secret is ever
   committed, revoke or rotate it immediately; removing it in a later commit is
   not sufficient because Git history preserves it.
@@ -44,5 +50,23 @@ token, application token, Resend key, ingest-token URL, or raw eval histories.
   fingerprint detect escape; a production fleet should add process isolation.
 - Email turn messages are an audit mirror; runner dispatch—not email arrival—
   advances the next agent.
-- One operator account is the initial Cloud Run invoker. Team identity and role
-  groups are a post-hackathon control-plane feature.
+- One operator account remains the only private coordinator invoker. The
+  separate public control plane accepts verified Google accounts but has no
+  permission to invoke the coordinator; an optional email or Workspace-domain
+  allowlist can close initial access while role groups are added.
+
+## Customer identity and credential vault
+
+The coordinator and customer control plane are deliberately separate Cloud Run
+services. The private coordinator keeps Cloud Run IAM plus its independent
+Secret Manager application token. The public control plane is network
+reachable because a browser must call it, but every `/v1` route verifies a
+Google Identity Services ID token, its audience, issuer, expiry, verified
+email, and optional account/domain allowlists. Rally keys tenancy only by the
+Google `sub` claim; email is display data and may change.
+
+The browser keeps the short-lived ID token and submitted credential only in
+memory. It never writes either value to cookies, local storage, session storage,
+HTML, logs, or repository files. The API never returns credential material and
+replaces FastAPI's default validation detail with a non-reflective error so an
+invalid oversized secret cannot be echoed.
