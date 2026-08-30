@@ -1,8 +1,68 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 120" role="img" aria-labelledby="title desc">
   <title id="title">Rally</title>
-  <desc id="desc">Two independent model paths exchange work and resolve into one verified result.</desc>
-  <path fill="#246BFD" d="M22.4 4.2a4 4 0 0 1 4.9.2l14.3 10.9a4 4 0 0 1 0 6.4L30.9 30l-5.7-7.4 7.6-5.9-10.4-7.9Z"/>
-  <path fill="#10233F" d="M22.4 4.2a4 4 0 0 1 4.9.2l14.3 10.9a4 4 0 0 1 0 6.4L30.9 30l-5.7-7.4 7.6-5.9-10.4-7.9Z" transform="rotate(180 24 24)"/>
-  <rect width="9.2" height="9.2" x="19.4" y="19.4" fill="#16A36A" rx="2.1" transform="rotate(45 24 24)"/>
-  <path fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.1" d="m20.9 24 2 2 4.4-4.5"/>
+  <desc id="desc">A Newton's cradle spelling Rally. Work moves between agents while the governing frame stays fixed.</desc>
+  <defs>
+    <filter id="weight-shadow" x="-30%" y="-30%" width="160%" height="170%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#10233f" flood-opacity=".22"/>
+    </filter>
+    <linearGradient id="frame" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#244466"/>
+      <stop offset="1" stop-color="#10233f"/>
+    </linearGradient>
+    <style>
+      .outer-left { transform-origin: 32px 24px; animation: rally-left 3.8s cubic-bezier(.55,.01,.35,1) infinite; }
+      .outer-right { transform-origin: 128px 24px; animation: rally-right 3.8s cubic-bezier(.55,.01,.35,1) infinite; }
+      .weight { filter: url(#weight-shadow); }
+      .letter { font: 700 13px Arial, sans-serif; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+      @keyframes rally-left {
+        0%, 10%, 38%, 100% { transform: rotate(0); }
+        23%, 27% { transform: rotate(28deg); }
+      }
+      @keyframes rally-right {
+        0%, 42%, 72%, 100% { transform: rotate(0); }
+        55%, 59% { transform: rotate(-28deg); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .outer-left, .outer-right { animation: none; }
+      }
+    </style>
+  </defs>
+
+  <path fill="none" stroke="url(#frame)" stroke-linecap="round" stroke-width="6" d="M18 25h124M24 25v77m112-77v77M13 103h134"/>
+  <path fill="none" stroke="#d3dce8" stroke-linecap="round" stroke-width="2" d="M18 19h124"/>
+
+  <g class="outer-left">
+    <path fill="none" stroke="#8091a7" stroke-width="1.8" d="M32 24v52"/>
+    <circle class="weight" cx="32" cy="78" r="12" fill="#4285f4"/>
+    <circle cx="28" cy="74" r="3.4" fill="#fff" opacity=".28"/>
+    <text class="letter" x="32" y="79" fill="#fff">R</text>
+  </g>
+
+  <g>
+    <path fill="none" stroke="#8091a7" stroke-width="1.8" d="M56 24v52"/>
+    <circle class="weight" cx="56" cy="78" r="12" fill="#ea4335"/>
+    <circle cx="52" cy="74" r="3.4" fill="#fff" opacity=".25"/>
+    <text class="letter" x="56" y="79" fill="#fff">A</text>
+  </g>
+
+  <g>
+    <path fill="none" stroke="#8091a7" stroke-width="1.8" d="M80 24v52"/>
+    <circle class="weight" cx="80" cy="78" r="12" fill="#fbbc04"/>
+    <circle cx="76" cy="74" r="3.4" fill="#fff" opacity=".34"/>
+    <text class="letter" x="80" y="79" fill="#5f4300">L</text>
+  </g>
+
+  <g>
+    <path fill="none" stroke="#8091a7" stroke-width="1.8" d="M104 24v52"/>
+    <circle class="weight" cx="104" cy="78" r="12" fill="#34a853"/>
+    <circle cx="100" cy="74" r="3.4" fill="#fff" opacity=".25"/>
+    <text class="letter" x="104" y="79" fill="#fff">L</text>
+  </g>
+
+  <g class="outer-right">
+    <path fill="none" stroke="#8091a7" stroke-width="1.8" d="M128 24v52"/>
+    <circle class="weight" cx="128" cy="78" r="12" fill="#246bfd"/>
+    <circle cx="124" cy="74" r="3.4" fill="#fff" opacity=".28"/>
+    <text class="letter" x="128" y="79" fill="#fff">Y</text>
+  </g>
 </svg>

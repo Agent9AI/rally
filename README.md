@@ -58,6 +58,17 @@ and limits. Then it lives at an address:
 rally@updates.agent9.dev
 ```
 
+The open ecosystem is moving in the same direction. Google introduced the
+[Agent2Agent (A2A) Protocol](https://developers.googleblog.com/en/a2a-a-new-era-of-agent-interoperability/)
+so independent agents can discover capabilities and collaborate across vendors;
+on August 27, 2026, A2A was
+[accepted into the Agentic AI Foundation at Growth Stage](https://a2a-protocol.org/latest/blog/2026/08/27/a-new-chapter-for-a2a-joining-the-agentic-ai-foundation/).
+Rally's contribution is the accountability layer around that interoperability:
+policy, ownership, recovery, evidence, and independent verification. The current
+release exposes an official A2A v1.0 Agent Card plus JSON-RPC and HTTP+JSON
+bindings backed by the same governed commission path. That is a tested
+interoperability claim, not a certification or endorsement claim.
+
 That changes a few things at once.
 
 **No install, no seat, no onboarding.** If you can send an email, you can use it.
@@ -105,12 +116,13 @@ still cannot finish, Rally tells you exactly where and why.
 | Ingress Worker (D1) | deployed, signed webhook and round trip verified |
 | Judge console | live Pages UI backed by a double-sanitized D1 run projection; golden run `r-20260829-dbb5c0` is public |
 | `rally@updates.agent9.dev` route | working; replies return to the commissioner |
-| Product + Cloud test suite | 80 automated tests passing |
+| Product + Cloud test suite | 93 automated tests passing |
 | Google ADK coordinator | implemented; live eval 6/6, both metrics 1.00 |
 | Cloud Run + Firestore + Trace | deployed privately in `rally-agent9-2026`; authenticated commission, replay, Firestore, logs, and content-free trace verified |
+| A2A v1.0 boundary | Agent Card, JSON-RPC, HTTP+JSON, SSE streaming, polling, listing, Firestore tasks, and dual-auth tested with official SDK clients |
 
-The current release candidate has **80 automated tests**: 69 deterministic
-runner, ingress, policy, bridge, and site tests plus 11 Cloud service tests.
+The current release candidate has **93 automated tests**: 69 deterministic
+runner, ingress, policy, bridge, and site tests plus 24 Cloud and A2A service tests.
 The separate live ADK scorecard remains 6/6 at 1.00 trajectory and 1.00 quality.
 
 ### Why the models have different jobs
@@ -159,6 +171,7 @@ See [docs/RUNBOOK.md](docs/RUNBOOK.md) to operate it, including how to stop a ru
 | [docs/DEMO-SCRIPT.md](docs/DEMO-SCRIPT.md) | The four-minute recording script and shot list. |
 | [docs/VIDEO-PRODUCTION.md](docs/VIDEO-PRODUCTION.md) | Short-film and unedited-run capture package. |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Google Cloud topology, trust boundaries, and failure behavior. |
+| [docs/A2A.md](docs/A2A.md) | A2A v1.0 discovery, bindings, security, state mapping, and verification. |
 | [docs/assets/rally-architecture.svg](docs/assets/rally-architecture.svg) | Presentation-ready architecture diagram. |
 | [docs/EVALUATION.md](docs/EVALUATION.md) | Live ADK eval design, scores, and the behavior it improved. |
 | [docs/HACKATHON.md](docs/HACKATHON.md) | Judge-facing positioning and submission checklist. |

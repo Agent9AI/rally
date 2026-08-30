@@ -1,4 +1,5 @@
 """Cloud Run HTTP surface for Rally's Google ADK coordinator."""
+
 from __future__ import annotations
 
 import datetime as dt
@@ -16,7 +17,9 @@ from google.genai import types
 from opentelemetry import trace
 from pydantic import BaseModel, Field
 from starlette.requests import Request
+from starlette.responses import JSONResponse
 
+from a2a_adapter import install_a2a_routes
 from catalog import load_catalog
 from rally_adk.agent import app as adk_app
 from rally_adk.handoff import build_handoff
@@ -40,9 +43,67 @@ async def request_observability(request: Request, call_next: Any) -> Any:
     started = time.perf_counter()
     status = 500
     try:
+        is_a2a_request = (
+            (request.method == "POST" and request.url.path == "/")
+            or request.url.path == "/a2a"
+            or request.url.path.startswith("/a2a/")
+        )
+        if is_a2a_request:
+            try:
+                require_service_token(request.headers.get("X-Rally-Service-Token"))
+            except HTTPException as exc:
+                status = exc.status_code
+                return JSONResponse(
+                    {"detail": exc.detail},
+                    status_code=exc.status_code,
+                    headers={"WWW-Authenticate": "RallyServiceToken"},
+                )
+            content_type = request.headers.get("Content-Type", "").lower()
+            has_json_body = request.method in {"POST", "PUT", "PATCH"}
+            if has_json_body and not content_type.startswith("application/json"):
+                if request.url.path in {"/", "/a2a"}:
+                    return JSONResponse(
+                        {
+                            "jsonrpc": "2.0",
+                            "id": None,
+                            "error": {
+                                "code": -32005,
+                                "message": "Content type not supported",
+                                "data": [
+                                    {
+                                        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+                                        "reason": "CONTENT_TYPE_NOT_SUPPORTED",
+                                        "domain": "a2a-protocol.org",
+                                        "metadata": {},
+                                    }
+                                ],
+                            },
+                        }
+                    )
+                return JSONResponse(
+                    {
+                        "error": {
+                            "code": 415,
+                            "status": "INVALID_ARGUMENT",
+                            "message": "Content type not supported",
+                            "details": [
+                                {
+                                    "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+                                    "reason": "CONTENT_TYPE_NOT_SUPPORTED",
+                                    "domain": "a2a-protocol.org",
+                                    "metadata": {},
+                                }
+                            ],
+                        }
+                    },
+                    status_code=415,
+                )
         response = await call_next(request)
         status = response.status_code
         response.headers["X-Rally-Request-ID"] = request_id
+        if request.url.path == "/.well-known/agent-card.json":
+            response.headers["Cache-Control"] = "public, max-age=300"
+            response.headers["ETag"] = '"rally-a2a-1.0.0"'
         return response
     finally:
         logger.info(
@@ -181,11 +242,24 @@ async def commission(
     idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
 ) -> dict[str, Any]:
     require_service_token(x_rally_service_token)
-    run_id = body.run_id or "r-" + uuid.uuid4().hex[:10]
-    request_key = idempotency_key or run_id
+    return await submit_commission(
+        body.task,
+        run_id=body.run_id,
+        request_key=idempotency_key,
+    )
+
+
+async def submit_commission(
+    task: str,
+    run_id: str | None = None,
+    request_key: str | None = None,
+) -> dict[str, Any]:
+    """Create or resume one governed commission independently of its transport."""
+    run_id = run_id or "r-" + uuid.uuid4().hex[:10]
+    request_key = request_key or run_id
     existing = await store.get_by_request_key(request_key)
     if existing:
-        if existing.get("task_digest") != task_digest(body.task):
+        if existing.get("task_digest") != task_digest(task):
             raise HTTPException(
                 status_code=409,
                 detail="idempotency key is already bound to another commission",
@@ -205,7 +279,7 @@ async def commission(
                         "status": resumed.get("status"),
                     },
                 )
-                return await finish_coordination(resumed, body.task)
+                return await finish_coordination(resumed, task)
         logger.info(
             "duplicate commission returned",
             extra={
@@ -218,7 +292,7 @@ async def commission(
         return {**existing, "duplicate": True}
 
     now = utc_now()
-    handoff = build_handoff(body.task)
+    handoff = build_handoff(task)
     record: dict[str, Any] = {
         "accepted": True,
         "duplicate": False,
@@ -226,7 +300,7 @@ async def commission(
         "request_key": request_key,
         "status": "coordinating",
         "handoff": handoff,
-        "task_digest": task_digest(body.task),
+        "task_digest": task_digest(task),
         "attempts": 1,
         "created_at": isoformat(now),
         "updated_at": isoformat(now),
@@ -248,7 +322,7 @@ async def commission(
             "duplicate": False,
         },
     )
-    return await finish_coordination(record, body.task)
+    return await finish_coordination(record, task)
 
 
 @app.get("/v1/runs/{run_id}")
@@ -261,3 +335,6 @@ async def run_status(
     if not record:
         raise HTTPException(status_code=404, detail="run not found")
     return record
+
+
+a2a_card = install_a2a_routes(app, submit_commission)

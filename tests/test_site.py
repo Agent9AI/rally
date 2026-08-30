@@ -1,3 +1,4 @@
+import json
 import os
 import re
 import unittest
@@ -35,6 +36,8 @@ class TestProductSite(unittest.TestCase):
         for phrase in (
             "Your AIs, finally",
             "The accountable AI team",
+            "Your agents can solve the problem",
+            "shared operating system for communication, delegation, and execution",
             "One hard goal",
             "Watch the accountable team work",
             "No model approves its own work",
@@ -44,9 +47,20 @@ class TestProductSite(unittest.TestCase):
             "Honest boundary:",
             "Rally runs one model at a time",
             "The authoritative runner dispatches the next model locally",
+            "The handshake now speaks a standard",
+            "introduced by Google",
+            "Rally publishes an A2A v1.0 Agent Card",
+            "Accepted into AAIF at Growth Stage",
+            "A2A v1.0 compatible",
+            "Agent discovery + task exchange",
+            "Originally created by",
+            "Linux Foundation open governance",
         ):
             self.assertIn(phrase, self.html)
-        self.assertIn('src="rally-mark.svg"', self.html)
+        self.assertIn('src="rally-symbol.png"', self.html)
+        self.assertIn('src="rally-logo.png"', self.html)
+        self.assertIn('src="a2a-icon.svg"', self.html)
+        self.assertIn('class="a2a-trust"', self.html)
         self.assertIn('name="rally-console-api"', self.html)
         self.assertIn('rel="canonical" href="https://rally.agent9.dev/"', self.html)
         self.assertIn("data-second-wind", self.html)
@@ -55,21 +69,33 @@ class TestProductSite(unittest.TestCase):
             self.assertIn(f"<h3>{connector}</h3>", self.html)
         self.assertNotIn("Request a managed pilot", self.html)
         self.assertNotIn("Webhook launch", self.html)
-        with open(os.path.join(SITE, "rally-mark.svg")) as handle:
-            mark = handle.read()
-        self.assertIn("independent model paths", mark)
+        for logo_asset in ("rally-logo.png", "rally-symbol.png"):
+            path = os.path.join(SITE, logo_asset)
+            self.assertTrue(os.path.exists(path))
+            self.assertGreater(os.path.getsize(path), 10_000)
         with open(os.path.join(SITE, "styles.css")) as handle:
             styles = handle.read()
-        self.assertIn("rally-mark-bounce", styles)
         self.assertIn("rally-handoff", styles)
         self.assertIn("prefers-reduced-motion", styles)
+        with open(os.path.join(SITE, ".well-known", "agent-card.json")) as handle:
+            agent_card = json.load(handle)
+        self.assertEqual(agent_card["version"], "1.0.0")
+        self.assertEqual(
+            [entry["protocolBinding"] for entry in agent_card["supportedInterfaces"]],
+            ["JSONRPC", "HTTP+JSON"],
+        )
+        self.assertEqual(
+            [skill["id"] for skill in agent_card["skills"]],
+            ["commission_governed_run"],
+        )
+        self.assertNotIn("test-token", str(agent_card))
         with open(os.path.join(SITE, "app.js")) as handle:
             app = handle.read()
         self.assertIn("Second Wind recovery:", app)
         self.assertIn('entry.kind === "recovery"', app)
         with open(os.path.join(ROOT, "studio", "og-card.html")) as handle:
             card = handle.read()
-        for phrase in ("THE ACCOUNTABLE AI TEAM", "Your AIs, finally", "80", "6/6", "0"):
+        for phrase in ("THE ACCOUNTABLE AI TEAM", "Your AIs, finally", "93", "6/6", "0"):
             self.assertIn(phrase, card)
         self.assertNotIn("75 TESTS", card)
 

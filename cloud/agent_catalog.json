@@ -15,8 +15,10 @@
       "capabilities": [
         "preserve commissioned intent",
         "create a bounded handoff",
-        "record durable intake state"
+        "record durable intake state",
+        "accept A2A v1.0 tasks over JSON-RPC and HTTP+JSON"
       ],
+      "protocols": ["A2A v1.0 JSON-RPC", "A2A v1.0 HTTP+JSON"],
       "authority": ["accept authenticated commissions", "invoke the Rally handoff tool"],
       "prohibited": ["modify repositories", "approve completed work", "change policy"],
       "departments": ["engineering", "product", "operations", "security"],

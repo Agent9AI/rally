@@ -47,7 +47,7 @@ engineering leader can audit.
 |---|---|---|
 | Innovation & operational utility (40%) | Email-native access plus cross-family verification converts agents from personal copilots into a shared, accountable team service | Send one email; show alternating Claude/Gemini executive updates and final evidence |
 | Technical architecture (30%) | ADK + Gemini on IAM-protected Cloud Run, atomic Firestore idempotency, Secret Manager, Cloud Trace, signed edge webhook, deterministic state machine | Architecture diagram, Terraform, trace/log, verification state |
-| Demo & production readiness (30%) | Deployed path, live eval gate, bounded costs, polished emails, human stop/steer, reproducible repo | 6/6 eval, 80 tests, live Cloud Run health, complete email thread |
+| Demo & production readiness (30%) | Deployed path, live eval gate, bounded costs, polished emails, human stop/steer, reproducible repo | 6/6 eval, 93 tests, live Cloud Run health, complete email thread |
 
 ## Model assignment rationale
 
@@ -129,7 +129,7 @@ lowering a threshold.
 - Authenticated fleet catalog for cross-department discovery and governance
 - Dual-auth Cloud Run boundary and least-privilege runtime identity
 - Metadata-only GenAI observability
-- 80 automated tests plus six live ADK eval cases at 1.00/1.00
+- 93 automated tests plus six live ADK eval cases at 1.00/1.00
 - Validated Terraform and a demo-ready operator workflow
 
 ### What we learned
@@ -144,8 +144,11 @@ preservation, not just whether the final answer sounds good.
 Onboard Rally through one administrator-controlled connection center, then add
 official OAuth/MCP paths for Google Workspace, Slack, GitHub, Cloudflare, n8n,
 and Stripe. Each connection will declare what Rally may read, draft, execute, or
-execute only after human approval. The one-company identity, cross-model team,
-and no-self-approval contract remain unchanged.
+execute only after human approval. Use the shipped A2A v1.0 boundary to admit
+additional external agents without moving policy, ownership, or verification
+out of Rally's deterministic control plane. The
+one-company identity, cross-model team, and no-self-approval contract remain
+unchanged.
 
 ## Final evidence checklist
 

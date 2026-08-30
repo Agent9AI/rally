@@ -17,7 +17,7 @@
     <meta name="theme-color" content="#ffffff">
     <meta name="rally-console-api" content="https://rally-ingress.terry-c87.workers.dev/v1/console">
     <link rel="canonical" href="https://rally.agent9.dev/">
-    <link rel="icon" href="rally-mark.svg" type="image/svg+xml">
+    <link rel="icon" href="rally-symbol.png" type="image/png">
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
@@ -32,7 +32,7 @@
 
     <header class="site-header" data-header>
       <a class="brand" href="#top" aria-label="Rally home">
-        <img class="brand-mark" src="rally-mark.svg" alt="">
+        <img class="brand-mark" src="rally-symbol.png" alt="">
         <span class="brand-name">Rally</span>
       </a>
       <nav class="nav-links" aria-label="Primary navigation">
@@ -63,7 +63,7 @@
 
           <aside class="operator-card" aria-label="Rally accountable AI team">
             <div class="operator-card-top">
-              <img class="operator-mark" src="rally-mark.svg" alt="">
+              <img class="operator-mark" src="rally-symbol.png" alt="">
               <div><span>Rally</span><strong>Accountable AI team</strong></div>
               <span class="online-chip"><i></i> Always on</span>
             </div>
@@ -88,8 +88,9 @@
       <section class="story-section" id="how" aria-labelledby="story-title">
         <div class="story-heading">
           <p class="eyebrow">Why Rally</p>
-          <h2 id="story-title">You hired brilliant AIs.<br><span>You still manage every handoff.</span></h2>
-          <p>One model knows the customer history. Another is strongest at code. A third can reason over the plan. Today, people copy context between them, reconcile their answers, and hope someone checked the work.</p>
+          <h2 id="story-title">Your agents can solve the problem.<br><span>Rally helps them solve it together.</span></h2>
+          <p>Today, capable agents still operate in isolation. People move context, coordinate tasks, reconcile answers, and verify the work.</p>
+          <p>Rally gives agents a shared operating system for communication, delegation, and execution—turning disconnected AI capabilities into coordinated, accountable outcomes.</p>
         </div>
         <div class="story-flow" aria-label="How Rally turns one goal into a verified outcome">
           <article>
@@ -114,6 +115,22 @@
           </article>
         </div>
         <p class="story-thesis"><b>Rally is the handshake between your best models—and the accountability layer around their work.</b></p>
+        <aside class="a2a-proof" aria-labelledby="a2a-title">
+          <a class="a2a-brand" href="https://a2a-protocol.org/latest/" aria-label="Visit the official Agent2Agent Protocol site">
+            <img src="a2a-icon.svg" alt="">
+            <span><small>Open agent ecosystem</small><b>A2A Protocol</b></span>
+          </a>
+          <div class="a2a-copy">
+            <h3 id="a2a-title">The handshake now speaks a standard.</h3>
+            <p><a href="https://developers.googleblog.com/en/a2a-a-new-era-of-agent-interoperability/">Google introduced A2A</a> so agents could discover capabilities and collaborate across vendors. Rally implements v1.0 for that handshake, then adds the accountability around it: authority, durable execution, recovery, evidence, and independent verification.</p>
+            <a class="a2a-source" href="https://a2a-protocol.org/latest/blog/2026/08/27/a-new-chapter-for-a2a-joining-the-agentic-ai-foundation/">Read the August 27 announcement <span aria-hidden="true">↗</span></a>
+          </div>
+          <ol class="a2a-timeline" aria-label="A2A protocol history">
+            <li><time datetime="2025-04-09">Apr 2025</time><span>Introduced by Google</span></li>
+            <li><time datetime="2026-03-12">Mar 2026</time><span>Stable v1.0 released</span></li>
+            <li><time datetime="2026-08-27">Aug 27, 2026</time><span>Accepted into AAIF at Growth Stage</span></li>
+          </ol>
+        </aside>
       </section>
 
       <section class="workspace-section" id="demo" aria-labelledby="workspace-title">
@@ -130,7 +147,7 @@
             <button class="icon-button" type="button" aria-label="Open navigation">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
             </button>
-            <div class="app-brand"><img class="brand-mark mini" src="rally-mark.svg" alt=""><b>Rally</b></div>
+            <div class="app-brand"><img class="brand-mark mini" src="rally-symbol.png" alt=""><b>Rally</b></div>
             <div class="search-box" role="search">
               <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
               <label class="sr-only" for="run-search">Search public runs</label>
@@ -242,7 +259,7 @@
             <a href="https://docs.stripe.com/mcp">Official connector path ↗</a>
           </article>
         </div>
-        <p class="connector-boundary"><b>Honest boundary:</b> email, cross-model repository execution, the Google governance plane, and the public evidence console are live now. These six official connection paths are the product sequence; they are not presented as shipped.</p>
+        <p class="connector-boundary"><b>Honest boundary:</b> email, cross-model repository execution, the Google governance plane, the public evidence console, and Rally’s A2A v1.0 boundary are live now. The six official MCP connection paths above remain the product sequence and are not presented as shipped.</p>
       </section>
 
       <section class="section architecture-section" id="proof">
@@ -262,10 +279,10 @@
           </article>
           <article class="test-card">
             <div class="card-header"><div><span class="terminal-icon">›_</span><b>Release gates</b></div><span class="status-chip complete">Green</span></div>
-            <pre><code>64  runner + ingress + policy + site
-11  Cloud service + recovery
+            <pre><code>69  runner + ingress + policy + site
+20  Cloud service + A2A protocol
 ──
-80  automated tests
+93  automated tests
 
 ✓ Terraform validated
 ✓ Worker bundle verified
@@ -297,24 +314,33 @@
           <details><summary>Do emails literally trigger every model turn?</summary><p>The first email starts the real run and every turn is mirrored to the thread. The authoritative runner dispatches the next model locally.</p></details>
           <details><summary>What happens when the agents cannot finish?</summary><p>Second Wind first asks the teammate to diagnose and take over a recoverable failure. Rally still stops with a precise report when both models remain blocked, disagree repeatedly, stop making progress, hit a hard budget, cross an authority boundary, or receive a human STOP.</p></details>
           <details><summary>Is Rally an official Google product?</summary><p>No. Rally is an independent Agent9 project built with Gemini, Google ADK, and Google Cloud for the All Things Agentic Hackathon.</p></details>
+          <details><summary>How does A2A fit—and is Rally A2A compatible?</summary><p>Yes. Rally publishes an A2A v1.0 Agent Card and accepts tasks over JSON-RPC and HTTP+JSON; official SDK clients exercise both paths. A2A enables discovery and task exchange. Rally adds the controls around the work: authority, durable state, recovery, evidence, and independent verification. The protocol was <a href="https://developers.googleblog.com/en/a2a-a-new-era-of-agent-interoperability/">introduced by Google</a> and now advances under <a href="https://a2a-protocol.org/latest/blog/2026/08/27/a-new-chapter-for-a2a-joining-the-agentic-ai-foundation/">Linux Foundation open governance</a>. Compatibility is not certification or endorsement.</p></details>
           <details><summary>What stays private?</summary><p>Commissioner identity, worktree paths, mail IDs, raw prompts, credentials, and cloud request keys never enter the public console record.</p></details>
           <details><summary>What does “give Rally a job” mean?</summary><p>Start with one bounded outcome Rally can own repeatedly—such as repository maintenance or release preparation—then grant only the access, limits, and approval rules that outcome needs.</p></details>
           <details><summary>Are the business connectors live?</summary><p>Not yet. The current build proves email intake, cross-model repository execution, Google governance, and public evidence. Google Workspace, Slack, GitHub, Cloudflare, n8n, and Stripe are the researched official connection paths, clearly labeled as roadmap.</p></details>
         </div>
       </section>
 
-      <section class="final-cta"><div><img class="brand-mark large" src="rally-mark.svg" alt=""><p class="eyebrow">The accountable AI team</p><h2>Give your AIs one goal.<br><span>Let Rally make them a team.</span></h2><p>Connect the company once, define the authority, and receive one independently verified result instead of another answer to manage.</p><div class="hero-actions"><button class="button button-primary" type="button" data-open-setup>Give the team a goal</button><a class="button button-outline" href="https://github.com/Agent9AI/rally">Explore the source</a></div></div></section>
+      <section class="final-cta"><div><img class="brand-lockup" src="rally-logo.png" alt="Rally"><p class="eyebrow">The accountable AI team</p><h2>Give your AIs one goal.<br><span>Let Rally make them a team.</span></h2><p>Connect the company once, define the authority, and receive one independently verified result instead of another answer to manage.</p><div class="hero-actions"><button class="button button-primary" type="button" data-open-setup>Give the team a goal</button><a class="button button-outline" href="https://github.com/Agent9AI/rally">Explore the source</a></div></div></section>
     </main>
 
+    <aside class="a2a-trust" aria-label="A2A interoperability">
+      <a class="a2a-trust-badge" href="https://a2a-protocol.org/latest/">
+        <img src="a2a-icon.svg" alt="">
+        <span><b>A2A v1.0 compatible</b><small>Agent discovery + task exchange</small></span>
+      </a>
+      <p>Originally created by <a href="https://developers.googleblog.com/en/a2a-a-new-era-of-agent-interoperability/">Google</a> · now under <a href="https://a2a-protocol.org/latest/blog/2026/08/27/a-new-chapter-for-a2a-joining-the-agentic-ai-foundation/">Linux Foundation open governance</a></p>
+    </aside>
+
     <footer class="site-footer">
-      <a class="brand" href="#top"><img class="brand-mark mini" src="rally-mark.svg" alt=""><span class="brand-name">Rally</span></a>
+      <a class="brand" href="#top"><img class="brand-mark mini" src="rally-symbol.png" alt=""><span class="brand-name">Rally</span></a>
       <p>Independent Agent9 project · Built with Gemini, Google ADK, and Google Cloud</p>
       <div><a href="https://github.com/Agent9AI/rally">GitHub</a><a href="mailto:terry@agent9.dev?subject=Rally%20pilot">Contact</a></div>
     </footer>
 
     <dialog class="setup-dialog" data-setup-dialog aria-labelledby="setup-title">
       <button class="dialog-close" type="button" data-close-setup aria-label="Close setup">×</button>
-      <img class="brand-mark large" src="rally-mark.svg" alt="">
+      <img class="brand-mark large" src="rally-symbol.png" alt="">
       <p class="eyebrow">Onboard Rally</p>
       <h2 id="setup-title">Give your company an accountable AI team.</h2>
       <div class="setup-tabs" role="tablist" aria-label="Launch options"><button class="is-active" type="button" role="tab" aria-selected="true" data-setup-tab="managed">Managed setup</button><button type="button" role="tab" aria-selected="false" data-setup-tab="self">Self-hosted</button></div>

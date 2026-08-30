@@ -10,7 +10,7 @@ entry. Items are ordered so a failure cannot invalidate later evidence.
 - [x] The live result reads 6/6, trajectory 1.00, quality 1.00.
 - [x] `git diff --check` passes.
 - [x] No token, private key, webhook URL, or prompt content appears in tracked files.
-- [x] The repository and site say 80 tests everywhere.
+- [x] The repository and site say 93 tests everywhere.
 - [x] The standard and filmed model pins are documented accurately.
 
 ## 2. Approval gate: Google Cloud deployment

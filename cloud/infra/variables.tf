@@ -16,6 +16,12 @@ variable "service_name" {
   default     = "rally-google-coordinator"
 }
 
+variable "a2a_base_url" {
+  description = "Stable external base URL advertised by Rally's A2A Agent Card."
+  type        = string
+  default     = "https://rally-google-coordinator-u5xngrbzna-ue.a.run.app"
+}
+
 variable "image_uri" {
   description = "Immutable coordinator image URI; unused during bootstrap."
   type        = string

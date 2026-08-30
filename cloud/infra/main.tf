@@ -161,6 +161,10 @@ resource "google_cloud_run_v2_service" "coordinator" {
         value = "firestore"
       }
       env {
+        name  = "RALLY_A2A_BASE_URL"
+        value = var.a2a_base_url
+      }
+      env {
         name  = "RALLY_ENABLE_CLOUD_TRACE"
         value = "1"
       }

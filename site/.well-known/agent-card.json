@@ -1,0 +1,76 @@
+{
+  "name": "Rally Accountable AI Team",
+  "description": "Commissions a governed Rally run: Gemini coordinates the bounded handoff, specialist agents perform the work, and a different agent must verify it.",
+  "supportedInterfaces": [
+    {
+      "url": "https://rally-google-coordinator-u5xngrbzna-ue.a.run.app",
+      "protocolBinding": "JSONRPC",
+      "protocolVersion": "1.0"
+    },
+    {
+      "url": "https://rally-google-coordinator-u5xngrbzna-ue.a.run.app/a2a/rest",
+      "protocolBinding": "HTTP+JSON",
+      "protocolVersion": "1.0"
+    }
+  ],
+  "provider": {
+    "url": "https://agent9.dev",
+    "organization": "Agent9 AI"
+  },
+  "version": "1.0.0",
+  "documentationUrl": "https://github.com/Agent9AI/rally/blob/main/docs/A2A.md",
+  "capabilities": {
+    "streaming": true,
+    "pushNotifications": false,
+    "extendedAgentCard": false
+  },
+  "securitySchemes": {
+    "google_cloud_identity": {
+      "httpAuthSecurityScheme": {
+        "description": "Google Cloud Run identity token for the Rally service audience.",
+        "scheme": "bearer",
+        "bearerFormat": "Google OIDC ID token"
+      }
+    },
+    "rally_service_token": {
+      "apiKeySecurityScheme": {
+        "description": "Rally tenant service credential.",
+        "location": "header",
+        "name": "X-Rally-Service-Token"
+      }
+    }
+  },
+  "securityRequirements": [
+    {
+      "schemes": {
+        "google_cloud_identity": {},
+        "rally_service_token": {}
+      }
+    }
+  ],
+  "defaultInputModes": ["text/plain"],
+  "defaultOutputModes": ["application/json", "text/plain"],
+  "skills": [
+    {
+      "id": "commission_governed_run",
+      "name": "Commission an accountable AI team",
+      "description": "Accepts one bounded objective and returns a safe receipt for the durable Rally run created through Gemini, Google ADK, Cloud Run, and Firestore.",
+      "tags": ["governance", "verification", "asynchronous-workflows", "google-adk"],
+      "examples": [
+        "Review this webhook change, repair any replay risk, and return evidence.",
+        "Prepare this repository for launch and independently verify every claim."
+      ],
+      "inputModes": ["text/plain"],
+      "outputModes": ["application/json", "text/plain"],
+      "securityRequirements": [
+        {
+          "schemes": {
+            "google_cloud_identity": {},
+            "rally_service_token": {}
+          }
+        }
+      ]
+    }
+  ],
+  "iconUrl": "https://agent9-rally.pages.dev/rally-mark.svg"
+}

@@ -66,6 +66,30 @@ authorization layer: connector allowlists, per-action risk classes, budgets,
 independent verification, human gates, and append-only evidence stay outside
 the model and outside the remote tool server.
 
+## Why A2A fits—but is not Rally's product
+
+MCP gives an agent a standard way to use tools. The Google-originated
+[Agent2Agent (A2A) Protocol](https://developers.googleblog.com/en/a2a-a-new-era-of-agent-interoperability/)
+gives independent agents a standard way to discover capabilities and exchange
+long-running work across vendors. A2A reached stable v1.0 and, on August 27,
+2026, was
+[accepted into the Linux Foundation's Agentic AI Foundation at Growth Stage](https://a2a-protocol.org/latest/blog/2026/08/27/a-new-chapter-for-a2a-joining-the-agentic-ai-foundation/).
+
+That makes A2A the correct interoperability boundary for Rally, not a
+replacement for Rally. The protocol can carry discovery, messages, task state,
+and artifacts. Rally must still own commission intent, connector authority,
+budgets, ownership, cross-family verification, Second Wind recovery, evidence,
+and human control outside that boundary.
+
+The current release implements that thin, replaceable adapter with the official
+A2A Python SDK. A public Agent Card advertises one real skill and two v1.0
+bindings: JSON-RPC and HTTP+JSON. Message IDs become Rally idempotency keys;
+only bounded receipts return as artifacts; A2A task protobufs persist in
+Firestore. The adapter calls Rally's existing commission function, so the
+deterministic runner remains authoritative and the protocol cannot become a
+less-governed side door. Compatibility is tested with official SDK clients and
+is not presented as certification or endorsement.
+
 The sequence for every connector is:
 
 ```text

@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Google ADK and Cloud Run execution path for Rally"
 requires-python = ">=3.11,<3.14"
 dependencies = [
+  "a2a-sdk[fastapi]>=1,<2",
   "fastapi>=0.115,<1",
   "google-adk>=1.15,<2",
   "google-cloud-firestore>=2.16,<3",
@@ -33,6 +34,9 @@ target-version = "py311"
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
+filterwarnings = [
+  "ignore:label\\(\\) is deprecated.*:DeprecationWarning:a2a\\..*",
+]
 
 [build-system]
 requires = ["hatchling"]
