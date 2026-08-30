@@ -127,6 +127,7 @@ still cannot finish, Rally tells you exactly where and why.
 | Google ADK coordinator | implemented; live eval 6/6, both metrics 1.00 |
 | Cloud Run + Firestore + Trace | deployed privately in `rally-agent9-2026`; authenticated commission, replay, Firestore, logs, and content-free trace verified |
 | A2A v1.0 boundary | Agent Card, JSON-RPC, HTTP+JSON, SSE streaming, polling, listing, Firestore tasks, and dual-auth tested with official SDK clients |
+| WebMCP browser surface | Three feature-detected tools shipped for public-run search, bounded verification inspection, and human-confirmed job drafting; production ChatGPT in-app invocation remains the final proof gate |
 
 The current release candidate has **180 automated tests**: 86 deterministic
 runner, ingress, policy, bridge, connector, and site tests plus 94 Cloud, A2A,
@@ -188,6 +189,8 @@ See [docs/RUNBOOK.md](docs/RUNBOOK.md) to operate it, including how to stop a ru
 | [docs/A2A.md](docs/A2A.md) | A2A v1.0 discovery, bindings, security, state mapping, and verification. |
 | [docs/CONNECTORS.md](docs/CONNECTORS.md) | Governed MCP gateway, ten runtime adapters, setup, policy, approvals, and receipts. |
 | [docs/CUSTOM-MCP.md](docs/CUSTOM-MCP.md) | Labs admission contract for custom remote MCP and WebMCP boundary. |
+| [docs/WEBMCP.md](docs/WEBMCP.md) | Shipped browser tools for live-run review and human-confirmed job drafting. |
+| [docs/WEBMCP-CHALLENGE.md](docs/WEBMCP-CHALLENGE.md) | September 3 submission story, three-minute proof, and must-pass gate. |
 | [docs/assets/rally-architecture.svg](docs/assets/rally-architecture.svg) | Presentation-ready architecture diagram. |
 | [docs/EVALUATION.md](docs/EVALUATION.md) | Live ADK eval design, scores, and the behavior it improved. |
 | [docs/HACKATHON.md](docs/HACKATHON.md) | Judge-facing positioning and submission checklist. |

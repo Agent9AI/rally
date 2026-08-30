@@ -34,3 +34,10 @@ primary brand mark.
 The public A2A v1.0 discovery document lives at
 `.well-known/agent-card.json`. It intentionally advertises only the deployed
 commission skill and contains security scheme names, never credentials.
+
+`app.js` also feature-detects the official WebMCP `document.modelContext` API
+and registers three bounded tools for the human-present browser experience:
+live-run search, public verification inspection, and governed job drafting.
+The draft only populates the visible setup dialog and mail link; it never sends,
+stores, connects, or authorizes anything without the person's action. See
+[`docs/WEBMCP.md`](../docs/WEBMCP.md) for the complete contract and demo flow.

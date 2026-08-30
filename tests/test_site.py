@@ -59,6 +59,11 @@ class TestProductSite(unittest.TestCase):
             "Agent discovery + task exchange",
             "Originally created by",
             "Linux Foundation open governance",
+            "WebMCP enabled",
+            "Browser agents can inspect live evidence",
+            "Can a browser agent use Rally directly?",
+            "three WebMCP tools",
+            "it cannot submit the job",
         ):
             self.assertIn(phrase, self.html)
         self.assertIn('src="rally-symbol.png"', self.html)
@@ -101,6 +106,21 @@ class TestProductSite(unittest.TestCase):
             app = handle.read()
         self.assertIn("Second Wind recovery:", app)
         self.assertIn('entry.kind === "recovery"', app)
+        self.assertIn("document.modelContext.registerTool({", app)
+        for tool in (
+            "rally_list_public_runs",
+            "rally_inspect_public_run",
+            "rally_draft_job",
+        ):
+            self.assertIn(f'name: "{tool}"', app)
+        self.assertIn('status: "drafted_not_submitted"', app)
+        self.assertIn("human_confirmation_required: true", app)
+        self.assertIn("transmitted: false", app)
+        self.assertIn("stored: false", app)
+        self.assertIn("readOnlyHint: true, untrustedContentHint: true", app)
+        self.assertIn("additionalProperties: false", app)
+        self.assertIn("closedWebMcpInput", app)
+        self.assertIn("maxLength: 2000", app)
         with open(os.path.join(ROOT, "studio", "og-card.html")) as handle:
             card = handle.read()
         for phrase in ("THE ACCOUNTABLE AI TEAM", "Your AIs, finally", "180", "6/6", "0"):
@@ -123,6 +143,7 @@ class TestProductSite(unittest.TestCase):
         self.assertIn("Content-Security-Policy", headers)
         self.assertIn("frame-ancestors 'none'", headers)
         self.assertIn("connect-src 'self' https://rally.agent9.dev", headers)
+        self.assertIn("tools=(self)", headers)
         with open(os.path.join(ROOT, "src", "worker", "wrangler.jsonc")) as handle:
             worker_config = json.load(handle)
         self.assertEqual(

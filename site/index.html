@@ -18,7 +18,7 @@
     <meta name="rally-console-api" content="https://rally.agent9.dev/v1/console">
     <link rel="canonical" href="https://rally.agent9.dev/">
     <link rel="icon" href="rally-symbol.png" type="image/png">
-    <link rel="stylesheet" href="styles.css?v=20260830b">
+    <link rel="stylesheet" href="styles.css?v=20260830c">
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
@@ -393,13 +393,14 @@
           <details><summary>How does A2A fit—and is Rally A2A compatible?</summary><p>Yes. Rally publishes an A2A v1.0 Agent Card and accepts tasks over JSON-RPC and HTTP+JSON; official SDK clients exercise both paths. A2A enables discovery and task exchange. Rally adds the controls around the work: authority, durable state, recovery, evidence, and independent verification. The protocol was <a href="https://developers.googleblog.com/en/a2a-a-new-era-of-agent-interoperability/">introduced by Google</a> and now advances under <a href="https://a2a-protocol.org/latest/blog/2026/08/27/a-new-chapter-for-a2a-joining-the-agentic-ai-foundation/">Linux Foundation open governance</a>. Compatibility is not certification or endorsement.</p></details>
           <details><summary>What stays private?</summary><p>Commissioner identity, worktree paths, mail IDs, raw prompts, credentials, and cloud request keys never enter the public console record.</p></details>
           <details><summary>Are AI and business-system connections shared between users?</summary><p>No. Each user authorizes their own provider accounts. Rally selects a separate one-way connection profile from the authenticated commissioner, namespaces OAuth storage to that profile, and freezes only that user’s approved systems and tools into the run.</p></details>
-          <details><summary>Can Rally connect a custom MCP server?</summary><p>Not through an arbitrary URL box. Custom remote MCP is a Labs path that must pass HTTPS and network admission, OAuth origin checks, bounded discovery, schema fingerprint review, exact tool policy, payload ceilings, and one-time approval for writes. WebMCP is complementary: it may later expose Rally actions to a human-present browser, but it does not replace the asynchronous server-side gateway.</p></details>
+          <details><summary>Can a browser agent use Rally directly?</summary><p>Yes. Rally exposes three WebMCP tools in supported browsers: search the live public run index, inspect a run’s verification record, and prepare a governed job draft in the visible onboarding panel. The browser agent shares the page state with you, but it cannot submit the job, send email, grant access, or bypass your confirmation.</p></details>
+          <details><summary>Can Rally connect a custom MCP server?</summary><p>Not through an arbitrary URL box. Custom remote MCP is a Labs path that must pass HTTPS and network admission, OAuth origin checks, bounded discovery, schema fingerprint review, exact tool policy, payload ceilings, and one-time approval for writes. WebMCP is complementary: Rally uses it for human-present browser collaboration, while asynchronous jobs continue through the governed server-side gateway.</p></details>
           <details><summary>What does “give Rally a job” mean?</summary><p>Ask for a finished professional outcome—such as a sourced market briefing, an executive presentation, a customer-risk review, or a launch plan—then grant only the sources, limits, and approval rules that outcome needs.</p></details>
           <details><summary>Are the business connectors live?</summary><p>The governed gateway and all ten provider adapters are implemented. BigQuery has completed a real authenticated handshake with Google’s official MCP endpoint and discovered six tools. The other accounts are intentionally shown as disconnected until each user completes provider setup, authentication, live discovery, and an exact safe preset. Rally never turns “adapter exists” into “customer account connected.”</p></details>
         </div>
       </section>
 
-      <section class="final-cta"><div><img class="brand-lockup" src="rally-logo.png" alt="Rally"><p class="eyebrow">The accountable AI team</p><h2>Give your AIs one goal.<br><span>Let Rally make them a team.</span></h2><p>Connect the company once, define the authority, and receive one independently verified result instead of another answer to manage.</p><div class="hero-actions"><button class="button button-primary" type="button" data-open-setup>Give the team a goal</button><a class="button button-outline" href="https://github.com/Agent9AI/rally">Explore the source</a></div></div></section>
+      <section class="final-cta"><div><img class="brand-lockup" src="rally-logo.png" alt="Rally"><p class="eyebrow">The accountable AI team</p><h2>Give your AIs one goal.<br><span>Let Rally make them a team.</span></h2><p>Connect the company once, define the authority, and receive one independently verified result instead of another answer to manage.</p><div class="hero-actions"><button class="button button-primary" type="button" data-open-setup>Give the team a goal</button><a class="button button-outline" href="https://github.com/Agent9AI/rally">Explore the source</a></div><p class="webmcp-cta"><span>WebMCP enabled</span> Browser agents can inspect live evidence and prepare a governed job for your approval.</p></div></section>
     </main>
 
     <aside class="a2a-trust" aria-label="A2A interoperability">
@@ -424,13 +425,21 @@
       <div class="setup-tabs" role="tablist" aria-label="Launch options"><button class="is-active" type="button" role="tab" aria-selected="true" data-setup-tab="managed">Managed setup</button><button type="button" role="tab" aria-selected="false" data-setup-tab="self">Self-hosted</button></div>
       <section class="setup-panel is-active" data-setup-panel="managed">
         <div class="setup-promise"><b>Connect the company once.</b><span>Your team gets one Rally identity; administrators keep control of every system, scope, and approval rule behind it.</span></div>
+        <div class="webmcp-ready" data-webmcp-status><span>WebMCP agent-ready</span><p>Your browser agent can prepare this visible draft with you. It cannot send, submit, or widen authority.</p></div>
+        <div class="job-draft-fields" data-job-draft>
+          <label><span>Company</span><input type="text" maxlength="120" autocomplete="organization" placeholder="Your company" data-job-company></label>
+          <label><span>Team</span><input type="text" maxlength="120" autocomplete="organization-title" placeholder="Team or function" data-job-team></label>
+          <label class="job-field-wide"><span>Outcome</span><textarea maxlength="2000" rows="4" placeholder="The finished professional outcome Rally should deliver" data-job-goal></textarea></label>
+          <label class="job-field-wide"><span>Trusted systems</span><input type="text" maxlength="320" placeholder="Google Workspace, BigQuery, Slack" data-job-systems></label>
+          <label class="job-field-wide"><span>Source run <small>optional</small></span><input type="text" maxlength="128" placeholder="A blocked or related Rally run ID" data-job-source-run></label>
+        </div>
         <div class="continuity-setting">
           <label for="second-wind-toggle"><span class="toggle-copy"><b>Second Wind</b><span>Let the teammate diagnose and recover from a failed turn or reported blocker.</span></span><span class="switch"><input id="second-wind-toggle" type="checkbox" checked data-second-wind><span aria-hidden="true"></span></span></label>
           <small>Bounded recovery, not auto-approval. Human stops, permissions, budgets, and independent verification remain enforced.</small>
         </div>
         <ol><li><span>1</span><div><b>Choose one difficult outcome</b><p>Start with a real, repeatable job that crosses people, models, or systems—not an open-ended chatbot prompt.</p></div></li><li><span>2</span><div><b>Connect systems and define authority</b><p>Select what Rally may read, draft, execute, or execute only after human approval.</p></div></li><li><span>3</span><div><b>Watch the accountable team work</b><p>Review the model handoffs, tool actions, independent verification, evidence, and final result.</p></div></li></ol>
         <a class="button button-primary full-width" data-managed-setup-link href="mailto:terry@agent9.dev?subject=Give%20Rally%20its%20first%20job&body=Company%3A%0ATeam%3A%0AFirst%20job%20for%20Rally%3A%0ATrusted%20systems%20involved%3A">Tell us the first job</a>
-        <p class="setup-note">Your Second Wind preference is added to the pre-filled email. No form data is stored on this site.</p>
+        <p class="setup-note">Nothing is sent until you click. The draft only prepares a pre-filled email; no form data is stored on this site.</p>
       </section>
       <section class="setup-panel" data-setup-panel="self" hidden>
         <div class="setup-promise"><b>Provider-native authorization.</b><span>Credentials stay in provider tooling and your operating-system keychain.</span></div>
@@ -439,6 +448,6 @@
       </section>
     </dialog>
 
-    <script src="app.js?v=20260830b"></script>
+    <script src="app.js?v=20260830c"></script>
   </body>
 </html>

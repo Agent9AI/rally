@@ -46,16 +46,19 @@ isolated egress, OAuth-origin admission, and schema-fingerprint locking exist.
 
 ## WebMCP is complementary
 
-The current WebMCP proposal lets a web page expose client-side JavaScript or
-form actions through `document.modelContext` to an agent in or around the
-browser. It preserves the page's active state and authenticated session. It
-does not replace Rally's server-side remote MCP gateway for asynchronous jobs.
+Rally's public site now registers three client-side tools through
+`document.modelContext`: `rally_list_public_runs`,
+`rally_inspect_public_run`, and `rally_draft_job`. They preserve the page's
+visible state and let a human and browser agent review the same live evidence
+and prepare the same onboarding draft. The draft tool cannot submit a job,
+send email, connect a provider, or grant authority; the human must review the
+visible form and click the final mail link.
 
-WebMCP is useful later for exposing a small human-present Rally surface such as
-`draft_new_run`, `list_runs`, and `get_run_status`. That experiment should use
-feature detection and the official Web Machine Learning Community Group draft.
-The similarly named `webmcp.dev` bridge predates the current proposal and is not
-the dependency Rally should standardize on.
+This human-present WebMCP surface does not replace Rally's server-side remote
+MCP gateway for asynchronous jobs. The similarly named `webmcp.dev` bridge
+predates the current browser proposal and is not a Rally dependency. See
+[`docs/WEBMCP.md`](WEBMCP.md) for the shipped contract, security boundary, and
+demo path.
 
 As of 2026-08-30, the official document is a Community Group Draft, not a W3C
 Standard or a document on the W3C Standards Track. Its security section

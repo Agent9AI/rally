@@ -25,6 +25,7 @@ flowchart LR
     L -->|"final evidence report"| H
     L -->|"allowlisted public projection"| W
     W --> D["Judge console<br/>Pages live UI"]
+    B["Human + browser agent<br/>shared WebMCP page"] <--> D
 ```
 
 ## What each layer is allowed to decide
@@ -36,6 +37,7 @@ flowchart LR
 | Rally runner | Authenticate commissioners, advance state, authorize bounded Second Wind recovery, enforce budgets and verification | Change its own policy from model output |
 | Gemini / Claude / OpenAI workers | Scope, implement, test, reject, and repair work | Verify their own checklist items or share credentials across users |
 | Connector gateway | Discover approved remote MCP tools, enforce a frozen per-run allowlist, call read tools, write content-free receipts | Reveal OAuth tokens, widen authority, or execute gated writes |
+| WebMCP page | Search public runs, inspect bounded verification receipts, populate a visible job draft | Read private runs, transmit a draft, connect a provider, or grant authority |
 | Firestore | Atomically claim request keys and retain coordinator state | Trigger unbounded retries |
 
 ## The completion invariant
@@ -137,6 +139,13 @@ table, and exposes public read-only list/detail routes. The browser labels that
 source as live D1 data, polls it every 15 seconds, and shows an explicit empty or
 error state instead of substituting a mock. The default production profile
 cannot publish; public visibility is double opt-in in the demo configuration.
+
+Supported browser agents receive three WebMCP tools over the same page:
+bounded public-run search, bounded verification inspection, and visible job
+drafting. The two read tools label public model/user content as untrusted. The
+draft tool performs no network write and cannot launch work; it opens the same
+managed-setup panel the person edits and leaves the consequential mail action
+to that person. See [`WEBMCP.md`](WEBMCP.md).
 
 ## Per-user model authorization
 

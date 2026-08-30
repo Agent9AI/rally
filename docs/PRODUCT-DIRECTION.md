@@ -83,6 +83,20 @@ An adapter is not labeled connected until a real customer-owned endpoint passes
 Agent Card discovery, authentication, task submission, polling, failure, and
 replay tests.
 
+## Three protocols, three jobs
+
+- **WebMCP** is the human-present surface: a browser agent and person inspect
+  the same live evidence and prepare the same governed job draft.
+- **A2A** is the agent-network surface: independent workforces discover one
+  another and exchange durable tasks and artifacts.
+- **MCP** is the business-tool surface: a Rally worker uses an explicitly
+  approved capability behind the run's frozen authority snapshot.
+
+Keeping these roles separate is a product advantage. WebMCP cannot become a
+hidden submission path, A2A cannot become an approval bypass, and a remote MCP
+tool cannot silently turn into another autonomous workforce. Rally remains the
+authority and receipt layer across all three.
+
 ## Why MCP fits—but is not the security policy
 
 Google ADK can dynamically discover tools from an MCP server and filter which
