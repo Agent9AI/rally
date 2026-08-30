@@ -36,7 +36,7 @@ class TestProductSite(unittest.TestCase):
         for phrase in (
             "Your AIs, finally",
             "The accountable AI team",
-            "Your agents can solve the problem",
+            "Your AIs can solve the problem",
             "shared operating system for communication, delegation, and execution",
             "One hard goal",
             "Watch the accountable team work",
