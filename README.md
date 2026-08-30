@@ -115,7 +115,7 @@ still cannot finish, Rally tells you exactly where and why.
 
 | Piece | State |
 |---|---|
-| Turn loop, state machine, console projection, guards | working, 86 product/integration tests |
+| Turn loop, state machine, console projection, guards | working, 87 product/integration tests |
 | Claude + Gemini CLI execution | working, live multi-turn runs completed |
 | OpenAI Codex CLI execution | working, live authenticated preflight passed with per-user ChatGPT sign-in |
 | Executive turn emails + report | working through Resend |

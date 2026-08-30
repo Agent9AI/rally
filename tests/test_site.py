@@ -190,6 +190,7 @@ class TestProductSite(unittest.TestCase):
             security_headers = handle.read()
         self.assertIn("https://accounts.google.com/gsi/client", security_headers)
         self.assertIn("https://*.a.run.app", security_headers)
+        self.assertIn("87  runner + ingress + policy + site", self.html)
         with open(os.path.join(ROOT, "studio", "og-card.html")) as handle:
             card = handle.read()
         for phrase in ("THE ACCOUNTABLE AI TEAM", "Your AIs, finally", "196", "6/6", "0"):
