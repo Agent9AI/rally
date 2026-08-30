@@ -1,13 +1,16 @@
-"""The two CLI connections.
+"""Provider-neutral CLI connections for Rally workers.
 
-Both adapters do the same three things: build a command, run it with a hard
-timeout, return stdout. Everything model-specific is a flag, which is why adding
-a third family later is a function rather than an architecture.
+Every adapter does the same three things: build a command, run it with a hard
+timeout, and return the final response. Provider-specific authentication stays
+with the user's own CLI; Rally never pools a subscription or copies its token.
 """
 from __future__ import annotations
 
+import json
+import os
 import subprocess
-from typing import Dict, List, Tuple
+import tempfile
+from typing import Dict, List, Optional, Tuple
 
 
 class AgentError(RuntimeError):
@@ -15,13 +18,15 @@ class AgentError(RuntimeError):
 
 
 def assert_pins(agents: Dict[str, Dict]) -> None:
-    """Refuse to run two agents from the same model family.
+    """Refuse a fleet without at least two distinct model families.
 
     The Antigravity CLI also serves Claude models, so an unpinned run can quietly
     become one family reviewing itself while every log line still looks healthy.
     That failure invalidates the premise of the whole system, so it is checked
     before a run starts rather than trusted to configuration.
     """
+    if len(agents) < 2:
+        raise AgentError("Rally needs at least two configured workers")
     fams = [(name, a.get("family"), a.get("model")) for name, a in agents.items()]
     seen: Dict[str, str] = {}
     for name, fam, model in fams:
@@ -29,8 +34,9 @@ def assert_pins(agents: Dict[str, Dict]) -> None:
             raise AgentError("agent %s has no declared family" % name)
         if fam in seen:
             raise AgentError(
-                "same-family pair: %s (%s) and %s (%s) are both %s. "
-                "Rally needs two different model families." % (name, model, seen[fam], fams, fam)
+                "same-family workers: %s (%s) and %s are both %s. "
+                "Every configured Rally worker must declare a distinct family."
+                % (name, model, seen[fam], fam)
             )
         seen[fam] = name
     # Execution symmetry. Discovered on the first live run: agy carried
@@ -45,7 +51,7 @@ def assert_pins(agents: Dict[str, Dict]) -> None:
         raise AgentError(
             "execution asymmetry: %s can run commands, %s cannot. The agent that "
             "cannot execute can only read source, so its verification is a weaker "
-            "claim than the one recorded. Give both agents exec_flags, or neither."
+            "claim than the one recorded. Give every worker exec_flags, or none."
             % (", ".join(able), ", ".join(unable)))
 
     agy = agents.get("agy", {})
@@ -57,11 +63,15 @@ def assert_pins(agents: Dict[str, Dict]) -> None:
         )
 
 
-def _run(cmd: List[str], workdir: str, timeout: int) -> str:
+def _run(cmd: List[str], workdir: str, timeout: int,
+         extra_env: Optional[Dict[str, str]] = None) -> str:
+    process_env = os.environ.copy()
+    process_env.update({key: value for key, value in (extra_env or {}).items() if value})
     try:
         p = subprocess.run(
             cmd, cwd=workdir, timeout=timeout, stdin=subprocess.DEVNULL,
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            env=process_env,
         )
     except subprocess.TimeoutExpired:
         raise AgentError("turn exceeded %ds" % timeout)
@@ -97,8 +107,11 @@ def run_claude(prompt: str, workdir: str, cfg: Dict, timeout: int) -> str:
     # so removing claude's entry would abort the run as "asymmetric" while this
     # function still passed the flag. One source, and the assertion means what it says.
     cmd += list(cfg.get("exec_flags") or [])
+    mcp_config = cfg.get("mcp_config_path")
+    if mcp_config:
+        cmd += ["--mcp-config", mcp_config, "--strict-mcp-config"]
     cmd.append(prompt)
-    return _run(cmd, workdir, timeout)
+    return _run(cmd, workdir, timeout, cfg.get("connector_env"))
 
 
 def run_agy(prompt: str, workdir: str, cfg: Dict, timeout: int, schema_path: str = "") -> str:
@@ -121,14 +134,81 @@ def run_agy(prompt: str, workdir: str, cfg: Dict, timeout: int, schema_path: str
     if schema_path:
         cmd += ["--output-format", "json", "--json-schema", schema_path]
     cmd.append("-p=" + prompt)
-    return _run(cmd, workdir, timeout)
+    return _run(cmd, workdir, timeout, cfg.get("connector_env"))
 
 
-DISPATCH = {"claude": run_claude, "agy": run_agy}
+def _codex_mcp_override(path: str) -> str:
+    """Translate Rally's isolated MCP JSON into one invocation-local TOML value."""
+    with open(path) as handle:
+        server = (json.load(handle).get("mcpServers") or {}).get("rally-connectors") or {}
+    command = server.get("command")
+    if not command:
+        raise AgentError("Codex connector configuration has no gateway command")
+    args = ", ".join(json.dumps(str(value)) for value in (server.get("args") or []))
+    env = ", ".join(
+        "%s = %s" % (key, json.dumps(str(value)))
+        for key, value in sorted((server.get("env") or {}).items())
+    )
+    return (
+        "mcp_servers.rally-connectors={ command = %s, args = [%s], env = { %s } }"
+        % (json.dumps(str(command)), args, env)
+    )
+
+
+def run_codex(prompt: str, workdir: str, cfg: Dict, timeout: int,
+              schema_path: str = "") -> str:
+    """Run Codex with the user's own sign-in and an invocation-local boundary.
+
+    ``--ignore-user-config`` is load-bearing: a customer's unrelated global MCP
+    servers must not silently enter a governed Rally run. The sole connector
+    gateway is added back for this invocation from the immutable run snapshot.
+    Codex writes its final message to a private temporary file so CLI progress on
+    stderr cannot corrupt the Rally JSON envelope.
+    """
+    cmd = [
+        cfg.get("bin", "codex"), "exec",
+        "--model", cfg["model"],
+        "--cd", workdir,
+        "--ephemeral",
+        "--ignore-user-config",
+        "--skip-git-repo-check",
+        "--color", "never",
+    ]
+    cmd += list(cfg.get("exec_flags") or [])
+    mcp_config = cfg.get("mcp_config_path")
+    if mcp_config:
+        cmd += ["-c", _codex_mcp_override(mcp_config)]
+    if schema_path:
+        cmd += ["--output-schema", schema_path]
+
+    output_path = ""
+    try:
+        with tempfile.NamedTemporaryFile(
+                prefix="rally-codex-", suffix=".txt", delete=False) as handle:
+            output_path = handle.name
+        cmd += ["--output-last-message", output_path, prompt]
+        combined = _run(cmd, workdir, timeout, cfg.get("connector_env"))
+        with open(output_path, errors="replace") as handle:
+            final = handle.read().strip()
+        return final or combined
+    finally:
+        if output_path:
+            try:
+                os.unlink(output_path)
+            except OSError:
+                pass
+
+
+DISPATCH = {"claude": run_claude, "agy": run_agy, "codex": run_codex}
 
 
 def run_agent(name: str, prompt: str, workdir: str, cfg: Dict, timeout: int,
               schema_path: str = "") -> str:
-    if name == "agy":
+    adapter = cfg.get("adapter") or name
+    if adapter == "agy":
         return run_agy(prompt, workdir, cfg, timeout, schema_path)
-    return run_claude(prompt, workdir, cfg, timeout)
+    if adapter == "codex":
+        return run_codex(prompt, workdir, cfg, timeout, schema_path)
+    if adapter == "claude":
+        return run_claude(prompt, workdir, cfg, timeout)
+    raise AgentError("unknown agent adapter %r for %s" % (adapter, name))

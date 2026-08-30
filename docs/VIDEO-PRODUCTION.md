@@ -22,7 +22,7 @@ Prepare four scenes:
 | Scene | Left | Right | Purpose |
 |---|---|---|---|
 | Commission | Inbox compose | Architecture diagram | User value and mental model |
-| Work | Repository diff/editor | `make serve` + test output | Visible agent action |
+| Work | Presentation + source ledger | `make serve` + validation output | Visible agent research and creation |
 | Verify | Email turn/checklist | Run state evidence | Different-family verdict |
 | Cloud proof | Cloud Run/Firestore | Trace/eval summary | Google path and readiness |
 
@@ -44,9 +44,9 @@ signatures, personal inbox content, browser account menus, or terminal history.
 
 - The email Send, intake, first scoped turn, and one owner-to-verifier sequence
   are continuous in the short film.
-- One worker visibly edits code and runs tests.
+- One worker visibly researches primary sources, builds the presentation, and runs its checks.
 - The checklist visibly enters `awaiting-verification`.
-- The other model family visibly accepts or rejects the evidence.
+- A different model family visibly accepts or rejects the evidence.
 - Gemini 3.7, Google ADK, Cloud Run, and Firestore are readable on screen.
 - The final state shows `owner != verified_by` and concrete evidence.
 - All elapsed-time compression is labeled.
@@ -63,4 +63,4 @@ signatures, personal inbox content, browser account menus, or terminal history.
 - `03:05  EVALUATED AND OBSERVABLE`
 - `03:35  THE SECOND OPINION ARRIVES`
 
-End card: **ONE REQUEST · TWO MODEL FAMILIES · ZERO SELF-APPROVAL**
+End card: **ONE REQUEST · THREE MODEL FAMILIES · ZERO SELF-APPROVAL**

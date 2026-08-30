@@ -1,4 +1,4 @@
-"""Both agents must be able to *execute*, or the verification invariant is a fiction.
+"""Every worker must be able to *execute*, or verification is a fiction.
 
 Rule 1 says an item reaches `done` only when the agent that did not do the work
 verifies it. Verification that cannot run a command is source reading, which is a
@@ -27,20 +27,24 @@ import agents as A
 # to catch. (Originally written by claude during run r-20260828-cf40c3; rewritten
 # to read the real config once exec_flags moved out of the adapters.)
 import json
+import tempfile
 
 _ROOT = os.path.join(os.path.dirname(__file__), "..")
 with open(os.path.join(_ROOT, "config", "rally.json")) as _fh:
     CFG = json.load(_fh)["agents"]
 
-# Anything here means "this process may run commands without stopping to ask".
-EXEC_FLAGS = ("--dangerously-skip-permissions", "--allow-dangerously-skip-permissions")
+EXEC_FLAGS = (
+    "--dangerously-skip-permissions",
+    "--allow-dangerously-skip-permissions",
+    "--approve-for-me",
+)
 
 
 def capture(name, cfg=None):
     """Build the argv an adapter would run, without running it."""
     seen = {}
 
-    def fake_run(cmd, workdir, timeout):
+    def fake_run(cmd, workdir, timeout, extra_env=None):
         seen["cmd"] = cmd
         return "{}"
 
@@ -65,17 +69,24 @@ class TestExecutionSymmetry(unittest.TestCase):
         cmd = capture("agy")
         self.assertTrue(any(f in cmd for f in EXEC_FLAGS), repr(cmd))
 
+    def test_codex_can_execute_inside_its_workspace(self):
+        cmd = capture("codex")
+        self.assertIn("--approve-for-me", cmd)
+
     def test_both_sides_equally_capable(self):
         """Neither agent may be the privileged one. Asymmetry biases who can verify."""
-        c = any(f in capture("claude") for f in EXEC_FLAGS)
-        a = any(f in capture("agy") for f in EXEC_FLAGS)
-        self.assertEqual(c, a, "one agent can execute and the other cannot")
+        capabilities = {
+            name: any(flag in capture(name) for flag in EXEC_FLAGS)
+            for name in CFG
+        }
+        self.assertEqual(set(capabilities.values()), {True}, capabilities)
 
 
 class TestModelPinning(unittest.TestCase):
     def test_pins_survive_into_argv(self):
         self.assertTrue(any("opus" in arg for arg in capture("claude")))
         self.assertIn("gemini-3.1-pro-high", capture("agy"))
+        self.assertIn("gpt-5.4", capture("codex"))
 
     def test_agy_prompt_is_last_and_glued(self):
         """`agy` parses Go style: a bare `-p` swallows the next token, so an
@@ -83,6 +94,34 @@ class TestModelPinning(unittest.TestCase):
         cmd = capture("agy")
         self.assertTrue(cmd[-1].startswith("-p="), cmd[-1][:60])
         self.assertNotIn("-p", cmd[:-1], "a bare -p would swallow the next flag")
+
+    def test_codex_is_ephemeral_and_does_not_load_global_mcp_config(self):
+        cmd = capture("codex")
+        self.assertIn("--ephemeral", cmd)
+        self.assertIn("--ignore-user-config", cmd)
+        self.assertIn("--skip-git-repo-check", cmd)
+        self.assertIn("--output-last-message", cmd)
+
+        with tempfile.TemporaryDirectory() as directory:
+            mcp_path = os.path.join(directory, "mcp.json")
+            with open(mcp_path, "w") as handle:
+                json.dump({"mcpServers": {"rally-connectors": {
+                    "command": "/rally/bin/rally-connectors",
+                    "args": [],
+                    "env": {"RALLY_CONNECTOR_POLICY": "/private/policy.json"},
+                }}}, handle)
+            cfg = {name: dict(value) for name, value in CFG.items()}
+            cfg["codex"]["mcp_config_path"] = mcp_path
+            isolated = capture("codex", cfg)
+        override = isolated[isolated.index("-c") + 1]
+        self.assertIn("mcp_servers.rally-connectors", override)
+        self.assertIn("/private/policy.json", override)
+
+    def test_all_shipped_workers_have_distinct_families(self):
+        A.assert_pins(CFG)
+        self.assertEqual({cfg["family"] for cfg in CFG.values()}, {
+            "anthropic", "google", "openai",
+        })
 
 
 if __name__ == "__main__":

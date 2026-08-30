@@ -113,4 +113,9 @@ async def test_agent_catalog_requires_service_auth(cloud_service):
 
     assert denied.status_code == 401
     assert allowed.status_code == 200
-    assert len(allowed.json()["agents"]) == 3
+    catalog = allowed.json()["agents"]
+    assert len(catalog) == 4
+    assert any(
+        agent["id"] == "rally-openai-worker" and agent["family"] == "openai"
+        for agent in catalog
+    )

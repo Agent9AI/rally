@@ -5,9 +5,9 @@ proof links only after the Cloud and golden-run evidence exists.
 
 ## Long-form article
 
-# Rally: the engineering agent that cannot approve its own work
+# Rally: the accountable AI team that cannot approve its own work
 
-Most coding agents combine three powers that should be separate: they decide
+Most agents combine three powers that should be separate: they decide
 what the task means, do the work, and declare themselves finished. That is
 convenient, but it is not a reliable chain of custody for engineering work.
 
@@ -16,9 +16,9 @@ never verify it.**
 
 A user emails one outcome to Rally from any device. A Gemini 3.7 agent built
 with Google ADK preserves that request and creates an authenticated, durable
-handoff on Google Cloud. Claude and Gemini coding workers then alternate in a
-shared repository: they scope, implement, run tests, challenge evidence, repair
-failures, and verify the other model family's work. Deterministic Python—not a
+handoff on Google Cloud. Gemini, Claude, and OpenAI Codex workers then rotate in
+a shared workspace: they research, build, test, challenge evidence, repair
+failures, and verify work owned by another model family. Deterministic Python—not a
 prompt—decides whether a transition is legal.
 
 The interface matters as much as the orchestration. A product or operations
@@ -43,10 +43,10 @@ gate. Rally now passes six live cases—including policy bypass, hostile artifac
 instructions, and a production-shaped release workflow—at 1.00 trajectory and
 1.00 response quality.
 
-The current release has 93 deterministic automated tests plus that live
-scorecard. More importantly, the demo shows the agents doing the work: editing
-the repository, running the tests, placing an item into
-`awaiting-verification`, and receiving a verdict from the other model family.
+The current release has 105 deterministic automated tests plus that live
+scorecard. More importantly, the demo shows the agents doing the work: researching
+primary sources, building an executive presentation, running its checks, placing an item into
+`awaiting-verification`, and receiving a verdict from another model family.
 The full unedited run is published beside the four-minute walkthrough.
 
 - Product: <https://rally.agent9.dev/#demo>
@@ -61,12 +61,12 @@ Rally was created for purposes of entering the All Things Agentic Hackathon.
 I built Rally because an AI agent should not grade its own homework.
 
 One email commissions real repository work. Gemini 3.7 + Google ADK governs the
-handoff. Claude and Gemini implement, test, challenge, and verify. Deterministic
+handoff. Gemini, Claude, and OpenAI Codex implement, test, challenge, and verify. Deterministic
 policy enforces one rule neither model can waive: owner ≠ verifier.
 
-93 tests. 6/6 live ADK evals at 1.00/1.00. Full unedited agent run included.
+105 tests. 6/6 live ADK evals at 1.00/1.00. Full unedited agent run included.
 
-One request. Two model families. Zero self-approval.
+One request. Three model families. Zero self-approval.
 
 [VIDEO OR PRODUCT LINK]
 
@@ -74,9 +74,9 @@ Created for the All Things Agentic Hackathon. #AllThingsAgentic
 
 ## Short social variant
 
-Rally turns one email into independently verified engineering work.
+Rally turns one email into independently verified professional work.
 
-Gemini + Google ADK govern. Claude + Gemini build and review. Code—not model
+Gemini + Google ADK govern. Gemini + Claude + OpenAI build and review. Code—not model
 confidence—enforces zero self-approval.
 
 Demo + full unedited run: [LINK]

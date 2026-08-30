@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
   <title id="title">Rally governed multi-agent architecture</title>
-  <desc id="desc">A human commissions work by email. A signed durable ingress and deterministic Rally runner pass an authenticated, idempotent handoff to a Gemini 3.7 Google ADK coordinator on Cloud Run. Firestore, an agent catalog, and metadata-only telemetry govern the fleet. Claude and Gemini coding agents implement and independently verify work before an executive report returns.</desc>
+  <desc id="desc">A human commissions work by email. A signed durable ingress and deterministic Rally runner pass an authenticated, idempotent handoff to a Gemini 3.7 Google ADK coordinator on Cloud Run. Firestore, an agent catalog, and metadata-only telemetry govern the fleet. Gemini, Claude, and OpenAI workers implement and independently verify work before an executive report returns.</desc>
   <defs>
     <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
       <stop offset="0" stop-color="#06100d"/>
@@ -41,8 +41,8 @@
 
   <g class="sans">
     <text class="eyebrow" x="80" y="72">RALLY / FORTIFIED ENTERPRISE FLEET</text>
-    <text class="title" x="80" y="126">One request. Two model families. Zero self-approval.</text>
-    <text class="subtitle" x="80" y="162">Durable Google governance, deterministic authority, and visible cross-family engineering work.</text>
+    <text class="title" x="80" y="126">One request. Three model families. Zero self-approval.</text>
+    <text class="subtitle" x="80" y="162">Durable Google governance, deterministic authority, and visible cross-family professional work.</text>
 
     <line x1="80" y1="202" x2="1520" y2="202" stroke="#233a31"/>
 
@@ -110,33 +110,39 @@
 
     <!-- execution plane -->
     <g filter="url(#shadow)">
-      <rect x="180" y="710" width="350" height="116" rx="16" fill="#231817" stroke="#7f4d45"/>
-      <rect x="680" y="710" width="350" height="116" rx="16" fill="#121e32" stroke="#3e6695"/>
-      <rect x="1190" y="710" width="300" height="116" rx="16" fill="#102019" stroke="#3a5d4e"/>
+      <rect x="90" y="710" width="300" height="116" rx="16" fill="#231817" stroke="#7f4d45"/>
+      <rect x="430" y="710" width="300" height="116" rx="16" fill="#121e32" stroke="#3e6695"/>
+      <rect x="770" y="710" width="300" height="116" rx="16" fill="#17191b" stroke="#5f6368"/>
+      <rect x="1150" y="710" width="340" height="116" rx="16" fill="#102019" stroke="#3a5d4e"/>
     </g>
 
-    <text class="nodeMeta mono" x="205" y="741" fill="#ffb4a8">ANTHROPIC FAMILY</text>
-    <text class="nodeTitle" x="205" y="775">Claude coding worker</text>
-    <text class="nodeText" x="205" y="800">Scope · implement · test · review</text>
+    <text class="nodeMeta mono" x="115" y="741" fill="#ffb4a8">ANTHROPIC FAMILY</text>
+    <text class="nodeTitle" x="115" y="775">Claude worker</text>
+    <text class="nodeText" x="115" y="800">Scope · implement · test · review</text>
 
-    <text class="nodeMeta mono" x="705" y="741" fill="#9dc0ff">GEMINI FAMILY</text>
-    <text class="nodeTitle" x="705" y="775">Antigravity coding worker</text>
-    <text class="nodeText" x="705" y="800">Scope · implement · test · review</text>
+    <text class="nodeMeta mono" x="455" y="741" fill="#9dc0ff">GEMINI FAMILY</text>
+    <text class="nodeTitle" x="455" y="775">Antigravity worker</text>
+    <text class="nodeText" x="455" y="800">Scope · implement · test · review</text>
 
-    <text class="nodeMeta mono" x="1215" y="741">AUDIT SURFACE</text>
-    <text class="nodeTitle" x="1215" y="775">Executive thread</text>
-    <text class="nodeText" x="1215" y="800">Every turn + final evidence</text>
+    <text class="nodeMeta mono" x="795" y="741" fill="#d7d9dd">OPENAI FAMILY</text>
+    <text class="nodeTitle" x="795" y="775">Codex worker</text>
+    <text class="nodeText" x="795" y="800">Scope · implement · test · review</text>
 
-    <line x1="530" y1="755" x2="666" y2="755" stroke="#7cf7bd" stroke-width="2.5" marker-end="url(#arrowMint)"/>
-    <line x1="680" y1="792" x2="544" y2="792" stroke="#7cf7bd" stroke-width="2.5" marker-end="url(#arrowMint)"/>
-    <text class="label" x="557" y="741">IMPLEMENT</text>
-    <text class="label" x="558" y="817">VERIFY</text>
+    <text class="nodeMeta mono" x="1175" y="741">AUDIT SURFACE</text>
+    <text class="nodeTitle" x="1175" y="775">Executive thread</text>
+    <text class="nodeText" x="1175" y="800">Every turn + final evidence</text>
 
-    <path d="M710 390 V674 H355 V696" fill="none" stroke="#7cf7bd" stroke-width="2.5" marker-end="url(#arrowMint)"/>
-    <path d="M885 390 V696" fill="none" stroke="#7cf7bd" stroke-width="2.5" marker-end="url(#arrowMint)"/>
-    <line x1="1030" y1="768" x2="1176" y2="768" stroke="#7cf7bd" stroke-width="2.5" marker-end="url(#arrowMint)"/>
-    <path d="M180 768 H128 V334 H66" fill="none" stroke="#7cf7bd" stroke-width="2.5" marker-end="url(#arrowMint)"/>
-    <text class="label" x="1070" y="751">VERIFIED REPORT</text>
+    <line x1="390" y1="755" x2="416" y2="755" stroke="#7cf7bd" stroke-width="2.5" marker-end="url(#arrowMint)"/>
+    <line x1="430" y1="792" x2="404" y2="792" stroke="#7cf7bd" stroke-width="2.5" marker-end="url(#arrowMint)"/>
+    <line x1="730" y1="755" x2="756" y2="755" stroke="#7cf7bd" stroke-width="2.5" marker-end="url(#arrowMint)"/>
+    <line x1="770" y1="792" x2="744" y2="792" stroke="#7cf7bd" stroke-width="2.5" marker-end="url(#arrowMint)"/>
+
+    <path d="M710 390 V674 H240 V696" fill="none" stroke="#7cf7bd" stroke-width="2.5" marker-end="url(#arrowMint)"/>
+    <path d="M830 390 V674 H580 V696" fill="none" stroke="#7cf7bd" stroke-width="2.5" marker-end="url(#arrowMint)"/>
+    <path d="M950 390 V674 H920 V696" fill="none" stroke="#7cf7bd" stroke-width="2.5" marker-end="url(#arrowMint)"/>
+    <line x1="1070" y1="768" x2="1136" y2="768" stroke="#7cf7bd" stroke-width="2.5" marker-end="url(#arrowMint)"/>
+    <path d="M90 768 H52 V334 H66" fill="none" stroke="#7cf7bd" stroke-width="2.5" marker-end="url(#arrowMint)"/>
+    <text class="label" x="1080" y="751">REPORT</text>
 
     <line x1="80" y1="858" x2="1520" y2="858" stroke="#233a31"/>
     <text class="small mono" x="80" y="883">LOAD-BEARING INVARIANT  ·  DONE REQUIRES owner ≠ verified_by  ·  ENFORCED OUTSIDE EVERY MODEL</text>

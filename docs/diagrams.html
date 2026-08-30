@@ -132,7 +132,7 @@
   <header>
     <div class="eyebrow">Architecture note</div>
     <h1>The Rally Protocol</h1>
-    <p class="lede">Two coding agents from different model families carry one task to completion by writing email to each other. A person commissions the run. The checklist decides when it ends.</p>
+    <p class="lede">Provider-native agents from different model families carry one task to completion through durable handoffs. A person commissions the run. The checklist decides when it ends.</p>
     <div class="meta">
       <span>v1</span><span>2026-08-28</span><span>Claude CLI &nbsp;/&nbsp; Antigravity CLI</span><span>transport: Resend</span>
     </div>
@@ -143,7 +143,7 @@
     <h2>Decisions travel in the message, artifacts live in git</h2>
     <p>The hardest thing to see from prose is how state is split. Rally runs on <strong>two planes</strong>. Progress and reasoning move as email. The work itself accumulates on a branch. Every message names the commit it describes, so any single message is enough to reconstruct both what an agent believed and exactly which tree it believed it about.</p>
     <figure>
-      <svg viewBox="0 0 760 384" role="img" aria-label="Two horizontal planes. On top, three email envelopes passing between Agent A and Agent B. Below, a git branch with one commit per turn. Dashed lines join each message to its commit, labelled commit SHA.">
+      <svg viewBox="0 0 760 384" role="img" aria-label="Two horizontal planes. On top, three email envelopes rotate between Agents A, B, and C. Below, a git branch has one commit per turn. Dashed lines join each message to its commit, labelled commit SHA.">
         <defs>
           <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
             <polygon class="ah" points="0,1 10,5 0,9"/>
@@ -164,7 +164,7 @@
 
         <rect class="n-box" x="550" y="34" width="176" height="72" rx="2"/>
         <text class="t-lbl" x="566" y="58">turn 8</text>
-        <text class="t" x="566" y="78">Agent A</text>
+        <text class="t" x="566" y="78">Agent C</text>
         <text class="t-sm" x="566" y="95">checklist + narrative</text>
 
         <line class="ln" x1="210" y1="70" x2="286" y2="70" marker-end="url(#a1)"/>
@@ -246,14 +246,14 @@
         <text class="t-sm" x="566" y="262" text-anchor="middle">hard limit / unresolved block</text>
         <text class="t-sm" x="656" y="204">reports state as it stands</text>
       </svg>
-      <figcaption><b>Second Wind recovers before Rally halts.</b> A failed turn or blocker first receives one bounded handoff to the other model family. Hard limits, a confirmed authority boundary, or an unresolved backup review stop the run and report the checklist as it stands.</figcaption>
+      <figcaption><b>Second Wind recovers before Rally halts.</b> A failed turn or blocker first receives one bounded handoff to the next model family. Hard limits, a confirmed authority boundary, or an unresolved backup review stop the run and report the checklist as it stands.</figcaption>
     </figure>
   </section>
 
   <section>
     <div class="eyebrow">Figure 3</div>
     <h2>An item cannot be marked done by the agent that did it</h2>
-    <p>This is the rule that earns the second model its cost, and the state machine is where it is enforced rather than merely encouraged. The back edge is bounded, which is what makes the loop terminate instead of two agents disagreeing politely forever.</p>
+    <p>This is the rule that earns independent models their cost, and the state machine is where it is enforced rather than merely encouraged. The back edge is bounded, which is what makes the loop terminate instead of agents disagreeing politely forever.</p>
     <figure>
       <svg viewBox="0 0 820 312" role="img" aria-label="States left to right: open, claimed, awaiting verification, done. A bounded rejection edge arcs back from awaiting verification to claimed. Two exits drop to blocked and disputed.">
         <defs>
@@ -303,7 +303,7 @@
 
         <text class="t-sm" x="8" y="292">2nd failure of the same item: the verifier may repair it, and ownership flips so the original author must verify the repair.</text>
       </svg>
-      <figcaption><b>Recovery never becomes approval.</b> Second Wind may move a blocked item back into claimed work under the backup model, but that model cannot move its repair to done. The other family must still verify it, and repeated disagreement still escalates.</figcaption>
+      <figcaption><b>Recovery never becomes approval.</b> Second Wind may move a blocked item back into claimed work under the backup model, but that model cannot move its repair to done. Another family must still verify it, and repeated disagreement still escalates.</figcaption>
     </figure>
   </section>
 
@@ -312,7 +312,7 @@
     <h2>Ingress is a swap point, not a rewrite</h2>
     <p>The one part of the system genuinely worth deciding late. Whatever delivers inbound mail sits behind a thin interface, so the choice between an always-on edge queue and an existing self-hosted workflow host is reversible. One is faster to trust, the other is faster to first run.</p>
     <figure>
-      <svg viewBox="0 0 800 300" role="img" aria-label="Inbound mail enters a dashed boundary labelled ingress interface containing two interchangeable implementations, which both feed a single runner that drives the Claude CLI and the Antigravity CLI.">
+      <svg viewBox="0 0 800 340" role="img" aria-label="Inbound mail enters a dashed ingress boundary with two interchangeable implementations. Both feed one runner that drives Claude, Antigravity, and OpenAI Codex CLIs.">
         <defs>
           <marker id="a4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
             <polygon class="ah" points="0,1 10,5 0,9"/>
@@ -343,20 +343,25 @@
         <text class="t" x="574" y="140" text-anchor="middle">runner</text>
         <text class="t-sm" x="574" y="159" text-anchor="middle">turns, budget</text>
 
-        <line class="ln" x1="630" y1="130" x2="686" y2="98" marker-end="url(#a4)"/>
-        <line class="ln" x1="630" y1="160" x2="686" y2="192" marker-end="url(#a4)"/>
+        <line class="ln" x1="630" y1="128" x2="686" y2="72" marker-end="url(#a4)"/>
+        <line class="ln" x1="630" y1="145" x2="686" y2="151" marker-end="url(#a4)"/>
+        <line class="ln" x1="630" y1="162" x2="686" y2="230" marker-end="url(#a4)"/>
 
-        <rect class="n-box" x="690" y="70" width="104" height="52" rx="2"/>
-        <text class="t-lbl" x="742" y="93" text-anchor="middle">claude -p</text>
-        <text class="t-sm" x="742" y="110" text-anchor="middle">opus</text>
+        <rect class="n-box" x="690" y="46" width="104" height="52" rx="2"/>
+        <text class="t-lbl" x="742" y="69" text-anchor="middle">claude -p</text>
+        <text class="t-sm" x="742" y="86" text-anchor="middle">opus</text>
 
-        <rect class="n-box" x="690" y="168" width="104" height="52" rx="2"/>
-        <text class="t-lbl" x="742" y="191" text-anchor="middle">agy -p</text>
-        <text class="t-sm" x="742" y="208" text-anchor="middle">gemini pinned</text>
+        <rect class="n-box" x="690" y="125" width="104" height="52" rx="2"/>
+        <text class="t-lbl" x="742" y="148" text-anchor="middle">agy -p</text>
+        <text class="t-sm" x="742" y="165" text-anchor="middle">gemini pinned</text>
 
-        <text class="t-sm" x="518" y="272">the runner holds authoritative state; an envelope is evidence, never authority</text>
+        <rect class="n-box" x="690" y="204" width="104" height="52" rx="2"/>
+        <text class="t-lbl" x="742" y="227" text-anchor="middle">codex exec</text>
+        <text class="t-sm" x="742" y="244" text-anchor="middle">openai pinned</text>
+
+        <text class="t-sm" x="518" y="310">the runner holds authoritative state; an envelope is evidence, never authority</text>
       </svg>
-      <figcaption><b>Model pinning belongs here, not in config.</b> The Antigravity CLI also serves Claude models, so an unpinned run can quietly become one family reviewing itself while everything still appears to work. The runner refuses a turn unless the two models come from different families.</figcaption>
+      <figcaption><b>Model pinning belongs here, not in config.</b> The Antigravity CLI also serves Claude models, so an unpinned run can quietly become one family reviewing itself while everything still appears to work. The runner refuses a fleet unless every worker declares a distinct family.</figcaption>
     </figure>
   </section>
 

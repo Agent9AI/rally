@@ -6,7 +6,7 @@ infrastructure credentials on the default path**.
 ## Path 1: managed onboarding (default)
 
 An administrator names the Rally team identity, supplies commissioner addresses,
-chooses the first outcome, and selects the systems and authority it needs.
+chooses the first outcome, and selects the systems and authority each user needs.
 Agent9 owns the Cloudflare account, Resend mail plane, Google Cloud control
 plane, model configuration, secret rotation, budgets, and upgrades. Everyone
 else receives one Rally address and simply gives the team work.
@@ -23,9 +23,13 @@ A future guided installer should orchestrate provider-native browser consent:
 2. Wrangler opens Cloudflare's OAuth consent screen and stores its own token.
 3. Terraform provisions Cloud Run, Firestore, IAM, Secret Manager, and Trace.
 4. Rally creates and verifies the ingress Worker, D1 schema, and routes.
-5. A mail provider is connected or the customer uses an Agent9-managed Rally
+5. Each operator signs into their own Gemini, Claude, and/or OpenAI Codex
+   entitlement. Rally never pools a subscription seat.
+6. Each business-system OAuth connection is stored in that commissioner's
+   isolated profile and Keychain namespace.
+7. A mail provider is connected or the customer uses an Agent9-managed Rally
    address.
-6. A final readiness call proves send, receive, Gemini, Claude, Firestore,
+8. A final readiness call proves send, receive, Gemini, Claude, Codex, Firestore,
    duplicate suppression, and human reply routing.
 
 The installer may report credential status, but must never print tokens, write
@@ -40,7 +44,7 @@ dashboard link is not a completed integration. Rally will label a button
 - a registered application and least-privilege consent scopes
 - a state-bound callback with PKCE where supported
 - encrypted token storage and rotation
-- tenant isolation and revocation
+- per-user tenant isolation and revocation
 - a post-connect capability check
 - a complete rollback path
 
@@ -54,7 +58,7 @@ the self-host flow.
 - Each connected system, resource allowlist, and OAuth scope approved
 - Read, draft, execute, verify-first, and human-approval action classes set
 - Repository and writable scope selected
-- Claude and Gemini entitlements verified
+- Gemini, Claude, and OpenAI Codex entitlements verified per user
 - First task chosen with objective acceptance criteria
 - Turn, send, timeout, and spend ceilings accepted
 - Second Wind recovery toggled on or off, with its handoff ceiling accepted
@@ -62,6 +66,6 @@ the self-host flow.
 - One dry run and one live run reviewed by the customer
 - Human `STOP` and steering behavior rehearsed
 
-Activation is complete only when a real email commission reaches both model
-families, every completed item has another verifier, and the commissioner
+Activation is complete only when a real email commission reaches independent
+model families, every completed item has another verifier, and the commissioner
 receives the final report in the same thread.

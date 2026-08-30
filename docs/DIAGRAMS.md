@@ -9,7 +9,7 @@ flowchart TB
     subgraph CP["CONTROL PLANE - email"]
         direction LR
         M6["turn 6 · Agent A<br/>checklist + narrative"] -->|mails| M7["turn 7 · Agent B<br/>checklist + narrative"]
-        M7 -->|mails| M8["turn 8 · Agent A<br/>checklist + narrative"]
+        M7 -->|mails| M8["turn 8 · Agent C<br/>checklist + narrative"]
     end
     subgraph DP["DATA PLANE - branch rally/run_id"]
         direction LR
@@ -30,7 +30,7 @@ costs a turn rather than the run.
 flowchart LR
     H([human]) -->|commission| S["Scope<br/>agent A"]
     S -->|proposed checklist| N["Negotiate<br/>agent B"]
-    N --> W["Work turns<br/>A and B alternate"]
+    N --> W["Work turns<br/>A, B, and C rotate"]
     W -->|every item verified| R["Report<br/>to human"]
     W -->|recoverable failure| SW["Second Wind<br/>bounded backup handoff"]
     SW -->|backup repairs; still needs verification| W
@@ -40,7 +40,7 @@ flowchart LR
 ```
 
 Agreement on what "done" means comes before any work. Second Wind tries the
-other model family before a recoverable failure becomes a halt. A halt remains
+next model family before a recoverable failure becomes a halt. A halt remains
 a reported outcome, not a crash: stopping and asking counts as success.
 
 ## 3. An item cannot be marked done by the agent that did it
@@ -50,7 +50,7 @@ stateDiagram-v2
     [*] --> open
     open --> claimed: an agent claims it
     claimed --> awaiting_verification: worked and committed
-    awaiting_verification --> done: verified by the OTHER agent
+    awaiting_verification --> done: verified by a NON-OWNER
     awaiting_verification --> claimed: rejected, at most twice
     claimed --> blocked: needs a human
     blocked --> claimed: Second Wind takeover, once
@@ -77,6 +77,7 @@ flowchart LR
     IF --> RUN["runner<br/>turns, budget,<br/>authoritative state"]
     RUN --> CL["claude -p<br/>opus"]
     RUN --> AG["agy -p<br/>gemini pinned"]
+    RUN --> OAI["codex exec<br/>OpenAI pinned"]
 ```
 
 The runner holds authoritative state; an envelope is evidence, never authority.

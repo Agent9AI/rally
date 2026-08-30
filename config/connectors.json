@@ -1,0 +1,99 @@
+{
+  "schema_version": "rally.connector-catalog/v1",
+  "connectors": [
+    {
+      "id": "google-workspace",
+      "name": "Google Workspace",
+      "runtime": "roadmap",
+      "category": "Company work",
+      "docs_url": "https://developers.google.com/workspace/guides/configure-mcp-servers"
+    },
+    {
+      "id": "slack",
+      "name": "Slack",
+      "runtime": "roadmap",
+      "category": "Team memory",
+      "docs_url": "https://docs.slack.dev/ai/slack-mcp-server/"
+    },
+    {
+      "id": "github",
+      "name": "GitHub",
+      "runtime": "roadmap",
+      "category": "Engineering",
+      "docs_url": "https://github.com/github/github-mcp-server"
+    },
+    {
+      "id": "cloudflare",
+      "name": "Cloudflare",
+      "runtime": "roadmap",
+      "category": "Web operations",
+      "docs_url": "https://developers.cloudflare.com/agents/model-context-protocol/cloudflare/servers-for-cloudflare/"
+    },
+    {
+      "id": "n8n",
+      "name": "n8n",
+      "runtime": "roadmap",
+      "category": "Workflow reach",
+      "docs_url": "https://docs.n8n.io/connect/connect-to-n8n-mcp-server/"
+    },
+    {
+      "id": "stripe",
+      "name": "Stripe",
+      "runtime": "roadmap",
+      "category": "Revenue",
+      "docs_url": "https://docs.stripe.com/mcp"
+    },
+    {
+      "id": "bigquery",
+      "name": "BigQuery",
+      "runtime": "gateway",
+      "category": "Data intelligence",
+      "transport": "streamable_http",
+      "endpoint": "https://bigquery.googleapis.com/mcp",
+      "auth": {
+        "type": "google_adc",
+        "scopes": ["https://www.googleapis.com/auth/cloud-platform"]
+      },
+      "docs_url": "https://docs.cloud.google.com/bigquery/docs/use-bigquery-mcp"
+    },
+    {
+      "id": "atlassian",
+      "name": "Atlassian",
+      "runtime": "gateway",
+      "category": "Work and knowledge",
+      "transport": "streamable_http",
+      "endpoint": "https://mcp.atlassian.com/v1/mcp",
+      "auth": {
+        "type": "oauth_2_1",
+        "keychain_service": "rally-connector-atlassian"
+      },
+      "docs_url": "https://www.atlassian.com/platform/rovo-mcp"
+    },
+    {
+      "id": "salesforce",
+      "name": "Salesforce",
+      "runtime": "gateway",
+      "category": "Customer truth",
+      "transport": "streamable_http",
+      "endpoint_env": "RALLY_SALESFORCE_MCP_URL",
+      "auth": {
+        "type": "oauth_2_1",
+        "keychain_service": "rally-connector-salesforce"
+      },
+      "docs_url": "https://developer.salesforce.com/blogs/2026/06/the-salesforce-developers-guide-to-the-summer-26-release"
+    },
+    {
+      "id": "hyperagent",
+      "name": "Hyperagent",
+      "runtime": "gateway",
+      "category": "Agent delegation",
+      "transport": "streamable_http",
+      "endpoint": "https://hyperagent.com/api/mcp",
+      "auth": {
+        "type": "oauth_2_1",
+        "keychain_service": "rally-connector-hyperagent"
+      },
+      "docs_url": "https://www.hyperagent.com/docs/concepts/agents/invocations/mcp-server/"
+    }
+  ]
+}

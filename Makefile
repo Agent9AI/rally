@@ -8,7 +8,7 @@ help:
 	@echo "make release-check run every deterministic release gate; never deploys"
 	@echo "make check   preflight: pins, binaries, credentials, limits"
 	@echo "make dry     exercise the loop with stub agents, no tokens spent"
-	@echo "make smoke   preflight AND make both agents actually answer"
+	@echo "make smoke   preflight AND make every configured worker actually answer"
 	@echo "make demo    a full live run on fast models, about 60 seconds"
 	@echo "make serve   poll the ingress Worker and run what arrives"
 	@echo "make clean   remove run state and caches"
@@ -36,7 +36,7 @@ release-check: test cloud-test infra-check
 	@cd src/worker && wrangler deploy --dry-run --outdir /tmp/rally-worker-build
 	@git diff --check
 	@git diff --cached --check
-	@echo "release gates passed: 93 automated tests, Terraform, Worker bundle, syntax, whitespace"
+	@echo "release gates passed: 105 automated tests, Terraform, Worker bundle, syntax, whitespace"
 
 check:
 	@./bin/rally --check
@@ -49,7 +49,7 @@ smoke:
 
 demo:
 	@./bin/rally --config config/rally.demo.json --no-mail \
-	  --run "Write fizzbuzz.py with a fizzbuzz(n) function returning the FizzBuzz string for n, and test_fizzbuzz.py covering 1, 3, 5 and 15. Must pass python3 -m unittest discover."
+	  --run "Create a polished, self-contained HTML presentation for an executive AI strategy meeting covering the most consequential Google AI product launches and major releases from 2025-08-29 through 2026-08-29. Use primary Google sources only. For every included launch, show the release date, what changed, who it matters to, a concrete business use, and a source URL. Include an executive synthesis, a coverage appendix grouped by product family, and a machine-readable claim ledger. Do not guess: unsupported or disputed claims must be omitted or labeled. Add automated checks for required sections, dates, source URLs, and local presentation loading. Every factual claim and the finished presentation must be independently verified."
 
 serve:
 	@./bin/rally --serve

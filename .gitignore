@@ -11,3 +11,4 @@ __pycache__/
 .ruff_cache/
 .wrangler/
 demo-run/
+config/connectors.local.json

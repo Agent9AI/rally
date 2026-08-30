@@ -13,7 +13,7 @@ import re
 from typing import Any, Dict, List, Optional, Tuple
 
 STATES = {"open", "claimed", "awaiting-verification", "done", "blocked", "disputed"}
-AGENTS = {"claude", "agy"}
+AGENTS = {"claude", "agy", "codex"}
 
 _FENCE = re.compile(r"```(?:json)?\s*(\{.*?\})\s*```", re.DOTALL)
 
@@ -101,7 +101,6 @@ def reconcile(
     The invariant that earns the second model its cost: an item may only reach
     `done` when the agent that does NOT own it says so.
     """
-    other = "agy" if actor == "claude" else "claude"
     recoverable = set(recovery_items or [])
     by_id = {it["id"]: _norm(it) for it in (prev or []) if it.get("id")}
     violations: List[str] = []

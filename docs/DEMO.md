@@ -15,7 +15,7 @@ make infra-check
 
 When the Cloud service is deployed, preflight must report:
 
-- Claude and Gemini from distinct model families
+- Gemini, Claude, and OpenAI Codex from distinct model families
 - both agent CLIs responding
 - Resend credential present
 - ingress Worker and queue reachable
@@ -106,7 +106,7 @@ use the prerecorded live email thread and Cloud evidence for model execution.
 
 ## Recording discipline
 
-- Rehearse once on the same network and warm both CLIs.
+- Rehearse once on the same network and warm every configured CLI.
 - Do not use Claude Code interactively while Rally consumes the same subscription.
 - Do not edit Rally's source during a run; containment monitoring will report it.
 - Keep Cloud Console pages pre-opened and sanitized.

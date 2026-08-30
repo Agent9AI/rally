@@ -120,21 +120,34 @@ def _changes(items: List[Dict], redactions: List[tuple]) -> List[Dict]:
     ]
 
 
+def _agent_label(name: str) -> str:
+    return {
+        "claude": "Claude worker",
+        "agy": "Gemini worker",
+        "codex": "OpenAI worker",
+    }.get(name, "%s worker" % (name or "Unknown").title())
+
+
 def build_snapshot(state: Dict, cfg: Dict, published_at: Optional[str] = None) -> Dict:
     """Return the only shape the runner is allowed to publish."""
     stamp = published_at or _now()
     redactions = _redactions(state)
     checklist = _checklist(state.get("checklist") or [], redactions)
     done = sum(1 for item in checklist if item["state"] == "done")
+    participants = {
+        _text(record.get("actor"), 40)
+        for record in (state.get("turns") or [])
+        if isinstance(record, dict) and record.get("actor")
+    }
     agents = []
-    for name in ("claude", "agy"):
-        agent = (cfg.get("agents") or {}).get(name) or {}
+    for name, agent in (cfg.get("agents") or {}).items():
         agents.append({
             "id": name,
-            "label": "Claude worker" if name == "claude" else "Gemini worker",
+            "label": _agent_label(name),
             "family": _text(agent.get("family"), 60),
             "model": _text(agent.get("model"), 100),
             "role": "implementation + review",
+            "participated": name in participants,
         })
 
     verified_items = sum(
@@ -154,7 +167,10 @@ def build_snapshot(state: Dict, cfg: Dict, published_at: Optional[str] = None) -
         and item.get("owner")
         and item["owner"] == item.get("verified_by")
     )
-    model_families = len({agent["family"] for agent in agents if agent["family"]})
+    model_families = len({
+        agent["family"] for agent in agents
+        if agent["family"] and agent["participated"]
+    })
 
     timeline = [{
         "id": "commission",
@@ -195,7 +211,7 @@ def build_snapshot(state: Dict, cfg: Dict, published_at: Optional[str] = None) -
             "at": _text(record.get("at"), 40),
             "turn": max(0, int(record.get("turn") or 0)),
             "actor": actor,
-            "label": "Claude worker" if actor == "claude" else "Gemini worker",
+            "label": _agent_label(actor),
             "family": _text(record.get("family"), 60),
             "model": _text(record.get("model"), 100),
             "narrative": _public_text(record.get("narrative"), 4000, redactions),
@@ -220,8 +236,8 @@ def build_snapshot(state: Dict, cfg: Dict, published_at: Optional[str] = None) -
             "bounded recovery attempt from %s to %s. Independent verification "
             "remained required.%s" % (
                 cause,
-                "Claude" if source == "claude" else "Gemini",
-                "Claude" if target == "claude" else "Gemini",
+                _agent_label(source).replace(" worker", ""),
+                _agent_label(target).replace(" worker", ""),
                 " Recovery items: %s." % ", ".join(items) if items else "",
             )
         )

@@ -19,6 +19,17 @@
       "exec_flags": [
         "--dangerously-skip-permissions"
       ]
+    },
+    "codex": {
+      "bin": "codex",
+      "adapter": "codex",
+      "model": "gpt-5.4",
+      "family": "openai",
+      "address": "codex@updates.agent9.dev",
+      "auth": "per-user-chatgpt",
+      "exec_flags": [
+        "--approve-for-me"
+      ]
     }
   },
   "limits": {
@@ -33,6 +44,12 @@
   "continuity": {
     "second_wind": true,
     "max_recoveries_per_run": 2
+  },
+  "connectors": {
+    "registry": "config/connectors.json",
+    "local": "config/connectors.local.json",
+    "enabled": [],
+    "overrides": {}
   },
   "mail": {
     "enabled": true,

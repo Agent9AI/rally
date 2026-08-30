@@ -3,8 +3,9 @@
 ## The thesis
 
 **Rally turns the AI models a company already trusts into one accountable team.
-One difficult goal comes in; Gemini governs the handoff; Claude and Gemini do
-visible work and review; and one independently verified result comes out.**
+One difficult goal comes in; Gemini governs the handoff; Gemini, Claude, and
+OpenAI Codex do visible work and review; and one independently verified result
+comes out.**
 
 Primary category: **Fortified Enterprise Fleet**.
 
@@ -35,7 +36,8 @@ owner-to-verifier transition continuous in the four-minute cut.
 | Claim | Primary implementation | Automated proof | Visual proof |
 |---|---|---|---|
 | No self-approval | `src/envelope.py` | `tests/test_envelope.py` | Rejected owner transition, then different-family verification |
-| Distinct model families | `src/agents.py` | `tests/test_agents.py` | Claude and Gemini watermarks in one thread |
+| Distinct model families | `src/agents.py` | `tests/test_agents.py` | Gemini, Claude, and OpenAI worker identities in the roster and thread |
+| Per-user authorization | connector profiles + native CLI sign-in | connector isolation and adapter tests | One-way profile ID; no pooled token or seat |
 | Durable email intake | `src/worker/index.js`, D1 schema | runner reliability tests | Queued D1 row before acknowledgement |
 | Retry-safe coordination | `cloud/store.py`, `cloud/service.py` | store/service recovery and fencing tests | Failed record resumes with incremented attempt |
 | Cross-model recovery | `src/runner.py`, `src/envelope.py` | Second Wind runner and custody-transfer tests | Backup repairs a blocker but cannot self-approve |
@@ -49,9 +51,10 @@ owner-to-verifier transition continuous in the four-minute cut.
 
 Gemini 3.7 Flash through Vertex AI and Google ADK is the intake coordinator. It
 preserves the commission verbatim, makes the single bounded handoff, and creates
-the governance record before repository execution starts. Claude and
-Antigravity/Gemini are licensed coding workers. They have symmetric build and
-review abilities, but the runner assigns incompatible authority so the owner of
+the governance record before workspace execution starts. Claude,
+Antigravity/Gemini, and OpenAI Codex are licensed CLI workers using the
+operator's own provider sign-ins. They have symmetric build and review abilities,
+but the runner assigns incompatible authority so the owner of
 an item cannot verify it. The standard profile keeps a deliberative worker pin;
 the filmed profile uses Gemini 3.7 Flash for predictable latency.
 
@@ -60,17 +63,17 @@ The required Gemini 3.5+ path is substantive and visible.
 
 ## Fast answers to likely objections
 
-**“Is this two agents role-playing in one prompt?”**  No. Two separate CLI
-executions from different model families share a real workspace. Their output
+**“Is this agents role-playing in one prompt?”**  No. Separate provider-native
+CLI executions from different model families share a real workspace. Their output
 is parsed by a deterministic state machine, and every turn is independently
 emailed.
 
-**“Could both agents simply agree?”**  Agreement is insufficient. A checklist
+**“Could the agents simply agree?”**  Agreement is insufficient. A checklist
 item can reach `done` only through a legal state transition naming a verifier
-from the other model family and retaining evidence.
+from a different model family and retaining evidence.
 
-**“Why is repository execution local?”**  The current Claude and Antigravity
-workers are licensed desktop CLIs. Rally honestly keeps execution on the
+**“Why is repository execution local?”**  The current Claude, Antigravity, and
+Codex workers are licensed CLIs. Rally honestly keeps execution on the
 controlled licensed host while placing identity, durable coordination, memory,
 catalog discovery, and telemetry on Google Cloud.
 
@@ -88,11 +91,11 @@ stale owner from overwriting the new attempt.
 
 ## Judge-visible numbers
 
-- 93 automated deterministic tests: 69 product tests + 24 Cloud/A2A tests
+- 105 automated deterministic tests: 80 product tests + 25 Cloud/A2A/connector tests
 - 6 live ADK evaluation cases
 - 1.00 tool trajectory score
 - 1.00 response-quality score
-- 2 independent model families
+- 3 live-authenticated worker model families
 - 0 allowed self-approvals
 - 1 authenticated, versioned fleet catalog
 - 30-day declared Cloud coordination retention horizon
@@ -116,7 +119,7 @@ request keys, account menus, and raw prompt fields off screen.
 
 | Surface | Live anchor |
 |---|---|
-| Public product + golden run | <https://rally.agent9.dev/#demo> — `r-20260829-dbb5c0` |
+| Public product + professional proof run | <https://rally.agent9.dev/#demo> — `r-20260830-447f2f` |
 | Cloud project | `rally-agent9-2026` |
 | Cloud Run | `rally-google-coordinator-00004-zxb` in `us-east1` |
 | Immutable container | `sha256:b51e64c4071da49f1b61b97f621c83249bb9b77be9470638a338d6a0125f562e` |

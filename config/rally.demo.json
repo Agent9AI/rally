@@ -19,6 +19,17 @@
       "exec_flags": [
         "--dangerously-skip-permissions"
       ]
+    },
+    "codex": {
+      "bin": "codex",
+      "adapter": "codex",
+      "model": "gpt-5.4",
+      "family": "openai",
+      "address": "codex@updates.agent9.dev",
+      "auth": "per-user-chatgpt",
+      "exec_flags": [
+        "--approve-for-me"
+      ]
     }
   },
   "limits": {
@@ -33,6 +44,12 @@
   "continuity": {
     "second_wind": true,
     "max_recoveries_per_run": 2
+  },
+  "connectors": {
+    "registry": "config/connectors.json",
+    "local": "config/connectors.local.json",
+    "enabled": [],
+    "overrides": {}
   },
   "mail": {
     "enabled": true,
@@ -64,5 +81,5 @@
     "identity_service_account": "rally-local-invoker@rally-agent9-2026.iam.gserviceaccount.com",
     "timeout_sec": 180
   },
-  "_note": "Demo profile. Fast models and low effort so a live run finishes in minutes rather than tens of minutes. Same rules, same guards, same invariant: only the speed changes. Use config/rally.json for real work."
+  "_note": "Demo profile. Fast Gemini and Claude workers plus the user's signed-in Codex CLI keep a live run practical. Same rules, same guards, same invariant: only the speed changes. Use config/rally.json for real work."
 }

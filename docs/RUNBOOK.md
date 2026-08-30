@@ -10,6 +10,7 @@ built, [SPEC.md](SPEC.md).
 | `rally@updates.agent9.dev` | **Commission a run.** Email a task here. |
 | `claude@updates.agent9.dev` | Agent A mailbox (agent-to-agent leg) |
 | `agy@updates.agent9.dev` | Agent B mailbox (agent-to-agent leg) |
+| `codex@updates.agent9.dev` | Agent C mailbox (agent-to-agent leg) |
 
 Only verified owners may commission. Authority comes from the sender address,
 never from anything the body claims. A stranger's mail is fetched, classified,
@@ -50,7 +51,7 @@ make check
 ```
 
 It reports model pins, both CLI binaries, credentials, and the limits. It exits
-non-zero if either binary is missing or the two agents share a model family.
+non-zero if any binary is missing or configured workers share a model family.
 
 ## Daily use
 
@@ -104,13 +105,13 @@ runs/<run_id>/workspace/    the agents' git tree, one commit per turn
 
 ## When it goes wrong
 
-**"execution asymmetry" at startup.** One agent has `exec_flags` and the other
-does not. The agent that cannot run commands can only read source, so its
-verification is weaker than the `done` it records. Give both agents the flag or
-neither.
+**"execution asymmetry" at startup.** One worker has autonomous execution flags
+and another does not. The worker that cannot run commands can only read source,
+so its verification is weaker than the `done` it records. Give every worker
+equivalent execution authority or none.
 
 **"same-family pair" at startup.** The Antigravity CLI also serves Claude models.
-Two agents from one family means the system is reviewing itself. Pin `agy` to a
+Two workers from one family means the system is reviewing itself. Pin `agy` to a
 `gemini-*` model.
 
 **Run halts with `no_progress`.** Four turns passed with no item changing state.

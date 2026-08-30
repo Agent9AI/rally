@@ -24,8 +24,8 @@ and final submission.
 | At least one deployed Google Cloud infrastructure service | PASS | Private Cloud Run revision `rally-google-coordinator-00004-zxb` runs the ADK coordinator in project `rally-agent9-2026`; Firestore, IAM, Secret Manager, Artifact Registry, Cloud Logging, and Cloud Trace are live supporting services. |
 | Reproducible setup instructions | PASS | `README.md` and `docs/RUNBOOK.md` provide local, cloud, test, and operational instructions. |
 | Reviewable repository | PASS | `Agent9AI/rally` is public and carries the Apache License 2.0. The FAQ's private-repository judging-account exception no longer applies. |
-| Real autonomous agent work, not a generic chatbot | PASS | Durable intake, bounded multi-turn execution, repository edits, tests, cross-family verification, replay controls, evidence receipts, and completion invariants are implemented. |
-| Judge-visible live agent proof | PASS | Public run `r-20260829-dbb5c0` shows the exact production-shaped commission, Gemini/Claude turn alternation, implementation, five passing webhook tests, 6/6 cross-family verification, evidence receipts, and zero self-approvals. |
+| Real autonomous agent work, not a generic chatbot | PASS | Durable intake, bounded multi-turn execution, sourced artifact creation, automated checks, cross-family verification, replay controls, evidence receipts, and completion invariants are implemented. |
+| Judge-visible live agent proof | PASS | Public run `r-20260830-447f2f` shows primary-source research, a self-contained executive presentation, a 36-claim ledger, independent rejection of a wrong date and unsupported claim, repair, 6/6 verification, and zero self-approvals. Gemini, Claude, and OpenAI Codex also pass the shipped live provider preflight. |
 | Disclose pre-existing work | PASS | The disclosure says Rally began in the submission period and identifies standard third-party tools and services. |
 
 ## Mandatory blockers before submission

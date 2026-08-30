@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# One MCP surface for every Rally worker. Provider credentials stay behind it.
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+exec uv run --project "$ROOT/cloud" python "$ROOT/cloud/connector_gateway.py" "$@"

@@ -32,6 +32,7 @@ class TestGoogleCloudContract(unittest.TestCase):
             cfg = json.loads((ROOT / "config" / name).read_text())
             self.assertEqual(cfg["agents"]["claude"]["family"], "anthropic")
             self.assertEqual(cfg["agents"]["agy"]["family"], "google")
+            self.assertEqual(cfg["agents"]["codex"]["family"], "openai")
 
     def test_build_and_runtime_use_the_same_region(self):
         cloudbuild = (ROOT / "cloud" / "cloudbuild.yaml").read_text()

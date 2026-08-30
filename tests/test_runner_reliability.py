@@ -153,6 +153,18 @@ class DurableIngressTests(unittest.TestCase):
             self.assertFalse(runner.sync_console(run, {"console": {"enabled": True}}))
         self.assertIsNone(run.s["halt"])
 
+    def test_three_family_rotation_is_stable_and_snapshotted(self):
+        cfg = runtime_config()
+        cfg["agents"]["codex"] = {
+            "model": "gpt-5.4", "family": "openai", "address": "o@example.com",
+        }
+        run = runner.Run.create("ship it", self.tmp.name, cfg)
+
+        self.assertEqual(run.s["agent_order"], ["claude", "agy", "codex"])
+        self.assertEqual(runner.next_actor(run.s, cfg, "claude"), "agy")
+        self.assertEqual(runner.next_actor(run.s, cfg, "agy"), "codex")
+        self.assertEqual(runner.next_actor(run.s, cfg, "codex"), "claude")
+
     def test_agent_failure_halts_when_second_wind_is_off(self):
         cfg = runtime_config(second_wind=False)
         run = runner.Run.create("ship it", self.tmp.name, cfg)

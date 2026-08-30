@@ -65,6 +65,34 @@ const integer = (value, maximum = 10000) => {
   return Number.isInteger(parsed) ? Math.max(0, Math.min(parsed, maximum)) : 0;
 };
 
+async function boundedText(request, maximum) {
+  const declared = Number(request.headers.get("content-length") || "0");
+  if (Number.isFinite(declared) && declared > maximum) return null;
+  if (!request.body) return "";
+
+  const reader = request.body.getReader();
+  const chunks = [];
+  let length = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    length += value.byteLength;
+    if (length > maximum) {
+      await reader.cancel("request body exceeds Rally limit");
+      return null;
+    }
+    chunks.push(value);
+  }
+
+  const joined = new Uint8Array(length);
+  let offset = 0;
+  for (const chunk of chunks) {
+    joined.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return new TextDecoder().decode(joined);
+}
+
 const cleanChanges = (changes) => Array.isArray(changes) ? changes.slice(0, 50).map((item) => ({
   id: text(item?.id, 48),
   state: text(item?.state, 40),
@@ -118,6 +146,7 @@ function normalizeConsoleRun(value, expectedRunId) {
     family: text(agent?.family, 60),
     model: text(agent?.model, 100),
     role: text(agent?.role, 100),
+    participated: agent?.participated === true,
   })) : [];
   const done = integer(value.progress?.done, 1000);
   const total = integer(value.progress?.total, 1000);
@@ -130,7 +159,9 @@ function normalizeConsoleRun(value, expectedRunId) {
   const selfApproved = checklist.filter((item) =>
     item.state === "done" && item.owner && item.owner === item.verified_by
   ).length;
-  const modelFamilies = new Set(agents.map((agent) => agent.family).filter(Boolean)).size;
+  const modelFamilies = new Set(
+    agents.filter((agent) => agent.participated).map((agent) => agent.family).filter(Boolean)
+  ).size;
   return {
     schema_version: 1,
     visibility: value.visibility === "public" ? "public" : "private",
@@ -291,12 +322,8 @@ export default {
         if (!(await safeEqual(bearer(request), env.POLL_TOKEN || ""))) {
           return json({ error: "unauthorized" }, 401);
         }
-        const contentLength = Number(request.headers.get("content-length") || "0");
-        if (Number.isFinite(contentLength) && contentLength > MAX_CONSOLE_BODY) {
-          return json({ error: "too large" }, 413);
-        }
-        const raw = await request.text();
-        if (raw.length > MAX_CONSOLE_BODY) return json({ error: "too large" }, 413);
+        const raw = await boundedText(request, MAX_CONSOLE_BODY);
+        if (raw === null) return json({ error: "too large" }, 413);
         let normalized;
         try {
           normalized = normalizeConsoleRun(JSON.parse(raw), runId);
@@ -357,12 +384,8 @@ export default {
       if (!(await safeEqual(token, env.INGEST_TOKEN || ""))) {
         return json({ error: "not found" }, 404);
       }
-      const contentLength = Number(request.headers.get("content-length") || "0");
-      if (Number.isFinite(contentLength) && contentLength > MAX_BODY) {
-        return json({ error: "too large" }, 413);
-      }
-      const raw = await request.text();
-      if (raw.length > MAX_BODY) return json({ error: "too large" }, 413);
+      const raw = await boundedText(request, MAX_BODY);
+      if (raw === null) return json({ error: "too large" }, 413);
       if (!(await signedByResend(request, raw, env.RESEND_WEBHOOK_SECRET))) {
         return json({ error: "invalid signature" }, 401);
       }

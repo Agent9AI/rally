@@ -35,6 +35,7 @@ def config(enabled=False, public=False):
         "agents": {
             "claude": {"family": "anthropic", "model": "sonnet"},
             "agy": {"family": "google", "model": "gemini-3.7-flash-low"},
+            "codex": {"family": "openai", "model": "gpt-5.4"},
         },
         "ingress": {
             "worker_url": "https://worker.example",
@@ -87,7 +88,13 @@ class ConsoleSnapshotTests(unittest.TestCase):
             "owner": "claude", "verified_by": "agy", "evidence": "8 tests passed",
             "rejections": 0,
         }]
-        payload = rally_console.build_snapshot(state(checklist=checklist), config())
+        payload = rally_console.build_snapshot(state(
+            checklist=checklist,
+            turns=[
+                {"actor": "claude", "family": "anthropic", "model": "sonnet"},
+                {"actor": "agy", "family": "google", "model": "gemini-3.7-flash-low"},
+            ],
+        ), config())
         self.assertEqual(payload["progress"], {"done": 1, "total": 1})
         self.assertEqual(payload["checklist"][0]["verified_by"], "agy")
         self.assertEqual(payload["value_receipt"], {
@@ -96,6 +103,8 @@ class ConsoleSnapshotTests(unittest.TestCase):
             "model_families": 2,
             "self_approved": 0,
         })
+        codex = next(agent for agent in payload["agents"] if agent["id"] == "codex")
+        self.assertFalse(codex["participated"])
 
     def test_real_turn_history_is_preserved_for_the_console(self):
         turns = [{

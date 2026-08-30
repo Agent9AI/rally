@@ -2,4 +2,8 @@
 # Rally entry point. Keeps the python layout an implementation detail.
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+if [[ "${1:-}" == "connectors" ]]; then
+  shift
+  exec uv run --project "$ROOT/cloud" python "$ROOT/cloud/connector_cli.py" "$@"
+fi
 exec python3 "$ROOT/src/runner.py" "$@"

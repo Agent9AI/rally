@@ -190,6 +190,7 @@ function avatarFor(entry) {
   if (entry.kind === "coordination") return { letter: "G", className: "coordinator" };
   if (entry.kind === "recovery") return { letter: "R", className: "recovery" };
   if (entry.actor === "claude") return { letter: "C", className: "claude" };
+  if (entry.actor === "codex") return { letter: "O", className: "openai" };
   return { letter: "G", className: "gemini" };
 }
 
@@ -378,10 +379,13 @@ function renderDetail(run) {
   agents.append(element("p", "label", "Agent roster"));
   (run.agents || []).forEach((agent) => {
     const row = element("div", "agent-row");
-    row.append(element("span", `agent-dot ${agent.family === "google" ? "google" : "anthropic"}`));
+    const familyClass = ["google", "anthropic", "openai"].includes(agent.family)
+      ? agent.family
+      : "other";
+    row.append(element("span", `agent-dot ${familyClass}`));
     const copy = element("div");
     copy.append(element("b", "", agent.label), element("small", "", `${agent.model} · ${agent.family}`));
-    row.append(copy, element("span", "", "Active"));
+    row.append(copy, element("span", "", agent.participated ? "Participated" : "Available"));
     agents.append(row);
   });
   fragment.append(agents);

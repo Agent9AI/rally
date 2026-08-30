@@ -58,7 +58,7 @@
               <button class="button button-primary" type="button" data-open-setup>Give the team a goal</button>
               <a class="button button-outline" href="#demo">Watch a real run</a>
             </div>
-            <p class="hero-note"><span aria-hidden="true">✓</span> Real Gemini and Claude work is live today. Company-tool connections are next.</p>
+            <p class="hero-note"><span aria-hidden="true">✓</span> Gemini, Claude, and OpenAI Codex are real Rally workers—not decorative integrations. Connections remain per user.</p>
           </div>
 
           <aside class="operator-card" aria-label="Rally accountable AI team">
@@ -72,6 +72,8 @@
               <div class="team-member gemini-member"><span>G</span><p><small>Coordinate</small><strong>Gemini</strong></p><b>Active</b></div>
               <div class="handoff-lane" aria-label="Work handed between models"><i></i><span>work</span><i></i></div>
               <div class="team-member claude-member"><span>C</span><p><small>Build + review</small><strong>Claude</strong></p><b>Active</b></div>
+              <div class="handoff-lane openai-lane" aria-label="Work handed to the next model"><i></i><span>verify</span><i></i></div>
+              <div class="team-member openai-member"><span>O</span><p><small>Build + review</small><strong>OpenAI Codex</strong></p><b>Ready</b></div>
             </div>
             <div class="operator-rule"><div><span>The promise</span><code>one goal → verified outcome</code></div><b>No model approves its own work</b></div>
           </aside>
@@ -79,7 +81,7 @@
 
         <div class="hero-proof" aria-label="Rally verification results">
           <div><strong>1</strong><span>goal from your team</span></div>
-          <div><strong>2+</strong><span>models rally around it</span></div>
+          <div><strong>3</strong><span>model families ready</span></div>
           <div><strong>Every</strong><span>claim returns with proof</span></div>
           <div><strong>0</strong><span>self-approvals allowed</span></div>
         </div>
@@ -96,8 +98,8 @@
           <article>
             <span class="story-step">01</span>
             <p class="label">One hard goal</p>
-            <h3>“Investigate yesterday’s checkout drop and prepare the fix.”</h3>
-            <small>Your team asks once in ordinary language.</small>
+            <h3>“Build a sourced executive briefing on Google’s AI launches from the last 12 months.”</h3>
+            <small>Ask for a finished professional outcome—not a chain of prompts.</small>
           </article>
           <span class="story-arrow" aria-hidden="true">→</span>
           <article class="rally-step">
@@ -139,7 +141,7 @@
             <p class="eyebrow">This is not a concept</p>
             <h2 id="workspace-title">Watch the accountable team work.</h2>
           </div>
-          <p>A genuine public run: Gemini coordinates, independent model families execute and review, and every completion claim carries evidence.</p>
+          <p>A genuine public run: Gemini coordinates, independent model families execute and review, and every completion claim carries evidence. The roster distinguishes workers that participated from workers available for the next run.</p>
         </div>
 
         <div class="app-window">
@@ -214,7 +216,7 @@
       </section>
 
       <section class="section connector-section" id="connectors">
-        <div class="section-heading"><p class="eyebrow">Connect the company once</p><h2>Give Rally a desk in the systems you already run.</h2><p>An administrator connects each platform, chooses the allowed resources, and decides what Rally may read, draft, execute, or execute only after approval.</p></div>
+        <div class="section-heading"><p class="eyebrow">Ten connector paths · one policy boundary</p><h2>Give Rally a desk in the systems you already run.</h2><p>Each user connects only the accounts they are authorized to use. Administrators set organization-wide resource boundaries and decide what Rally may read, draft, execute, or hold for approval. BigQuery, Atlassian, and Salesforce stay together in the third row; Hyperagent adds an external agent workforce below them.</p></div>
         <div class="connector-grid">
           <article>
             <div class="connector-top"><span class="connector-icon workspace-icon">G</span><span class="roadmap-chip">Broadest reach</span></div>
@@ -258,8 +260,42 @@
             <div class="connector-policy"><span>Default</span><b>Read + report</b><span>Refund/write</span><b>Human approval</b></div>
             <a href="https://docs.stripe.com/mcp">Official connector path ↗</a>
           </article>
+          <article>
+            <div class="connector-top"><span class="connector-icon bigquery-icon">BQ</span><span class="roadmap-chip ready-chip">Live discovery</span></div>
+            <h3>BigQuery</h3>
+            <p>Turn governed company data into sourced analysis, anomaly investigations, and executive-ready answers through Google’s official remote MCP server.</p>
+            <div class="connector-policy"><span>Default</span><b>Metadata + bounded query</b><span>Write/admin</span><b>Human gate</b></div>
+            <a href="https://docs.cloud.google.com/bigquery/docs/use-bigquery-mcp">Official connector path ↗</a>
+          </article>
+          <article>
+            <div class="connector-top"><span class="connector-icon atlassian-icon">A</span><span class="roadmap-chip ready-chip">Gateway ready</span></div>
+            <h3>Atlassian</h3>
+            <p>Bring Jira work, Confluence knowledge, and Compass services into one accountable assignment without copying context between assistants.</p>
+            <div class="connector-policy"><span>Default</span><b>Search + synthesize</b><span>Create/edit</span><b>Verify first</b></div>
+            <a href="https://www.atlassian.com/platform/rovo-mcp">Official connector path ↗</a>
+          </article>
+          <article>
+            <div class="connector-top"><span class="connector-icon salesforce-icon">SF</span><span class="roadmap-chip ready-chip">Gateway ready</span></div>
+            <h3>Salesforce</h3>
+            <p>Reason across customer, pipeline, service, Data 360, and Tableau context through Salesforce-hosted MCP servers and tenant authorization.</p>
+            <div class="connector-policy"><span>Default</span><b>Query + analyze</b><span>Record writes</span><b>Human gate</b></div>
+            <a href="https://developer.salesforce.com/blogs/2026/06/the-salesforce-developers-guide-to-the-summer-26-release">Official connector path ↗</a>
+          </article>
+          <article class="connector-featured">
+            <div class="connector-featured-copy">
+              <div class="connector-top"><span class="connector-icon hyperagent-icon">HA</span><span class="roadmap-chip ready-chip">OAuth MCP ready</span></div>
+              <h3>Hyperagent</h3>
+              <p>Delegate bounded work to the user’s existing Hyperagent workforce: discover their agents, start background threads, follow up, and return the result to Rally’s independent verification loop.</p>
+              <a href="https://www.hyperagent.com/docs/concepts/agents/invocations/mcp-server/">Official connector path ↗</a>
+            </div>
+            <div class="connector-featured-policy">
+              <p class="connector-kicker">External agent delegation</p>
+              <div class="connector-policy"><span>Default</span><b>List agents + read results</b><span>Start/send</span><b>Human approval</b></div>
+              <small>One-time browser OAuth · per-user token namespace · hosted remote MCP</small>
+            </div>
+          </article>
         </div>
-        <p class="connector-boundary"><b>Honest boundary:</b> email, cross-model repository execution, the Google governance plane, the public evidence console, and Rally’s A2A v1.0 boundary are live now. The six official MCP connection paths above remain the product sequence and are not presented as shipped.</p>
+        <p class="connector-boundary"><b>Honest boundary:</b> email, cross-model execution, Google governance, public evidence, and Rally’s A2A v1.0 boundary are live. BigQuery’s official endpoint has passed authenticated MCP discovery; its six tools remain denied until an administrator approves a read-only allowlist. Atlassian, Salesforce, and Hyperagent are runtime-ready but not called connected until each user completes provider authentication and live discovery. The other six remain the product sequence.</p>
       </section>
 
       <section class="section architecture-section" id="proof">
@@ -267,7 +303,7 @@
         <div class="flow-grid">
           <article><span class="flow-number blue">1</span><p class="label">Commission</p><h3>Signed email ingress</h3><p>Resend and a Worker/D1 queue authenticate, deduplicate, and retain the request until handling succeeds.</p></article>
           <article><span class="flow-number red">2</span><p class="label">Govern</p><h3>Gemini 3.7 + ADK</h3><p>An IAM-protected Cloud Run service preserves intent and atomically records the handoff in Firestore.</p></article>
-          <article><span class="flow-number yellow">3</span><p class="label">Execute</p><h3>Cross-family workers</h3><p>Claude and Gemini alternate implementation and review in one controlled repository workspace.</p></article>
+          <article><span class="flow-number yellow">3</span><p class="label">Execute</p><h3>Cross-family workers</h3><p>Claude, Gemini, and OpenAI Codex rotate through implementation and independent review in one controlled workspace.</p></article>
           <article><span class="flow-number green">4</span><p class="label">Prove</p><h3>Evidence comes home</h3><p>Cloud Trace, test output, verifier identity, and residual risk arrive in the same executive email thread.</p></article>
         </div>
         <div class="proof-grid">
@@ -279,10 +315,10 @@
           </article>
           <article class="test-card">
             <div class="card-header"><div><span class="terminal-icon">›_</span><b>Release gates</b></div><span class="status-chip complete">Green</span></div>
-            <pre><code>69  runner + ingress + policy + site
-20  Cloud service + A2A protocol
-──
-93  automated tests
+            <pre><code>80  runner + ingress + policy + site
+25  Cloud, A2A + connector gateway
+───
+105 automated tests
 
 ✓ Terraform validated
 ✓ Worker bundle verified
@@ -309,15 +345,16 @@
         <div class="section-heading"><p class="eyebrow">Clear answers</p><h2>Built to be questioned.</h2></div>
         <div class="faq-grid">
           <details><summary>Is the console showing a mock run?</summary><p>No. It reads an explicitly public, allowlisted projection of Rally’s authoritative runner state from Cloudflare D1. If that service fails, the page shows the failure instead of sample data.</p></details>
-          <details><summary>Are two agents just agreeing with each other?</summary><p>No. They execute separately, come from different model families, and cannot verify checklist work they own.</p></details>
+          <details><summary>Are the agents just agreeing with each other?</summary><p>No. They execute as separate provider-native processes, come from different model families, and cannot verify checklist work they own. The live receipt counts only families that actually participated.</p></details>
           <details><summary>Do the agents wait for each other?</summary><p>Yes. Rally runs one model at a time and saves only validated state before the next handoff. With Second Wind enabled, a timeout, failed process, or reported blocker gives the other model one bounded recovery attempt from that saved state—including inspection of partial workspace edits—without auto-approving anything.</p></details>
           <details><summary>Do emails literally trigger every model turn?</summary><p>The first email starts the real run and every turn is mirrored to the thread. The authoritative runner dispatches the next model locally.</p></details>
-          <details><summary>What happens when the agents cannot finish?</summary><p>Second Wind first asks the teammate to diagnose and take over a recoverable failure. Rally still stops with a precise report when both models remain blocked, disagree repeatedly, stop making progress, hit a hard budget, cross an authority boundary, or receive a human STOP.</p></details>
+          <details><summary>What happens when the agents cannot finish?</summary><p>Second Wind first asks the next independent model to diagnose and take over a recoverable failure. Rally still stops with a precise report when the fleet remains blocked, disagrees repeatedly, stops making progress, hits a hard budget, crosses an authority boundary, or receives a human STOP.</p></details>
           <details><summary>Is Rally an official Google product?</summary><p>No. Rally is an independent Agent9 project built with Gemini, Google ADK, and Google Cloud for the All Things Agentic Hackathon.</p></details>
           <details><summary>How does A2A fit—and is Rally A2A compatible?</summary><p>Yes. Rally publishes an A2A v1.0 Agent Card and accepts tasks over JSON-RPC and HTTP+JSON; official SDK clients exercise both paths. A2A enables discovery and task exchange. Rally adds the controls around the work: authority, durable state, recovery, evidence, and independent verification. The protocol was <a href="https://developers.googleblog.com/en/a2a-a-new-era-of-agent-interoperability/">introduced by Google</a> and now advances under <a href="https://a2a-protocol.org/latest/blog/2026/08/27/a-new-chapter-for-a2a-joining-the-agentic-ai-foundation/">Linux Foundation open governance</a>. Compatibility is not certification or endorsement.</p></details>
           <details><summary>What stays private?</summary><p>Commissioner identity, worktree paths, mail IDs, raw prompts, credentials, and cloud request keys never enter the public console record.</p></details>
-          <details><summary>What does “give Rally a job” mean?</summary><p>Start with one bounded outcome Rally can own repeatedly—such as repository maintenance or release preparation—then grant only the access, limits, and approval rules that outcome needs.</p></details>
-          <details><summary>Are the business connectors live?</summary><p>Not yet. The current build proves email intake, cross-model repository execution, Google governance, and public evidence. Google Workspace, Slack, GitHub, Cloudflare, n8n, and Stripe are the researched official connection paths, clearly labeled as roadmap.</p></details>
+          <details><summary>Are AI and business-system connections shared between users?</summary><p>No. Each user authorizes their own provider accounts. Rally selects a separate one-way connection profile from the authenticated commissioner, namespaces OAuth storage to that profile, and freezes only that user’s approved systems and tools into the run.</p></details>
+          <details><summary>What does “give Rally a job” mean?</summary><p>Ask for a finished professional outcome—such as a sourced market briefing, an executive presentation, a customer-risk review, or a launch plan—then grant only the sources, limits, and approval rules that outcome needs.</p></details>
+          <details><summary>Are the business connectors live?</summary><p>The gateway is, and BigQuery has completed a real authenticated handshake with Google’s official MCP endpoint and discovered six tools. All six remain denied until an administrator approves a read-only allowlist. Atlassian, Salesforce, and Hyperagent have runnable per-user OAuth adapters but are not presented as connected before their provider checks pass. Google Workspace, Slack, GitHub, Cloudflare, n8n, and Stripe remain researched official paths in the product sequence.</p></details>
         </div>
       </section>
 
@@ -356,7 +393,7 @@
       </section>
       <section class="setup-panel" data-setup-panel="self" hidden>
         <div class="setup-promise"><b>Provider-native authorization.</b><span>Credentials stay in provider tooling and your operating-system keychain.</span></div>
-        <div class="provider-list"><div><span class="provider-mark google-mark">G</span><div><b>Google Cloud</b><p>Browser sign-in through Google CLI; Terraform provisions the control plane.</p></div><span class="provider-status">OAuth</span></div><div><span class="provider-mark cloudflare-mark">C</span><div><b>Cloudflare</b><p>Wrangler opens Cloudflare consent; no API token is pasted into Rally.</p></div><span class="provider-status">OAuth</span></div><div><span class="provider-mark resend-mark">R</span><div><b>Resend</b><p>Managed mail avoids customer credentials. Bring-your-own mail is optional.</p></div><span class="provider-status muted-status">Optional</span></div></div>
+        <div class="provider-list"><div><span class="provider-mark google-mark">G</span><div><b>Google Cloud + Gemini</b><p>Browser sign-in through Google tooling; Terraform provisions the control plane.</p></div><span class="provider-status">Per user</span></div><div><span class="provider-mark anthropic-mark">A</span><div><b>Anthropic Claude</b><p>Each operator authorizes their own Claude CLI account; Rally never shares a seat.</p></div><span class="provider-status">Per user</span></div><div><span class="provider-mark openai-mark">O</span><div><b>OpenAI Codex</b><p>Sign in with ChatGPT through Codex CLI; credentials stay in provider tooling.</p></div><span class="provider-status">Per user</span></div><div><span class="provider-mark cloudflare-mark">C</span><div><b>Cloudflare</b><p>Wrangler opens Cloudflare consent; no API token is pasted into Rally.</p></div><span class="provider-status">Per user</span></div><div><span class="provider-mark resend-mark">R</span><div><b>Resend</b><p>Managed mail avoids customer credentials. Bring-your-own mail is optional.</p></div><span class="provider-status muted-status">Optional</span></div></div>
         <a class="button button-outline full-width" href="https://github.com/Agent9AI/rally/blob/main/docs/RUNBOOK.md">Open the self-host runbook</a>
       </section>
     </dialog>

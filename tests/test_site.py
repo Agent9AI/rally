@@ -41,6 +41,9 @@ class TestProductSite(unittest.TestCase):
             "One hard goal",
             "Watch the accountable team work",
             "No model approves its own work",
+            "OpenAI Codex",
+            "Connections remain per user",
+            "Are AI and business-system connections shared between users?",
             "Second Wind recovery",
             "Bounded recovery, not auto-approval",
             "Gemini 3.7 + ADK",
@@ -67,7 +70,10 @@ class TestProductSite(unittest.TestCase):
         self.assertIn('rel="canonical" href="https://rally.agent9.dev/"', self.html)
         self.assertIn("data-second-wind", self.html)
         self.assertIn("Loading authoritative runs", self.html)
-        for connector in ("Google Workspace", "Slack", "GitHub", "Cloudflare", "n8n", "Stripe"):
+        for connector in (
+            "Google Workspace", "Slack", "GitHub", "Cloudflare", "n8n", "Stripe",
+            "BigQuery", "Atlassian", "Salesforce", "Hyperagent",
+        ):
             self.assertIn(f"<h3>{connector}</h3>", self.html)
         self.assertNotIn("Request a managed pilot", self.html)
         self.assertNotIn("Webhook launch", self.html)
@@ -97,9 +103,9 @@ class TestProductSite(unittest.TestCase):
         self.assertIn('entry.kind === "recovery"', app)
         with open(os.path.join(ROOT, "studio", "og-card.html")) as handle:
             card = handle.read()
-        for phrase in ("THE ACCOUNTABLE AI TEAM", "Your AIs, finally", "93", "6/6", "0"):
+        for phrase in ("THE ACCOUNTABLE AI TEAM", "Your AIs, finally", "105", "6/6", "0"):
             self.assertIn(phrase, card)
-        self.assertNotIn("75 TESTS", card)
+        self.assertNotIn("99 TESTS", card)
 
     def test_local_assets_exist_and_no_dead_hash_links(self):
         parser = LinkCollector()

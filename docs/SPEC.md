@@ -1,6 +1,6 @@
 # Rally: Technical Specification
 
-**Version 1. 2026-08-28.** This is the concrete build. It fills in the blanks left
+**Version 1.1. 2026-08-30.** This is the concrete build. It fills in the blanks left
 by [FOUNDING.md](FOUNDING.md), which remains the authority on intent. Where this
 document and the founding document disagree, the founding document is right and
 this one has a bug.
@@ -14,18 +14,17 @@ this one has a bug.
 | Transport, both directions | Resend (inbound webhook, outbound API) |
 | Agent A | Claude CLI (`claude -p`) |
 | Agent B | Antigravity CLI (`agy -p`) |
+| Agent C | OpenAI Codex CLI (`codex exec`) |
 | Durable ingress | Cloudflare Worker + D1 |
 | Intake coordinator | Google ADK + Gemini 3.7 on Cloud Run |
 | Coordinator state | Firestore, atomically idempotent by mail message ID |
 | Secrets and telemetry | Secret Manager, Cloud Logging, Cloud Trace |
-| Turn execution | Local runner on a machine hosting both CLIs |
+| Turn execution | Local runner on a machine hosting the authorized CLIs |
 | Work product | Git checkout, one branch per run |
 
-Two command line agents rather than two model APIs, for the reason given in
-founding section 11: the unit of work is a shell invocation, so the harness stays
-small and a third family is a new adapter rather than a new architecture. Both
-CLIs happen to expose the same shape (`-p`, `--model`, `--effort`,
-`--output-format`), which makes the adapters near-identical.
+Provider-native command line agents rather than raw model APIs, for the reason
+given in founding section 11: the unit of work is a shell invocation, so the
+harness stays small and a new family is an adapter rather than a new architecture.
 
 ## 2. Identities
 
@@ -34,6 +33,7 @@ updates.agent9.dev
   rally@updates.agent9.dev      Human commission address
   claude@updates.agent9.dev     Agent A mailbox
   agy@updates.agent9.dev        Agent B mailbox
+  codex@updates.agent9.dev      Agent C mailbox
 ```
 
 The sending domain and API key are shared with existing projects. This is a
@@ -57,7 +57,7 @@ block. Nothing is hidden in headers that is not also visible in the body.
 ```
 X-Rally-Run:   r-20260828-a1b2c3
 X-Rally-Turn:  7
-X-Rally-From:  claude | agy
+X-Rally-From:  claude | agy | codex
 Auto-Submitted: auto-generated
 In-Reply-To / References: standard threading to the commission message
 ```
@@ -104,10 +104,11 @@ Item states, as founding section 5: `open`, `claimed`, `awaiting-verification`,
 reason is one of `complete`, `turn_budget`, `no_progress`, `disputed`, `blocked`,
 `stopped_by_human`.
 
-**Schema enforcement.** The canonical schema lives at `schema/envelope.json`. The
-Antigravity adapter passes it to `agy --json-schema`, so malformed output is
-prevented rather than detected. The Claude adapter validates after the fact and
-gets exactly one reprompt on failure before the turn is recorded as failed.
+**Schema enforcement.** The canonical schema lives at `schema/envelope.json`.
+Every adapter's output is validated and gets exactly one reprompt on failure
+before the turn is recorded as failed. Antigravity may additionally use its
+native schema mode; Codex writes its final response separately so CLI progress
+cannot corrupt the envelope.
 
 ## 4. Two planes
 
@@ -153,23 +154,23 @@ rebuild it. That is the recovery path, used deliberately, not automatically.
 1. **Commission.** A verified human sends a task to `rally@`. The runner creates
    the run, allocates `run_id`, sends an authenticated and idempotent handoff to
    the Google ADK coordinator, cuts the workspace, and sets turn 0.
-2. **Scoping.** Claude converts the goal into a checklist and mails `agy@`. No
-   work yet.
+2. **Scoping.** The first configured worker converts the goal into a checklist
+   and hands it to the next family. No work yet.
 3. **Negotiation.** Antigravity accepts, splits, adds, or challenges items.
    Agreement on the checklist precedes work.
-4. **Work turns.** Agents alternate. Each turn: verify what the counterpart left
+4. **Work turns.** Agents rotate deterministically. Each turn: verify what another worker left
    in `awaiting-verification`, then advance one or more of your own items, commit,
    mail the envelope.
 5. **Completion.** When every item is `done`, the agent holding the turn writes
    the human report.
 6. **Recover or halt.** With Second Wind enabled, the first model-process failure
    or newly reported blocker creates a bounded recovery event and hands the last
-   accepted state to the other family. A human stop, authority boundary, hard
+   accepted state to the next family. A human stop, authority boundary, hard
    budget, repeated dispute, exhausted recovery allowance, or unresolved backup
    review ends the run with `halt` set and a message to the human.
 
-The invariant that makes the second agent worth its cost: **an item may only move
-to `done` by the agent that does not own it.**
+The invariant that makes independent agents worth their cost: **an item may only
+move to `done` by an agent that does not own it.**
 
 ## 7. Verification, rejection, dispute
 
@@ -199,7 +200,7 @@ prevents infinite polite ping-pong without escalating every trivial nit.
 
 ## 8. Agent invocation
 
-Both adapters are thin. They build a prompt, run one command, parse one envelope.
+All adapters are thin. They build a prompt, run one command, parse one envelope.
 
 **Claude:**
 
@@ -218,6 +219,20 @@ cd "$RUN_WORKDIR" && timeout "$TURN_TIMEOUT_SEC" \
       --print-timeout 25m -p="$TURN_PROMPT"
 ```
 
+**OpenAI Codex:**
+
+```bash
+cd "$RUN_WORKDIR" && timeout "$TURN_TIMEOUT_SEC" \
+  codex exec --model "$RALLY_CODEX_MODEL" --cd "$RUN_WORKDIR" \
+        --ephemeral --ignore-user-config --skip-git-repo-check \
+        --approve-for-me --output-last-message "$PRIVATE_RESULT" "$TURN_PROMPT"
+```
+
+Codex uses each operator's own Sign in with ChatGPT session. It is ephemeral and
+ignores global user configuration; Rally adds back only the immutable run-scoped
+connector gateway. The provider account and connector profile are never shared
+or pooled across users.
+
 **The prompt must be attached to the flag as `-p=...`, and it must come last.**
 `agy` parses flags Go style, so a bare `-p` swallows the next token: written as
 `agy -p --model gemini-3.1-pro-high "prompt"`, the CLI takes `--model` as the
@@ -231,10 +246,11 @@ with no higher rungs, so any richer internal scale maps down onto it.
 `claude-sonnet-4-6` and `claude-opus-4-6-thinking` alongside the Gemini family.
 Left unpinned, Rally can silently become one model family reviewing itself, which
 deletes the entire premise of founding section 3. The runner therefore refuses to
-start a turn unless `RALLY_AGY_MODEL` matches `^gemini-` and `RALLY_CLAUDE_MODEL`
-does not. Defaults: `gemini-3.1-pro-high` and `opus`.
+start a turn unless every configured worker declares a distinct family and the
+Antigravity worker remains pinned to `gemini-*`. Defaults are
+`gemini-3.1-pro-high`, `opus`, and `gpt-5.4`.
 
-**Placement.** Both CLIs must be on the machine running the turn. `agy` ships with
+**Placement.** The configured CLIs must be on the machine running the turn. `agy` ships with
 the Antigravity desktop application rather than a package registry, so the runner
 lives wherever that is installed. The runner is otherwise host agnostic and holds
 no assumption about which machine it is.
@@ -310,7 +326,7 @@ rally/
   schema/envelope.json      canonical envelope schema
   src/worker/               Cloudflare Worker: inbound webhook, durable queue
   src/runner.py             run store, turn dispatch, budget enforcement
-  src/agents.py             claude and agy adapters
+  src/agents.py             Claude, Antigravity, and Codex adapters
   src/cloud_coordinator.py  authenticated Cloud Run bridge
   cloud/rally_adk/          ADK + Gemini intake agent
   cloud/service.py          Cloud Run HTTP service
@@ -325,7 +341,7 @@ rally/
 
 - Whether `agy` can run on arm64 Linux, which would let the runner leave the
   desktop machine. Unknown, and the design deliberately does not depend on it.
-- Whether the scoping turn should be allowed to run twice when the two agents
+- Whether the scoping turn should be allowed to run twice when two agents
   produce very different checklists, or whether first disagreement should go
   straight to negotiation.
 - Retention: how long run branches and threads are kept before archival.

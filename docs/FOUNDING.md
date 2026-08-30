@@ -1,6 +1,6 @@
 # Rally
 
-**Founding document.** Written 2026-08-28. This describes what Rally is and what
+**Founding document.** Written 2026-08-28; fleet amendment 2026-08-30. This describes what Rally is and what
 it must be true to. It is deliberately free of any one deployment's hostnames,
 providers, or wiring, so the idea survives a change of infrastructure.
 
@@ -8,9 +8,9 @@ providers, or wiring, so the idea survives a change of infrastructure.
 
 ## 1. The idea
 
-Rally is a system in which two AI coding agents, each from a different model
-family, carry a single task through to completion by writing email to each
-other.
+Rally is a system in which two or more AI agents, each from a different model
+family, carry a single task through to completion through durable, explicit
+handoffs.
 
 A person starts it once. They send one message describing what they want. From
 that point the agents correspond directly: they agree on a checklist, divide it,
@@ -46,23 +46,22 @@ reasoning is much more visible in prose addressed to a peer than in a scratchpad
 The cost is real and accepted: every turn spends a send, adds latency, and
 crosses a network boundary that can fail. Section 7 exists because of that.
 
-## 3. Why two agents, and why not one agent twice
+## 3. Why different families, and why not one agent twice
 
 Heterogeneity is the whole thesis.
 
 A model asked to review its own output tends to agree with itself. It shares its
 own blind spots, its own training priors, and its own characteristic mistakes,
-so the review is close to free of information. Two models from different
-families fail in different places. Where one hallucinates an API that does not
-exist, the other has no reason to hallucinate the same one. Where one is
-confidently wrong about a version, the other is often plainly right.
+so the review is close to free of information. Models from different families
+fail in different places. Where one hallucinates an API that does not exist,
+another has no reason to hallucinate the same one. Where one is confidently
+wrong about a version, another is often plainly right.
 
-So Rally's second agent is not redundancy and it is not load balancing. It is an
-adversarial reviewer that happens to also be a capable worker. The value comes
-from the disagreement, and the system should be built to surface disagreement
-rather than smooth it over.
+So additional Rally agents are not decorative redundancy or simple load
+balancing. Each is an adversarial reviewer that also happens to be a capable
+worker. The value comes from independent execution and useful disagreement.
 
-A corollary: when the two agents agree immediately and completely on every item,
+A corollary: when every agent agrees immediately and completely on every item,
 that is weak evidence of correctness and worth treating with suspicion.
 
 ## 4. The loop
@@ -71,7 +70,7 @@ that is weak evidence of correctness and worth treating with suspicion.
    required human action.
 
 2. **Scoping.** The receiving agent converts the goal into an explicit checklist
-   of concrete, verifiable items, and mails it to its counterpart. It does not
+   of concrete, verifiable items, and hands it to the next worker. It does not
    start work yet. The first exchange is about agreeing what "done" means.
 
 3. **Negotiation.** The counterpart may add items, split items it thinks are too
@@ -84,8 +83,8 @@ that is weak evidence of correctness and worth treating with suspicion.
    the work is correct, and the updated checklist.
 
 5. **Verification.** No agent marks its own item complete. An item moves to done
-   only when the *other* agent has independently checked it and said so. This is
-   the rule that makes the second model worth its cost.
+   only when a worker from another model family independently checks it and says
+   so. This is the rule that makes additional models worth their cost.
 
 6. **Completion.** When every item is verified done, the agent holding the turn
    writes a single report to the human: what was asked, what was built, what was
@@ -109,25 +108,25 @@ States are deliberately few:
 
 - `open` (agreed, unclaimed)
 - `claimed` (an agent is working it)
-- `awaiting-verification` (worked, needs the other agent to check)
-- `done` (verified by the agent that did not do the work)
+- `awaiting-verification` (worked, needs a non-owning agent to check)
+- `done` (verified by a different worker than the one that did the work)
 - `blocked` (needs a human, with the specific reason)
 
 Two rules give the loop its termination guarantee. First, an item may only be
-moved to `done` by the agent that did not do the work. Second, every message
+moved to `done` by a different worker than the one that did the work. Second, every message
 must carry the complete current checklist, so that any single message is enough
 to reconstruct the state of the task. A lost message costs a turn, not the run.
 
 ## 6. Roles are per turn, not per agent
 
-Neither agent is "the worker" and neither is "the reviewer". On any given turn
-an agent is doing some of both: verifying what its counterpart just claimed, then
-advancing items of its own. Fixed roles waste half the system's capability and
-create a hierarchy the work does not need.
+No agent is permanently "the worker" or "the reviewer". On any given turn an
+agent may do some of both: verifying what another worker claimed, then advancing
+items of its own. Fixed roles waste capability and create a hierarchy the work
+does not need.
 
 The one asymmetry is the commission. The agent that receives the human's
-original email owns scoping and owns the final report, so that the human deals
-with one correspondent rather than two.
+original email owns scoping; the agent holding the terminal turn writes the
+final report, so that the human still deals with one Rally identity.
 
 ## 7. Guardrails
 
@@ -140,14 +139,14 @@ checklist as it stands. It does not silently continue.
 
 **Second Wind.** An administrator may enable a bounded recovery handoff. When a
 model process fails or an accepted turn reports a blocker, the runner preserves
-the last accepted checklist, records the failed attempt, and gives the other
+the last accepted checklist, records the failed attempt, and gives the next
 model family one chance to diagnose or take ownership. Partial workspace edits
 are treated as untrusted work to inspect, not accepted state. A takeover never
-transfers approval authority: the repairing model still needs the other family
+transfers approval authority: the repairing model still needs another family
 to verify its work.
 
 **Progress requirement.** If N consecutive turns pass with no checklist item
-changing state, the run is not converging. It halts and escalates. Two agents
+changing state, the run is not converging. It halts and escalates. Agents
 politely agreeing with each other forever is the characteristic failure of this
 design, and it must be detected structurally rather than hoped away.
 
@@ -178,12 +177,12 @@ of the message asking nicely.
 
 ## 8. Definition of done
 
-A run is done when every checklist item is `done`, each verified by the agent
-that did not perform it, and the human has received one report describing the
+A run is done when every checklist item is `done`, each verified by a different
+worker than the one that performed it, and the human has received one report describing the
 outcome and the evidence.
 
 A run is *not* done because the agents ran out of things to say, because the
-budget was spent, or because both agents feel good about it. Those are halts,
+budget was spent, or because all agents feel good about it. Those are halts,
 and they are reported as halts.
 
 ## 9. What the human experiences
@@ -200,36 +199,38 @@ still open. Not a transcript, and not a log.
 ## 10. Non-goals
 
 - **Not a chat product.** No human sits in the loop turn by turn.
-- **Not a general agent framework.** Rally is one pattern: two peers, one
-  checklist, email between them.
-- **Not more than two agents, for now.** Two is enough to get adversarial
-  verification. Three is a different and harder coordination problem, and the
-  design should not be contorted in advance to accommodate it.
+- **Not a general agent framework.** Rally is one pattern: independent peers,
+  one checklist, deterministic custody, and durable handoffs.
+- **Not a crowd of decorative integrations.** A provider appears in the active
+  fleet only when Rally can genuinely dispatch it with equivalent execution and
+  verification authority.
 - **Not real time.** Email latency is acceptable. If a task needs sub-second
   coordination, it is the wrong task for this system.
 - **Not autonomous commissioning.** Agents do not start runs. People do.
 
 ## 11. First implementation
 
-The first two participants are the **Claude CLI** and the **Gemini CLI**, each
-driven headlessly in single-prompt mode on a small always-on machine. Both are
+The first participants were the **Claude CLI** and the **Gemini CLI**. The first
+fleet expansion adds **OpenAI Codex CLI** through the user's own ChatGPT sign-in.
+Each is driven headlessly in single-prompt mode on a small always-on machine. All are
 genuinely agentic: they can read and write files, run commands, and use tools,
-so both can execute checklist items rather than only comment on them. Each gets
+so each can execute checklist items rather than only comment on them. Each gets
 its own mailbox and its own working checkout.
 
-Choosing two command line agents rather than two raw model APIs is deliberate.
+Choosing provider-native command line agents rather than raw model APIs is deliberate.
 The unit of work is a shell invocation with a prompt, which keeps the harness
-small, keeps the agents swappable, and means adding a third family later is a
-new function rather than a new architecture.
+small and keeps the agents swappable. The OpenAI expansion validated that
+choice: it required one adapter and a provider-neutral rotation, not a new
+control plane.
 
 ## 12. Open questions
 
 These are known unknowns, recorded rather than resolved.
 
 - How much of the working state lives in the message versus a shared workspace
-  both agents can reach? Fully self-contained messages are more robust and more
+  all agents can reach? Fully self-contained messages are more robust and more
   legible; a shared workspace is far more practical for real code.
-- What happens when both agents claim the same item on overlapping turns?
+- What happens when two agents claim the same item on overlapping turns?
 - How is a genuine disagreement resolved when neither agent will yield, short of
   escalating to the human every time?
 - Should the verifying agent be allowed to fix what it finds, or only to reject

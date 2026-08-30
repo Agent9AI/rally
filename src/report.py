@@ -14,7 +14,7 @@ HALT_MEANING = {
     "complete": ("COMPLETE", "Every checklist item was verified by the agent that did not do the work."),
     "turn_budget": ("HALT", "The run hit its turn budget before finishing. This is not a completion."),
     "no_progress": ("HALT", "Several turns passed with no item changing state, so the run was not converging."),
-    "disputed": ("HALT", "The two agents disagreed three times on the same item and escalated to you."),
+    "disputed": ("HALT", "Independent agents disagreed three times on the same item and escalated to you."),
     "blocked": ("HALT", "An item needs something only you can provide."),
     "agent_error": ("HALT", "Both bounded model attempts failed before a safe continuation was accepted."),
     "stopped_by_human": ("HALT", "You stopped this run."),

@@ -1,6 +1,6 @@
 {
   "schema_version": "rally.agent-catalog/v1",
-  "catalog_version": "2026.08.29",
+  "catalog_version": "2026.08.30",
   "product": "Rally",
   "owner": "Agent9",
   "discovery_scope": "cross-department engineering operations",
@@ -30,7 +30,7 @@
       "family": "anthropic",
       "runtime": "licensed workstation CLI",
       "capabilities": ["scope", "implement", "test", "review"],
-      "authority": ["claim checklist work", "submit evidence", "verify Gemini-owned work"],
+      "authority": ["claim checklist work", "submit evidence", "verify work owned by another model family"],
       "prohibited": ["verify Claude-owned work", "change budgets", "send outside Rally"],
       "departments": ["engineering", "product", "operations", "security"],
       "status": "active"
@@ -41,8 +41,20 @@
       "family": "google",
       "runtime": "licensed Antigravity CLI",
       "capabilities": ["scope", "implement", "test", "review"],
-      "authority": ["claim checklist work", "submit evidence", "verify Claude-owned work"],
+      "authority": ["claim checklist work", "submit evidence", "verify work owned by another model family"],
       "prohibited": ["verify Gemini-owned work", "change budgets", "send outside Rally"],
+      "departments": ["engineering", "product", "operations", "security"],
+      "status": "active"
+    },
+    {
+      "id": "rally-openai-worker",
+      "display_name": "OpenAI Codex Worker",
+      "family": "openai",
+      "model": "gpt-5.4",
+      "runtime": "licensed Codex CLI with per-user ChatGPT sign-in",
+      "capabilities": ["scope", "implement", "test", "review"],
+      "authority": ["claim checklist work", "submit evidence", "verify work owned by another model family"],
+      "prohibited": ["verify OpenAI-owned work", "change budgets", "share or pool user credentials", "send outside Rally"],
       "departments": ["engineering", "product", "operations", "security"],
       "status": "active"
     }

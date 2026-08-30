@@ -1,8 +1,8 @@
 # Architecture and trust boundaries
 
 Rally is a hybrid agent system: Google Cloud provides durable, authenticated
-coordination; a controlled workstation provides the licensed Claude and Gemini
-coding runtimes; deterministic code—not a model—decides whether work is done.
+coordination; a controlled workstation provides licensed Gemini, Claude, and
+OpenAI Codex runtimes; deterministic code—not a model—decides whether work is done.
 
 ```mermaid
 flowchart LR
@@ -15,9 +15,13 @@ flowchart LR
     C -.-> T["Cloud Logging + Trace<br/>metadata only"]
     L --> A["Claude CLI<br/>Anthropic family"]
     L --> G["Antigravity CLI<br/>Gemini family"]
-    A <-->|"alternating work + review"| G
+    L --> O["Codex CLI<br/>OpenAI family"]
+    A <-->|"work + review"| G
+    G <-->|"work + review"| O
+    O <-->|"work + review"| A
     A -->|"executive turn email"| H
     G -->|"executive turn email"| H
+    O -->|"executive turn email"| H
     L -->|"final evidence report"| H
     L -->|"allowlisted public projection"| W
     W --> D["Judge console<br/>Pages live UI"]
@@ -30,14 +34,16 @@ flowchart LR
 | Email edge | Verify webhook, queue, deduplicate delivery | Approve a sender or complete work |
 | Google ADK coordinator | Preserve the request verbatim and produce a bounded handoff | Modify files, invent evidence, waive review |
 | Rally runner | Authenticate commissioners, advance state, authorize bounded Second Wind recovery, enforce budgets and verification | Change its own policy from model output |
-| Claude / Gemini workers | Scope, implement, test, reject, and repair work | Verify their own checklist items |
+| Gemini / Claude / OpenAI workers | Scope, implement, test, reject, and repair work | Verify their own checklist items or share credentials across users |
+| Connector gateway | Discover approved remote MCP tools, enforce a frozen per-run allowlist, call read tools, write content-free receipts | Reveal OAuth tokens, widen authority, or execute gated writes |
 | Firestore | Atomically claim request keys and retain coordinator state | Trigger unbounded retries |
 
 ## The completion invariant
 
 An item follows `open → claimed → awaiting-verification → done`. The transition
-to `done` is rejected unless `verified_by` names the model family that did not
-own the item. The invariant is enforced in `src/envelope.py`; model prose is
+to `done` is rejected unless `verified_by` names a different worker than the one
+that owned the item. Startup separately guarantees that every worker has a
+distinct model family. Both invariants are enforced in code; model prose is
 never authoritative.
 
 ## Replay and restart behavior
@@ -55,7 +61,7 @@ never authoritative.
   Resend hydration error or local exception leaves the D1 row queued.
 - The local runner persists its complete state after every accepted transition.
 - With Second Wind enabled, a failed process never becomes accepted state. Rally
-  records the failure, preserves the checklist, and asks the other family to
+  records the failure, preserves the checklist, and asks the next family to
   inspect any partial workspace edits before taking custody.
 
 ## Fleet discovery and lifecycle
@@ -86,6 +92,24 @@ audience to the exact Cloud Run URL, and reads the application token from macOS
 Keychain. Neither credential is stored in config, Firestore, email, logs, or
 git.
 
+## Connector execution boundary
+
+Every worker receives one local MCP surface, `rally-connectors`. Claude is
+launched with a run-specific strict MCP config. Codex ignores the user's global
+configuration and receives only the run gateway. Antigravity preflight refuses
+connector runs unless the Rally gateway is its only enabled MCP server. The
+gateway reads an immutable, secret-free authority snapshot, discovers tools from
+the approved BigQuery, Atlassian, Salesforce, or Hyperagent endpoint, denies every tool not
+explicitly allowlisted, and records content-free call receipts.
+
+The authenticated commissioner selects a one-way connector profile. Enabled
+systems, tool policies, OAuth Keychain services, and non-local Google ADC files
+are isolated by that profile before the immutable run snapshot is created.
+Google ADC or OAuth state stays behind the gateway; no model receives a provider
+token. `verify_first` and `human_approval` tools fail closed
+until Rally has a genuine pre-execution approval workflow. See
+[`CONNECTORS.md`](CONNECTORS.md) for the administrator sequence.
+
 ## Observability without prompt leakage
 
 Cloud Trace captures request and Gemini spans. Structured Cloud Logging records
@@ -111,10 +135,18 @@ source as live D1 data, polls it every 15 seconds, and shows an explicit empty o
 error state instead of substituting a mock. The default production profile
 cannot publish; public visibility is double opt-in in the demo configuration.
 
+## Per-user model authorization
+
+Claude, Antigravity, and Codex authenticate through each operator's own provider
+tooling. Codex uses Sign in with ChatGPT; its invocation is ephemeral and ignores
+unrelated global MCP configuration. Rally does not collect, pool, resell, or
+multiplex subscription credentials. A hosted multi-tenant deployment must use
+provider APIs/business agreements or separately provisioned authorized seats.
+
 ## Why the hybrid runtime is deliberate
 
-Claude and Antigravity are subscription CLIs, and Antigravity is tied to its
-desktop runtime. Pretending those binaries run natively in Cloud Run would make
-the diagram cleaner and the product false. Rally places durable coordination,
+Claude, Antigravity, and Codex are licensed CLIs tied to authorized user
+environments. Pretending those binaries run natively in Cloud Run would make the
+diagram cleaner and the product false. Rally places durable coordination,
 identity, state, and telemetry in Google Cloud while keeping licensed execution
 on the host that can legally and reliably run it.

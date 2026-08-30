@@ -10,7 +10,7 @@ entry. Items are ordered so a failure cannot invalidate later evidence.
 - [x] The live result reads 6/6, trajectory 1.00, quality 1.00.
 - [x] `git diff --check` passes.
 - [x] No token, private key, webhook URL, or prompt content appears in tracked files.
-- [x] The repository and site say 93 tests everywhere.
+- [x] The repository and site say 105 tests everywhere.
 - [x] The standard and filmed model pins are documented accurately.
 
 ## 2. Approval gate: Google Cloud deployment
@@ -68,7 +68,7 @@ Save sanitized screenshots for each judge-visible claim.
 - [ ] Add captions and readable cursor/highlight treatment.
 - [ ] Label every elapsed-time cut; do not imply instantaneous inference.
 - [ ] Never show secrets, raw webhook URLs, thought signatures, or account menus.
-- [ ] End on: **One request. Two model families. Zero self-approval.**
+- [ ] End on: **One request. Three model families. Zero self-approval.**
 - [ ] Upload the full unedited run as supporting proof.
 - [ ] Check playback, captions, privacy, and link access in a signed-out browser.
 

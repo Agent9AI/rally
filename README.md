@@ -6,16 +6,20 @@ team of specialized models on the inside. Give it one difficult outcome; Rally
 coordinates the handoffs, works inside approved boundaries, and returns one
 independently verified result with evidence.
 
-The current release proves that contract on engineering operations. Gemini and
-Claude, from **different model families**, carry one task to completion against
+The current release proves that contract with three provider-native workers.
+Gemini, Claude, and OpenAI Codex, from **different model families**, rotate around
 one shared checklist. A person commissions the run once. The models execute and
-review. Deterministic policy—not either model's confidence—decides when it ends.
-The next product layer connects Google Workspace, Slack, GitHub, Cloudflare,
-n8n, and Stripe through least-privilege organization authorization; those
-connections are documented as roadmap, not represented as shipped.
+review. Deterministic policy—not any model's confidence—decides when it ends.
+The next product layer connects the systems where company work lives. BigQuery,
+Atlassian, and Salesforce now have a runnable, deny-by-default MCP gateway and
+administrator setup path; they remain disabled until a customer authenticates
+and explicitly allowlists tools. Google Workspace, Slack, GitHub, Cloudflare,
+n8n, and Stripe remain researched roadmap paths.
 
-Agent A is the **Claude CLI** (`claude -p`). Agent B is the **Antigravity CLI**
-(`agy -p`), pinned to Gemini. A Google ADK coordinator on **Cloud Run** preserves
+The fleet uses the **Claude CLI** (`claude -p`), **Antigravity CLI** (`agy -p`)
+pinned to Gemini, and **Codex CLI** (`codex exec`) pinned to OpenAI. Each runs
+through the user's own provider sign-in; accounts and connector credentials are
+never shared between users. A Google ADK coordinator on **Cloud Run** preserves
 the commission and records it durably in **Firestore** before execution.
 Transport is **Resend**; a **Cloudflare Worker + D1** holds inbound mail so a
 sleeping runner costs latency, never a lost task.
@@ -31,10 +35,10 @@ you ──email──▶ rally@updates.agent9.dev
                       │
                   Firestore
                       │
-        ┌─────────────┴─────────────┐
-   claude -p                     agy -p
-   (Anthropic)   ◀── verify ──▶   (Gemini)
-        └─────────────┬─────────────┘
+        ┌─────────────┼─────────────┐
+   claude -p        agy -p       codex exec
+   Anthropic        Gemini        OpenAI
+        └────── implement ↔ verify ──────┘
                       │ every turn + final report
 you ◀─────────────────┘
 ```
@@ -81,8 +85,8 @@ the model pins, the spend limits, the repo it works in. One person gets that
 right and the whole team inherits it, instead of fifteen people each half-solving
 it.
 
-**The work is checked before you see it.** Two different model families work the
-same checklist, and nothing is marked done until the agent that *didn't* do it
+**The work is checked before you see it.** Different model families work the
+same checklist, and nothing is marked done until a worker that *didn't* do it
 verifies it. What lands in your inbox has already survived a second opinion from
 a model that doesn't share the first one's blind spots. That is a materially
 different artifact from one model's confident first answer.
@@ -92,53 +96,56 @@ already the queue, the audit log, and the notification system. The whole
 deliberation sits in a thread you can read, forward, or search months later.
 
 **It recovers before it stops.** With **Second Wind** enabled, a failed turn or
-reported blocker is handed once to the other model family from the last accepted
+reported blocker is handed once to the next model family from the last accepted
 state. The backup may inspect partial workspace edits, repair the work, and take
 ownership—but it still cannot approve its own repair. Hard turn, progress, send,
-authority, and recovery ceilings remain outside both agents' reach; if the team
+authority, and recovery ceilings remain outside every agent's reach; if the team
 still cannot finish, Rally tells you exactly where and why.
 
 ## The two rules everything else protects
 
 1. **An item reaches `done` only when the agent that did _not_ do the work
    verifies it.** Enforced by the runner, not requested in a prompt.
-2. **The two agents must come from different model families.** A model reviewing
-   itself shares its own blind spots, so the review carries almost no
-   information. Startup refuses a same-family pair.
+2. **Every configured worker must come from a distinct model family.** A model
+   reviewing itself shares its own blind spots, so the review carries almost no
+   information. Startup refuses duplicate families.
 
 ## Status
 
 | Piece | State |
 |---|---|
-| Turn loop, state machine, console projection, guards | working, 69 core/product tests |
+| Turn loop, state machine, console projection, guards | working, 80 core/product tests |
 | Claude + Gemini CLI execution | working, live multi-turn runs completed |
+| OpenAI Codex CLI execution | working, live authenticated preflight passed with per-user ChatGPT sign-in |
 | Executive turn emails + report | working through Resend |
 | Ingress Worker (D1) | deployed, signed webhook and round trip verified |
-| Judge console | live Pages UI backed by a double-sanitized D1 run projection; golden run `r-20260829-dbb5c0` is public |
+| Judge console | live Pages UI backed by a double-sanitized D1 run projection; professional proof run `r-20260830-447f2f` is public |
 | `rally@updates.agent9.dev` route | working; replies return to the commissioner |
-| Product + Cloud test suite | 93 automated tests passing |
+| Connector gateway | BigQuery live MCP handshake + six-tool discovery verified; Atlassian, Salesforce, and Hyperagent runtime adapters ready for per-user auth; per-run authority, explicit tool policy, content-free receipts |
+| Product + Cloud test suite | 105 automated tests passing |
 | Google ADK coordinator | implemented; live eval 6/6, both metrics 1.00 |
 | Cloud Run + Firestore + Trace | deployed privately in `rally-agent9-2026`; authenticated commission, replay, Firestore, logs, and content-free trace verified |
 | A2A v1.0 boundary | Agent Card, JSON-RPC, HTTP+JSON, SSE streaming, polling, listing, Firestore tasks, and dual-auth tested with official SDK clients |
 
-The current release candidate has **93 automated tests**: 69 deterministic
-runner, ingress, policy, bridge, and site tests plus 24 Cloud and A2A service tests.
+The current release candidate has **105 automated tests**: 80 deterministic
+runner, ingress, policy, bridge, connector, and site tests plus 25 Cloud, A2A,
+and connector-gateway service tests.
 The separate live ADK scorecard remains 6/6 at 1.00 trajectory and 1.00 quality.
 
 ### Why the models have different jobs
 
 Gemini 3.7 Flash is the load-bearing Google ADK coordinator on Vertex AI. It
 preserves the human's request, invokes one bounded handoff tool, and creates the
-durable governance record. The two licensed coding workers then operate in the
-repository: Claude and Antigravity/Gemini can both implement and review, but the
-runner rotates item ownership so neither family can approve its own work. The
+durable governance record. Three licensed CLI workers then operate in the
+workspace: Claude, Antigravity/Gemini, and OpenAI Codex can each implement and
+review, but the runner rotates item ownership so no family can approve its own work. The
 standard profile keeps its deliberate high-reasoning worker pin; the filmed
 profile uses Gemini 3.7 Flash for speed. The required Gemini 3.5+ path is never
 decorative or confined to the presentation layer.
 
 Honest boundary: email starts the real run and mirrors every turn, but the next
 agent is dispatched by the authoritative runner rather than by re-delivering the
-email. The local host remains necessary because the two coding subscriptions are
+email. The local host remains necessary because the coding subscriptions are
 accessed through desktop CLIs. Google Cloud is the durable intake, governance,
 identity, and observability plane—not a decorative API call.
 
@@ -147,12 +154,18 @@ identity, and observability plane—not a decorative API call.
 ```bash
 make check                    # pins, binaries, credentials, limits
 make dry                      # exercise the loop, no tokens spent
-make test                     # 69 local policy, ingress, bridge, recovery, and site tests
+make test                     # 80 local policy, ingress, connector, recovery, and site tests
 make cloud-test               # Cloud coordinator tests + lint
 make cloud-eval               # live ADK eval; exact trajectory + quality gates
 
 ./bin/rally --run "your task" --workdir /path/to/repo --no-mail
 make serve                    # poll for commissions and run them
+
+./bin/rally connectors list
+./bin/rally connectors install              # register the gateway with Antigravity
+./bin/rally connectors --profile you@company.com list
+./bin/rally connectors auth atlassian       # browser OAuth + live tool discovery
+./bin/rally connectors doctor bigquery      # ADC + live tool discovery
 ```
 
 See [docs/RUNBOOK.md](docs/RUNBOOK.md) to operate it, including how to stop a run.
@@ -172,6 +185,7 @@ See [docs/RUNBOOK.md](docs/RUNBOOK.md) to operate it, including how to stop a ru
 | [docs/VIDEO-PRODUCTION.md](docs/VIDEO-PRODUCTION.md) | Short-film and unedited-run capture package. |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Google Cloud topology, trust boundaries, and failure behavior. |
 | [docs/A2A.md](docs/A2A.md) | A2A v1.0 discovery, bindings, security, state mapping, and verification. |
+| [docs/CONNECTORS.md](docs/CONNECTORS.md) | Governed MCP gateway, BigQuery/Atlassian/Salesforce/Hyperagent setup, policy, and receipts. |
 | [docs/assets/rally-architecture.svg](docs/assets/rally-architecture.svg) | Presentation-ready architecture diagram. |
 | [docs/EVALUATION.md](docs/EVALUATION.md) | Live ADK eval design, scores, and the behavior it improved. |
 | [docs/HACKATHON.md](docs/HACKATHON.md) | Judge-facing positioning and submission checklist. |
@@ -189,7 +203,7 @@ See [docs/RUNBOOK.md](docs/RUNBOOK.md) to operate it, including how to stop a ru
 bin/rally              entry point
 src/runner.py          authoritative state, turn dispatch, guards
 src/envelope.py        parsing and state-machine enforcement
-src/agents.py          the two CLI adapters, pin and symmetry checks
+src/agents.py          three CLI adapters, pin and symmetry checks
 src/transport.py       Resend send, fail-closed ceilings
 src/ingress.py         collect inbound, classify, authorise
 src/cloud_coordinator.py authenticated Google Cloud handoff
@@ -210,7 +224,7 @@ box below is checked; see `docs/SUBMISSION-CHECKLIST.md` for the evidence-level
 version.
 
 - [x] Deploy the authenticated ADK coordinator to Google Cloud and complete the
-      exact golden governed run (`r-20260829-dbb5c0`, 6/6 independently verified).
+      professional governed run (`r-20260830-447f2f`, 6/6 independently verified).
 - [ ] Record visible Cloud Run, Vertex AI, Firestore, and Trace proof in the
       narrated demo; keep the public YouTube/Vimeo cut under four minutes and
       verify it in an incognito window.

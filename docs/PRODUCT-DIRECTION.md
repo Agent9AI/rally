@@ -57,6 +57,9 @@ rather than a customer outcome.
 | 4 | Cloudflare | Sites, DNS, Workers, storage, observability, and security make it the operating plane for a company's web presence. | OAuth with customer-selected permissions. Begin with account discovery, analytics, build status, logs, and configuration reads. | Configuration writes require a second-family verifier; domain transfer, tokens, billing, and destructive storage actions remain unavailable. | Researched official MCP; customer connection not shipped |
 | 5 | n8n | One connection can expose only administrator-enabled workflows and provide a controlled bridge into the long tail of the business stack. | Instance-level MCP with per-client authorization. Begin with search and execution of explicitly exposed, published workflows. Never auto-expose new workflows. | Workflow execution follows a declared risk class. Workflow creation, editing, and data-table writes require verification; credential operations remain unavailable. | Researched official MCP; customer connection not shipped |
 | 6 | Stripe | Payments, subscriptions, customers, and revenue reporting make cross-system operating work tangible while demanding unusually strict controls. | Stripe OAuth, scoped separately by environment. Begin with API reads, documentation, analytics, and reports. | Refunds and all write or money-moving tools require human confirmation; production and sandbox access remain separate. | Researched public-preview MCP; customer connection not shipped |
+| 7 | BigQuery | It gives Rally a governed analytical surface for the large datasets and background research emphasized by the hackathon brief. | Google ADC or workload identity against Google's official remote MCP endpoint. Start with metadata and bounded queries; grant `roles/mcp.toolUser` plus the narrowest job and dataset roles. | Query tools require explicit allowlisting. Dataset writes, IAM, reservations, and destructive administration remain gated. | Runtime gateway shipped; live MCP handshake and six-tool discovery verified 2026-08-29; agent authority remains disabled |
+| 8 | Atlassian | Jira, Confluence, and Compass combine planned work, institutional knowledge, and service ownership—the context professionals otherwise carry between assistants. | OAuth 2.1 through Atlassian's hosted Rovo MCP server, restricted to selected sites and products. | Search and retrieval may be read-only. Create, edit, transition, and notification tools require a pre-execution gate. | Runtime gateway shipped; live customer auth and tool allowlist pending |
+| 9 | Salesforce | CRM, service, Data 360, and Tableau provide the customer and revenue truth required for high-value operating work. | OAuth through the customer's Salesforce-hosted MCP endpoint. Start with schema discovery, SOQL/search, and bounded reads. | Record changes, flows, Apex actions, messaging, and broad exports require a pre-execution gate. | Runtime gateway shipped; tenant endpoint, auth, and tool allowlist pending |
 
 ## Why MCP fits—but is not the security policy
 
@@ -131,3 +134,11 @@ independent verification or human gate
 - [Stripe's official MCP server](https://docs.stripe.com/mcp) uses OAuth,
   separates live and sandbox authorization, exposes read/write API tools, and
   explicitly recommends human confirmation for consequential tools.
+- [BigQuery's official remote MCP server](https://docs.cloud.google.com/bigquery/docs/use-bigquery-mcp)
+  uses Google identity, IAM, audit logs, and optional Model Armor. Rally adds a
+  per-run tool allowlist and content-free call receipts outside the model.
+- [Atlassian's Rovo MCP server](https://www.atlassian.com/platform/rovo-mcp)
+  is the hosted OAuth path for Jira, Confluence, and Compass tools.
+- [Salesforce hosted MCP servers](https://developer.salesforce.com/blogs/2026/06/the-salesforce-developers-guide-to-the-summer-26-release)
+  expose Salesforce platform capabilities through tenant-authorized MCP
+  endpoints, including CRM data and custom platform actions.

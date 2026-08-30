@@ -9,6 +9,7 @@ dependencies = [
   "google-adk>=1.15,<2",
   "google-cloud-firestore>=2.16,<3",
   "google-cloud-logging>=3.12,<4",
+  "mcp>=1.29,<2",
   "opentelemetry-exporter-gcp-trace>=1.15,<2",
   "opentelemetry-instrumentation-google-genai>=0.1,<1",
   "opentelemetry-sdk>=1.30,<2",

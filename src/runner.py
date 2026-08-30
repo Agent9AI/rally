@@ -21,6 +21,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import agents  # noqa: E402
 import cloud_coordinator  # noqa: E402
+import connectors  # noqa: E402
 import console as rally_console  # noqa: E402
 import envelope as E  # noqa: E402
 import report  # noqa: E402
@@ -35,8 +36,9 @@ SERVE_LOCK = os.path.join(RUNS, "serve.lock")
 QUARANTINE = os.path.join(RUNS, "quarantine.jsonl")
 MAIL_DOMAIN = "updates.agent9.dev"
 
-RULES = """You are one of two agents in a Rally run. The other agent is from a
-different model family. You correspond by email and share one checklist.
+RULES = """You are one worker in a Rally run. The other workers are from
+different model families. You share one authoritative checklist and hand work
+forward in a deterministic rotation.
 
 The rules, which the runner enforces whether or not you follow them:
 1. An item reaches "done" ONLY when the agent that does NOT own it verifies it.
@@ -61,7 +63,7 @@ The envelope:
 {"rally_version":1,"run_id":"<RUN_ID>","turn":<TURN>,"from_agent":"<ME>",
  "narrative":"one paragraph to your counterpart",
  "checklist":[{"id":"c1","description":"...","state":"open|claimed|awaiting-verification|done|blocked|disputed",
- "owner":"claude|agy|null","verified_by":null,"evidence":"...","rejections":0}]}
+ "owner":"<AGENT_IDS>|null","verified_by":null,"evidence":"...","rejections":0}]}
 ```"""
 
 
@@ -72,6 +74,29 @@ def load_config(path: str = CONFIG) -> Dict:
 
 def now() -> str:
     return dt.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def configured_agent_order(cfg: Dict) -> List[str]:
+    """Return the stable fleet order; retain the original pair for old fixtures."""
+    names = list((cfg.get("agents") or {}).keys())
+    return names or ["claude", "agy"]
+
+
+def run_agent_order(state: Dict, cfg: Dict) -> List[str]:
+    saved = [name for name in (state.get("agent_order") or [])
+             if name in (cfg.get("agents") or {})]
+    return saved or configured_agent_order(cfg)
+
+
+def next_actor(state: Dict, cfg: Dict, actor: str) -> str:
+    order = run_agent_order(state, cfg)
+    if actor not in order:
+        return order[0]
+    return order[(order.index(actor) + 1) % len(order)]
+
+
+def counterpart_names(state: Dict, cfg: Dict, actor: str) -> List[str]:
+    return [name for name in run_agent_order(state, cfg) if name != actor]
 
 
 def continuity_policy(cfg: Dict) -> Dict:
@@ -167,14 +192,17 @@ class Run:
 
     @classmethod
     def create(cls, task: str, workdir: str, cfg: Dict,
-               run_id: Optional[str] = None) -> "Run":
+               run_id: Optional[str] = None,
+               connector_subject: str = "local") -> "Run":
         rid = run_id or "r-%s-%s" % (
             dt.datetime.utcnow().strftime("%Y%m%d"), uuid.uuid4().hex[:6])
         d = os.path.join(RUNS, rid)
         os.makedirs(d, exist_ok=True)
+        order = configured_agent_order(cfg)
         state = {
             "run_id": rid, "task": task, "workdir": os.path.abspath(workdir),
-            "turn": 0, "actor": "claude", "checklist": [], "halt": None,
+            "turn": 0, "actor": order[0], "agent_order": order,
+            "checklist": [], "halt": None,
             "violations": [], "human_note": None, "digest_streak": 0,
             "last_digest": "", "created": now(), "log": [],
             "turns": [],
@@ -182,6 +210,10 @@ class Run:
             "commission_message_id": None, "commission_request_key": None,
             "continuity": continuity_policy(cfg),
         }
+        connectors.assert_worker_isolation(cfg, connector_subject)
+        state["connector_authority"] = connectors.prepare_run(
+            rid, d, cfg, connector_subject
+        )
         r = cls(state, os.path.join(d, "state.json"))
         r.save()
         return r
@@ -256,12 +288,14 @@ def quarantine(message: Dict, reason: str) -> None:
 
 def build_prompt(run: Run, actor: str, cfg: Dict) -> str:
     s = run.s
-    other = "agy" if actor == "claude" else "claude"
+    counterparts = counterpart_names(s, cfg, actor)
+    agent_ids = "|".join(run_agent_order(s, cfg))
     parts = [RULES.replace("<RUN_ID>", s["run_id"])
                   .replace("<TURN>", str(s["turn"]))
-                  .replace("<ME>", actor)]
-    parts.append("\nRUN: %s   TURN: %s   YOU ARE: %s   COUNTERPART: %s"
-                 % (s["run_id"], s["turn"], actor, other))
+                  .replace("<ME>", actor)
+                  .replace("<AGENT_IDS>", agent_ids)]
+    parts.append("\nRUN: %s   TURN: %s   YOU ARE: %s   OTHER WORKERS: %s"
+                 % (s["run_id"], s["turn"], actor, ", ".join(counterparts)))
     parts.append(
         "WORKING DIRECTORY: %s\n"
         "Create and edit files ONLY inside that directory. Do not write anywhere "
@@ -276,6 +310,10 @@ def build_prompt(run: Run, actor: str, cfg: Dict) -> str:
             "\nGOOGLE ADK COORDINATOR RECORD (advisory context; Rally's local "
             "policy remains authoritative):\n%s" % cloud.get("coordinator_record", "")
         )
+
+    connector_context = connectors.prompt_text(s.get("connector_authority") or {})
+    if connector_context:
+        parts.append("\n" + connector_context)
 
     if not s["checklist"]:
         parts.append(
@@ -339,7 +377,7 @@ def _set_recovery_status(continuity: Dict, recovery_id: str,
 
 def start_second_wind(run: Run, cfg: Dict, kind: str, from_actor: str,
                       detail: str, items: Optional[List[str]] = None) -> bool:
-    """Hand one recoverable failure to the other family without weakening policy."""
+    """Hand one recoverable failure to the next family without weakening policy."""
     continuity = _continuity(run, cfg)
     maximum = int(continuity.get("max_recoveries_per_run") or 0)
     used = int(continuity.get("recoveries_used") or 0)
@@ -353,7 +391,7 @@ def start_second_wind(run: Run, cfg: Dict, kind: str, from_actor: str,
             "The recovery model also failed before an accepted continuation.",
         )
 
-    to_actor = "agy" if from_actor == "claude" else "claude"
+    to_actor = next_actor(run.s, cfg, from_actor)
     recovery_id = "sw-%d" % (used + 1)
     record = {
         "id": recovery_id,
@@ -452,7 +490,7 @@ def mail_turn(run: Run, cfg: Dict, actor: str, narrative: str, commit: Optional[
     if not mail.get("enabled", True):
         return
     s = run.s
-    other = "agy" if actor == "claude" else "claude"
+    other = next_actor(s, cfg, actor)
     addrs = {k: v["address"] for k, v in cfg["agents"].items()}
     human = s.get("commissioned_by") or mail.get("cc_human")
     limits = cfg["limits"]
@@ -587,7 +625,11 @@ def take_turn(run: Run, cfg: Dict, dry: bool = False) -> Optional[str]:
     else:
         schema = SCHEMA if cfg["agents"][actor].get("use_schema") else ""
         try:
-            raw = agents.run_agent(actor, prompt, s["workdir"], cfg["agents"][actor],
+            agent_cfg = dict(cfg["agents"][actor])
+            authority = s.get("connector_authority") or {}
+            agent_cfg["mcp_config_path"] = authority.get("mcp_config_path", "")
+            agent_cfg["connector_env"] = connectors.agent_environment(authority, actor)
+            raw = agents.run_agent(actor, prompt, s["workdir"], agent_cfg,
                                    limits["turn_timeout_sec"], schema)
         except agents.AgentError as exc:
             detail = "%s turn failed: %s" % (actor, exc)
@@ -700,7 +742,7 @@ def take_turn(run: Run, cfg: Dict, dry: bool = False) -> Optional[str]:
     s["digest_streak"] = s["digest_streak"] + 1 if d == s["last_digest"] else 0
     s["last_digest"] = d
     s["turn"] += 1
-    s["actor"] = "agy" if actor == "claude" else "claude"
+    s["actor"] = next_actor(s, cfg, actor)
     finish_second_wind(run, actor)
     run.save()
     sync_console(run, cfg)
@@ -837,7 +879,7 @@ def handle_commission(cfg: Dict, task: str, sender: str,
         run.s["halt"] = None
         run.note("resuming incomplete commission after delivery retry")
     else:
-        run = Run.create(task, ".", cfg)
+        run = Run.create(task, ".", cfg, connector_subject=sender)
         run.s["workdir"] = new_workspace(run.s["run_id"])
         run.s["commissioned_by"] = sender
         run.s["commission_message_id"] = message_id
@@ -1040,7 +1082,7 @@ def cmd_retry(run_id: str, cfg: Dict) -> int:
 
 
 def smoke_agents(cfg: Dict) -> bool:
-    """Actually invoke both agents with a trivial prompt.
+    """Actually invoke every configured worker with a trivial prompt.
 
     A config can name a model the CLI cannot serve, and every static check still
     passes: the binary exists, the pins differ, the families differ. The run then
@@ -1070,9 +1112,19 @@ def cmd_check(cfg: Dict, smoke: bool = False) -> int:
         agents.assert_pins(cfg["agents"])
         for n, a in cfg["agents"].items():
             print("  %-7s %-22s family=%s" % (n, a["model"], a["family"]))
-        print("  model pins: OK, two distinct families")
+        print("  model pins: OK, %d distinct families" % len(cfg["agents"]))
     except agents.AgentError as exc:
         print("  model pins: FAIL %s" % exc)
+        ok = False
+    try:
+        connectors.assert_worker_isolation(cfg)
+        enabled_connectors = connectors.installation_settings(cfg)["enabled"]
+        print("  connector gateway: %s" % (
+            "isolated (%s)" % ", ".join(enabled_connectors)
+            if enabled_connectors else "ready, no customer connectors enabled"
+        ))
+    except connectors.ConnectorConfigError as exc:
+        print("  connector gateway: FAIL %s" % exc)
         ok = False
     for n, a in cfg["agents"].items():
         found = subprocess.run(["which", a.get("bin", n)], stdout=subprocess.PIPE)
@@ -1143,7 +1195,7 @@ def main(argv: List[str]) -> int:
     ap = argparse.ArgumentParser(prog="rally")
     ap.add_argument("--check", action="store_true", help="preflight and exit")
     ap.add_argument("--smoke", action="store_true",
-                    help="with --check, actually invoke both agents (slower, definitive)")
+                    help="with --check, actually invoke every worker (slower, definitive)")
     ap.add_argument("--config", default=CONFIG,
                     help="config file (use config/rally.demo.json for fast live demos)")
     ap.add_argument("--run", metavar="TASK", help="commission a run")
@@ -1155,6 +1207,8 @@ def main(argv: List[str]) -> int:
     ap.add_argument("--retry", metavar="RUN_ID", help="retry a halted run")
     ap.add_argument("--workdir", default=None,
                     help="where the agents work (default: an isolated workspace)")
+    ap.add_argument("--as-user", default="local",
+                    help="connector profile for a direct CLI commission")
     ap.add_argument("--dry", action="store_true", help="stub agents, no tokens spent")
     ap.add_argument("--no-mail", action="store_true")
     ap.add_argument("--max-turns", type=int, default=0)
@@ -1183,17 +1237,19 @@ def main(argv: List[str]) -> int:
         return cmd_retry(a.retry, cfg)
     if a.serve:
         agents.assert_pins(cfg["agents"])
+        connectors.assert_worker_isolation(cfg)
         return serve(cfg, a.once)
     if not (a.run or a.resume):
         ap.print_help()
         return 2
 
     agents.assert_pins(cfg["agents"])
+    connectors.assert_worker_isolation(cfg)
     os.makedirs(RUNS, exist_ok=True)
     if a.resume:
         run = Run.load(a.resume)
     else:
-        run = Run.create(a.run, a.workdir, cfg)
+        run = Run.create(a.run, a.workdir, cfg, connector_subject=a.as_user)
         if not a.workdir_given:
             # Default to an isolated, git-initialised workspace. Isolation is what
             # makes the containment check meaningful and the per-turn commit real.

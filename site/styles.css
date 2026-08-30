@@ -75,7 +75,7 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px soli
   z-index: 30;
   top: 0;
   max-width: var(--max);
-  min-height: 72px;
+  min-height: 80px;
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
@@ -97,6 +97,9 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px soli
   flex: none;
   object-fit: contain;
 }
+.site-header .brand { gap: 13px; }
+.site-header .brand-name { font-size: 1.52rem; letter-spacing: -.04em; }
+.site-header .brand-mark { width: 48px; height: 48px; }
 .brand-mark.mini { width: 28px; height: 28px; }
 .brand-mark.large { width: 66px; height: 66px; margin-bottom: 24px; }
 .brand-lockup { width: 156px; height: 156px; display: block; margin: 0 auto 18px; object-fit: contain; }
@@ -150,6 +153,7 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px soli
 .team-member > span { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 12px; color: #fff; font-size: .78rem; font-weight: 750; }
 .gemini-member > span { background: #4285f4; }
 .claude-member > span { background: #d86654; }
+.openai-member > span { background: #202124; }
 .team-member p, .team-member small, .team-member strong { display: block; margin: 0; }
 .team-member small { margin-bottom: 3px; color: #8999b1; font-size: .62rem; }
 .team-member strong { color: #fff; font-size: .82rem; }
@@ -158,6 +162,9 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px soli
 .handoff-lane::before { position: absolute; top: 50%; right: 6px; left: 6px; height: 1px; background: linear-gradient(90deg,rgba(66,133,244,.2),rgba(255,255,255,.28),rgba(216,102,84,.2)); content: ""; }
 .handoff-lane i { position: relative; z-index: 1; width: 7px; height: 7px; border: 2px solid #10233f; border-radius: 50%; background: #7ba7ff; }
 .handoff-lane i:last-child { background: #e08a7c; }
+.openai-lane::before { background: linear-gradient(90deg,rgba(216,102,84,.2),rgba(255,255,255,.28),rgba(32,33,36,.32)); }
+.openai-lane i:first-child { background: #e08a7c; }
+.openai-lane i:last-child { background: #d7d9dd; }
 .handoff-lane span { position: relative; z-index: 2; padding: 3px 8px; border-radius: 999px; background: #10233f; font-size: .54rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
 .handoff-lane::after { position: absolute; z-index: 3; top: 8px; left: 7px; width: 10px; height: 10px; border-radius: 50%; background: #f9ab00; box-shadow: 0 0 0 4px rgba(249,171,0,.1); content: ""; animation: rally-handoff 4.8s cubic-bezier(.65,0,.35,1) infinite; }
 .operator-capabilities { position: relative; z-index: 1; overflow: hidden; border: 1px solid rgba(255,255,255,.1); border-radius: 17px; background: rgba(255,255,255,.035); }
@@ -266,6 +273,7 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px soli
 .human { background: #7e57c2; }
 .gemini, .coordinator { background: #4285f4; }
 .claude { background: #d96c5f; }
+.openai { background: #202124; }
 .recovery { color: #5f4500; background: #f9ab00; }
 .run-copy { min-width: 0; }
 .run-copy > span:first-child { display: flex; justify-content: space-between; gap: 6px; }
@@ -362,6 +370,8 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px soli
 .agent-dot { width: 8px; height: 8px; border-radius: 50%; }
 .agent-dot.google { background: #4285f4; }
 .agent-dot.anthropic { background: #d96c5f; }
+.agent-dot.openai { background: #202124; }
+.agent-dot.other { background: #7e57c2; }
 .agent-row b, .agent-row small { display: block; }
 .agent-row b { color: #3c4043; font-size: .65rem; }
 .agent-row small, .agent-row > span:last-child { color: var(--quiet); font-size: .55rem; }
@@ -426,7 +436,12 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px soli
 .github-icon { color: #10233f; background: #fff; }
 .slack-icon { background: #611f69; }
 .stripe-icon { background: #635bff; }
+.bigquery-icon { background: #4285f4; }
+.atlassian-icon { background: #1868db; }
+.salesforce-icon { background: #0d9dda; }
+.hyperagent-icon { background: linear-gradient(135deg, #121212, #5d5d5d); }
 .roadmap-chip { padding: 6px 8px; color: #b8c7dc; border-radius: 999px; background: rgba(255,255,255,.08); font-size: .58rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+.ready-chip { color: #aef0d2; background: rgba(22,163,106,.18); }
 .connector-grid h3 { margin: 30px 0 10px; color: #fff; font-size: 1.3rem; }
 .connector-grid p { min-height: 112px; margin-bottom: 22px; color: #b7c4d7; font-size: .86rem; line-height: 1.55; }
 .connector-policy { display: grid; grid-template-columns: auto 1fr; gap: 5px 9px; margin-top: auto; padding: 14px; border-radius: 13px; background: rgba(0,0,0,.16); }
@@ -434,6 +449,16 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px soli
 .connector-policy b { color: #dbe4f1; font-size: .65rem; font-weight: 600; text-align: right; }
 .connector-grid a { margin-top: 18px; color: #8eb4ff; font-size: .7rem; font-weight: 650; }
 .connector-grid a:hover { color: #fff; }
+.connector-grid article.connector-featured { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(290px, .8fr); gap: 42px; align-items: stretch; border-color: rgba(121,165,255,.38); background: linear-gradient(120deg, rgba(66,133,244,.11), rgba(255,255,255,.045) 58%); }
+.connector-featured-copy { min-width: 0; display: flex; flex-direction: column; }
+.connector-featured .connector-top { justify-content: flex-start; }
+.connector-featured .connector-top .roadmap-chip { margin-left: 4px; }
+.connector-featured h3 { margin-top: 22px; }
+.connector-featured p { min-height: 0; max-width: 760px; margin-bottom: 14px; }
+.connector-featured-policy { display: flex; flex-direction: column; justify-content: center; padding: 20px; border: 1px solid rgba(255,255,255,.08); border-radius: 16px; background: rgba(0,0,0,.14); }
+.connector-featured-policy .connector-kicker { margin: 0 0 12px; color: #8eb4ff; font-size: .62rem; font-weight: 750; letter-spacing: .07em; text-transform: uppercase; }
+.connector-featured-policy .connector-policy { margin-top: 0; background: rgba(0,0,0,.2); }
+.connector-featured-policy small { margin-top: 14px; color: #8fa1b9; font-size: .62rem; line-height: 1.5; }
 .connector-boundary { max-width: 980px; margin: 28px 0 0; padding: 18px 20px; color: #aebbd0; border-left: 3px solid #16a36a; border-radius: 0 12px 12px 0; background: rgba(255,255,255,.04); font-size: .78rem; }
 .connector-boundary b { color: #dbe4f1; }
 
@@ -532,6 +557,8 @@ details p a:hover { color: var(--blue-hover); text-decoration-color: currentColo
 .provider-list > div { display: grid; grid-template-columns: 42px 1fr auto; align-items: center; gap: 12px; padding: 14px; border: 1px solid var(--line-soft); border-radius: 14px; }
 .provider-mark { width: 40px; height: 40px; display: grid; place-items: center; color: #fff; border-radius: 12px; font-weight: 700; }
 .google-mark { background: #4285f4; }
+.anthropic-mark { background: #d96c5f; }
+.openai-mark { background: #202124; }
 .cloudflare-mark { background: #f48120; }
 .resend-mark { background: #202124; }
 .provider-list b, .provider-list p { margin: 0; }
@@ -591,8 +618,10 @@ details p a:hover { color: var(--blue-hover); text-decoration-color: currentColo
 @media (max-width: 640px) {
   .event-bar { justify-content: flex-start; overflow: hidden; white-space: nowrap; }
   .event-separator, .event-bar strong { display: none; }
-  .site-header { min-height: 64px; padding: 0 16px; }
-  .brand-name { font-size: 1.1rem; }
+  .site-header { min-height: 68px; padding: 0 16px; }
+  .site-header .brand { gap: 9px; }
+  .site-header .brand > .brand-mark { width: 40px; height: 40px; }
+  .site-header .brand-name { font-size: 1.2rem; }
   .text-button { display: none; }
   .button-small { min-height: 38px; padding: 0 16px; }
   .hero { padding: 80px 20px 68px; text-align: left; }
@@ -643,6 +672,7 @@ details p a:hover { color: var(--blue-hover); text-decoration-color: currentColo
   .architecture-section { padding-left: 20px; padding-right: 20px; }
   .connector-section { padding-left: 20px; padding-right: 20px; }
   .connector-grid { grid-template-columns: 1fr; }
+  .connector-grid article.connector-featured { grid-template-columns: 1fr; gap: 20px; }
   .connector-grid p { min-height: 0; }
   .section-heading { margin-bottom: 36px; }
   .feature-card { padding: 26px; border-radius: 22px; }
