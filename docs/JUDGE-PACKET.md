@@ -127,8 +127,8 @@ request keys, account menus, and raw prompt fields off screen.
 | Firestore proof record | `r-cloud-redaction-20260829` in `(default)` |
 | Content-free Cloud Trace | `05b54fcc39e0f869fcb486ed62d5350f` — eight linked spans, all ADK payload attributes `{}` |
 | Cloudflare Worker | `rally-ingress` version `24630795-591a-4615-b127-43940f8bb977` |
-| Pages production release | deployment `f8ae8d79-9ed3-4acb-ae5b-355a89d6cdbf`, source `c3ecd53` |
-| Public source | <https://github.com/Agent9AI/rally> — commit `c3ecd53`, public, Apache-2.0 |
+| Pages production release | <https://rally.agent9.dev/>; immediately before recording, capture the first Production row from `wrangler pages deployment list --project-name agent9-rally` |
+| Public source | <https://github.com/Agent9AI/rally> — `main`, public, Apache-2.0; record the frozen submission commit after final evidence |
 
 Prepare these in order before recording:
 
