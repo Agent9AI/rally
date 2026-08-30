@@ -84,9 +84,20 @@ class TestProductSite(unittest.TestCase):
         self.assertIn("Loading authoritative runs", self.html)
         for connector in (
             "Google Workspace", "Slack", "GitHub", "Cloudflare", "n8n", "Stripe",
-            "BigQuery", "Atlassian", "Salesforce", "Hyperagent",
+            "BigQuery", "Atlassian", "Salesforce",
         ):
-            self.assertIn(f"<h3>{connector}</h3>", self.html)
+            self.assertIn(f'data-connector="{connector}"', self.html)
+        for agent_connector in ("Hyperagent", "Hermes Agent", "OpenClaw"):
+            self.assertIn(f'data-agent-connection="{agent_connector}"', self.html)
+        self.assertIn("Prime Intellect", self.html)
+        for brand_asset in (
+            "google.svg", "slack.svg", "github.svg", "cloudflare.svg", "n8n.svg",
+            "stripe.svg", "bigquery.svg", "atlassian.svg", "salesforce.svg",
+            "hyperagent.svg", "openclaw.svg",
+        ):
+            path = os.path.join(SITE, "brandmarks", brand_asset)
+            self.assertTrue(os.path.exists(path))
+            self.assertGreater(os.path.getsize(path), 500)
         self.assertNotIn("Request a managed pilot", self.html)
         self.assertNotIn("Webhook launch", self.html)
         for logo_asset in ("rally-logo.png", "rally-symbol.png"):

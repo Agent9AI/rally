@@ -18,7 +18,7 @@
     <meta name="rally-console-api" content="https://rally.agent9.dev/v1/console">
     <link rel="canonical" href="https://rally.agent9.dev/">
     <link rel="icon" href="rally-symbol.png" type="image/png">
-    <link rel="stylesheet" href="styles.css?v=20260830e">
+    <link rel="stylesheet" href="styles.css?v=20260830f">
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
@@ -263,86 +263,84 @@
       </section>
 
       <section class="section connector-section" id="connectors">
-        <div class="section-heading"><p class="eyebrow">Ten connector paths · one policy boundary</p><h2>Give Rally a desk in the systems you already run.</h2><p>Each user connects only the accounts they are authorized to use. Administrators set organization-wide resource boundaries and decide what Rally may read, draft, execute, or hold for approval. BigQuery, Atlassian, and Salesforce stay together in the third row; Hyperagent adds an external agent workforce below them.</p></div>
-        <div class="connector-grid">
-          <article>
-            <div class="connector-top"><span class="connector-icon workspace-icon">G</span><span class="roadmap-chip ready-chip">8-service gateway</span></div>
-            <h3>Google Workspace</h3>
-            <p>Work across Gmail, Drive, Docs, Sheets, Slides, Calendar, Chat, and company contacts using Google’s remote MCP servers.</p>
-            <div class="connector-policy"><span>Safe preset</span><b>Read only</b><span>Draft/send/share</span><b>Denied</b></div>
-            <a href="https://developers.google.com/workspace/guides/configure-mcp-servers">Official connector path ↗</a>
-          </article>
-          <article>
-            <div class="connector-top"><span class="connector-icon slack-icon">S</span><span class="roadmap-chip ready-chip">Gateway ready</span></div>
-            <h3>Slack</h3>
-            <p>Search decisions, understand project history, prepare updates, and request approvals where the team already works.</p>
-            <div class="connector-policy"><span>Safe preset</span><b>Public search + read</b><span>Private/post/create</span><b>Denied</b></div>
-            <a href="https://docs.slack.dev/ai/slack-mcp-server/">Official connector path ↗</a>
-          </article>
-          <article>
-            <div class="connector-top"><span class="connector-icon github-icon">GH</span><span class="roadmap-chip ready-chip">Gateway ready</span></div>
-            <h3>GitHub</h3>
-            <p>Investigate code, manage issues and pull requests, monitor Actions, and prepare changes through the official MCP server.</p>
-            <div class="connector-policy"><span>Safe preset</span><b>Read-only + lockdown</b><span>Write/merge</span><b>Server denied</b></div>
-            <a href="https://github.com/github/github-mcp-server">Official connector path ↗</a>
-          </article>
-          <article>
-            <div class="connector-top"><span class="connector-icon cloudflare-icon">C</span><span class="roadmap-chip ready-chip">Gateway ready</span></div>
-            <h3>Cloudflare</h3>
-            <p>Start with Worker logs and metrics through Cloudflare’s narrow, OAuth-capable Observability MCP server.</p>
-            <div class="connector-policy"><span>Default</span><b>Observability reads</b><span>Broad API execute</span><b>Denied</b></div>
-            <a href="https://developers.cloudflare.com/agents/model-context-protocol/cloudflare/servers-for-cloudflare/">Official connector path ↗</a>
-          </article>
-          <article>
-            <div class="connector-top"><span class="connector-icon n8n-icon">n8n</span><span class="roadmap-chip ready-chip">Gateway ready</span></div>
-            <h3>n8n</h3>
-            <p>Turn only the workflows an administrator explicitly exposes into bounded tools across the rest of the company stack.</p>
-            <div class="connector-policy"><span>Default</span><b>Approved workflows</b><span>New access</span><b>Admin controlled</b></div>
-            <a href="https://docs.n8n.io/connect/connect-to-n8n-mcp-server/">Official connector path ↗</a>
-          </article>
-          <article>
-            <div class="connector-top"><span class="connector-icon stripe-icon">S</span><span class="roadmap-chip ready-chip">Gateway ready</span></div>
-            <h3>Stripe</h3>
-            <p>Investigate payments, subscriptions, customers, and reports, with money-moving actions behind explicit confirmation.</p>
-            <div class="connector-policy"><span>Default</span><b>Read + report</b><span>Refund/write</span><b>Human approval</b></div>
-            <a href="https://docs.stripe.com/mcp">Official connector path ↗</a>
-          </article>
-          <article>
-            <div class="connector-top"><span class="connector-icon bigquery-icon">BQ</span><span class="roadmap-chip ready-chip">Live discovery</span></div>
-            <h3>BigQuery</h3>
-            <p>Turn governed company data into sourced analysis, anomaly investigations, and executive-ready answers through Google’s official remote MCP server.</p>
-            <div class="connector-policy"><span>Default</span><b>Metadata + bounded query</b><span>Write/admin</span><b>Human gate</b></div>
-            <a href="https://docs.cloud.google.com/bigquery/docs/use-bigquery-mcp">Official connector path ↗</a>
-          </article>
-          <article>
-            <div class="connector-top"><span class="connector-icon atlassian-icon">A</span><span class="roadmap-chip ready-chip">Gateway ready</span></div>
-            <h3>Atlassian</h3>
-            <p>Bring Jira work, Confluence knowledge, and Compass services into one accountable assignment without copying context between assistants.</p>
-            <div class="connector-policy"><span>Default</span><b>Search + synthesize</b><span>Create/edit</span><b>Verify first</b></div>
-            <a href="https://www.atlassian.com/platform/rovo-mcp">Official connector path ↗</a>
-          </article>
-          <article>
-            <div class="connector-top"><span class="connector-icon salesforce-icon">SF</span><span class="roadmap-chip ready-chip">Gateway ready</span></div>
-            <h3>Salesforce</h3>
-            <p>Query customer, pipeline, and service records through Salesforce’s read-only hosted SObject MCP server.</p>
-            <div class="connector-policy"><span>Safe preset</span><b>Schema + SOQL/SOSL</b><span>Record writes</span><b>No mutation endpoint</b></div>
-            <a href="https://developer.salesforce.com/docs/platform/hosted-mcp-servers/references/reference/sobject-reads.html">Official connector path ↗</a>
-          </article>
-          <article class="connector-featured">
-            <div class="connector-featured-copy">
-              <div class="connector-top"><span class="connector-icon hyperagent-icon">HA</span><span class="roadmap-chip ready-chip">OAuth MCP ready</span></div>
-              <h3>Hyperagent</h3>
-              <p>Delegate bounded work to the user’s existing Hyperagent workforce: discover their agents, start background threads, follow up, and return the result to Rally’s independent verification loop.</p>
-              <a href="https://www.hyperagent.com/docs/concepts/agents/invocations/mcp-server/">Official connector path ↗</a>
-            </div>
-            <div class="connector-featured-policy">
-              <p class="connector-kicker">External agent delegation</p>
-              <div class="connector-policy"><span>Default</span><b>List agents + read results</b><span>Start/send</span><b>Human approval</b></div>
-              <small>One-time browser OAuth · per-user token namespace · hosted remote MCP</small>
-            </div>
-          </article>
+        <div class="section-heading connector-heading">
+          <div><p class="eyebrow">Business systems + agent workforces</p><h2>Connect the company.<br><span>Extend the team.</span></h2></div>
+          <div class="connector-heading-copy"><p>Business systems give Rally governed context and tools. External agents accept delegated work and return artifacts. Rally keeps those permissions separate—so connecting a source never silently commissions a workforce.</p><div class="protocol-key" aria-label="Connector types"><span><i class="protocol-dot mcp-dot"></i><b>MCP</b> tools + context</span><span><i class="protocol-dot a2a-dot"></i><b>A2A</b> delegated work</span></div></div>
         </div>
-        <p class="connector-boundary"><b>Honest boundary:</b> all ten cards now have pinned, deny-by-default runtime adapters and exact safe presets. BigQuery’s official endpoint has passed authenticated MCP discovery; every other account remains disconnected until that user completes its provider setup, authentication, and live discovery. Google Workspace and Slack require customer app registration, Salesforce requires an External Client App, and GitHub requires a customer-owned token. Adapter ready never means account connected.</p>
+
+        <div class="connector-families">
+          <section class="connector-family knowledge-family" aria-labelledby="knowledge-title">
+            <header><span class="family-number">01</span><div><p>Company memory</p><h3 id="knowledge-title">Knowledge &amp; collaboration</h3></div></header>
+            <div class="connector-list">
+              <article class="connector-entry" data-connector="Google Workspace">
+                <div class="connector-brand"><span class="brand-plate"><img src="brandmarks/google.svg" alt=""></span><div><h4>Google Workspace</h4><p>Gmail, Drive, Docs, Sheets, Slides, Calendar, Chat, and contacts.</p></div></div>
+                <div class="connector-meta"><span class="readiness live-ready">8-service gateway</span><span class="guardrail">Read first · sharing denied</span><a href="https://developers.google.com/workspace/guides/configure-mcp-servers" aria-label="Google Workspace official connector documentation">Docs ↗</a></div>
+              </article>
+              <article class="connector-entry" data-connector="Slack">
+                <div class="connector-brand"><span class="brand-plate"><img src="brandmarks/slack.svg" alt=""></span><div><h4>Slack</h4><p>Decisions, project history, team updates, and approval requests.</p></div></div>
+                <div class="connector-meta"><span class="readiness">Adapter ready</span><span class="guardrail">Public search · private denied</span><a href="https://docs.slack.dev/ai/slack-mcp-server/" aria-label="Slack official connector documentation">Docs ↗</a></div>
+              </article>
+              <article class="connector-entry" data-connector="Atlassian">
+                <div class="connector-brand"><span class="brand-plate"><img src="brandmarks/atlassian.svg" alt=""></span><div><h4>Atlassian</h4><p>Jira work, Confluence knowledge, and Compass services.</p></div></div>
+                <div class="connector-meta"><span class="readiness">Adapter ready</span><span class="guardrail">Search first · edits verified</span><a href="https://www.atlassian.com/platform/rovo-mcp" aria-label="Atlassian official connector documentation">Docs ↗</a></div>
+              </article>
+            </div>
+          </section>
+
+          <section class="connector-family operations-family" aria-labelledby="operations-title">
+            <header><span class="family-number">02</span><div><p>Work in motion</p><h3 id="operations-title">Build &amp; automate</h3></div></header>
+            <div class="connector-list">
+              <article class="connector-entry" data-connector="GitHub">
+                <div class="connector-brand"><span class="brand-plate"><img src="brandmarks/github.svg" alt=""></span><div><h4>GitHub</h4><p>Repositories, issues, pull requests, Actions, and prepared changes.</p></div></div>
+                <div class="connector-meta"><span class="readiness">Adapter ready</span><span class="guardrail">Read-only · merge denied</span><a href="https://github.com/github/github-mcp-server" aria-label="GitHub official connector documentation">Docs ↗</a></div>
+              </article>
+              <article class="connector-entry" data-connector="Cloudflare">
+                <div class="connector-brand"><span class="brand-plate wide-mark"><img src="brandmarks/cloudflare.svg" alt=""></span><div><h4>Cloudflare</h4><p>Worker logs and metrics through the narrow Observability server.</p></div></div>
+                <div class="connector-meta"><span class="readiness">Adapter ready</span><span class="guardrail">Observe · broad execution denied</span><a href="https://developers.cloudflare.com/agents/model-context-protocol/cloudflare/servers-for-cloudflare/" aria-label="Cloudflare official connector documentation">Docs ↗</a></div>
+              </article>
+              <article class="connector-entry" data-connector="n8n">
+                <div class="connector-brand"><span class="brand-plate wide-mark"><img src="brandmarks/n8n.svg" alt=""></span><div><h4>n8n</h4><p>Only the workflows an administrator explicitly exposes.</p></div></div>
+                <div class="connector-meta"><span class="readiness">Adapter ready</span><span class="guardrail">Approved flows · new access denied</span><a href="https://docs.n8n.io/connect/connect-to-n8n-mcp-server/" aria-label="n8n official connector documentation">Docs ↗</a></div>
+              </article>
+            </div>
+          </section>
+
+          <section class="connector-family intelligence-family" aria-labelledby="intelligence-title">
+            <header><span class="family-number">03</span><div><p>Decisions &amp; revenue</p><h3 id="intelligence-title">Data &amp; customers</h3></div></header>
+            <div class="connector-list">
+              <article class="connector-entry" data-connector="BigQuery">
+                <div class="connector-brand"><span class="brand-plate"><img src="brandmarks/bigquery.svg" alt=""></span><div><h4>BigQuery</h4><p>Governed data for sourced analysis, anomalies, and executive answers.</p></div></div>
+                <div class="connector-meta"><span class="readiness live-ready">Live discovery</span><span class="guardrail">Bounded query · writes gated</span><a href="https://docs.cloud.google.com/bigquery/docs/use-bigquery-mcp" aria-label="BigQuery official connector documentation">Docs ↗</a></div>
+              </article>
+              <article class="connector-entry" data-connector="Salesforce">
+                <div class="connector-brand"><span class="brand-plate wide-mark"><img src="brandmarks/salesforce.svg" alt=""></span><div><h4>Salesforce</h4><p>Customer, pipeline, and service records through hosted SObject reads.</p></div></div>
+                <div class="connector-meta"><span class="readiness">Adapter ready</span><span class="guardrail">Read-only · no mutation endpoint</span><a href="https://developer.salesforce.com/docs/platform/hosted-mcp-servers/references/reference/sobject-reads.html" aria-label="Salesforce official connector documentation">Docs ↗</a></div>
+              </article>
+              <article class="connector-entry" data-connector="Stripe">
+                <div class="connector-brand"><span class="brand-plate wide-mark"><img src="brandmarks/stripe.svg" alt=""></span><div><h4>Stripe</h4><p>Payments, subscriptions, customers, and financial reporting.</p></div></div>
+                <div class="connector-meta"><span class="readiness">Adapter ready</span><span class="guardrail">Report first · money moves gated</span><a href="https://docs.stripe.com/mcp" aria-label="Stripe official connector documentation">Docs ↗</a></div>
+              </article>
+            </div>
+          </section>
+        </div>
+
+        <section class="agent-network" aria-labelledby="agent-network-title">
+          <div class="agent-network-intro"><p class="network-eyebrow"><span></span>External agent network</p><h3 id="agent-network-title">Bring another workforce into the accountable team.</h3><p>Gemini, Claude, and OpenAI are Rally’s core team. These systems extend it through a deliberately narrower delegation boundary.</p><div class="network-rule"><b>Different permission.</b><span>Agents receive bounded assignments—not ambient access to every connected system.</span></div></div>
+          <div class="agent-network-list">
+            <article class="agent-connection" data-agent-connection="Hyperagent">
+              <div class="agent-connection-top"><span class="brand-plate"><img src="brandmarks/hyperagent.svg" alt=""></span><span class="readiness">Adapter ready</span></div><h4>Hyperagent</h4><p>Hosted OAuth MCP workforce. Rally can discover agents and read results; starting work remains approval-gated.</p><div class="agent-protocol"><span>MCP delegation</span><a href="https://www.hyperagent.com/docs/concepts/agents/invocations/mcp-server/" aria-label="Hyperagent official connector documentation">Interface ↗</a></div>
+            </article>
+            <article class="agent-connection" data-agent-connection="Hermes Agent">
+              <div class="agent-connection-top"><span class="brand-plate protocol-plate"><img src="a2a-icon.svg" alt=""></span><span class="readiness candidate-ready">Interface verified</span></div><h4>Hermes Agent</h4><p>Native A2A v1.0 peer. Endpoint identity, task mirroring, and failure tests must pass before admission.</p><div class="agent-protocol"><span>A2A candidate</span><a href="https://hermes-agent.nousresearch.com/docs/user-guide/messaging/a2a" aria-label="Hermes Agent A2A documentation">Interface ↗</a></div>
+            </article>
+            <article class="agent-connection" data-agent-connection="OpenClaw">
+              <div class="agent-connection-top"><span class="brand-plate"><img src="brandmarks/openclaw.svg" alt=""></span><span class="readiness candidate-ready">Interface verified</span></div><h4>OpenClaw</h4><p>Authenticated A2A v1.0 peer. Rally will persist task state and expose only explicitly selected agents.</p><div class="agent-protocol"><span>A2A candidate</span><a href="https://docs.openclaw.ai/channels/a2a" aria-label="OpenClaw A2A documentation">Interface ↗</a></div>
+            </article>
+          </div>
+          <p class="execution-note"><b>Where is Prime Intellect?</b> We evaluated it as secure execution infrastructure—not an agent connection—because no stable A2A or hosted delegation contract has been verified.</p>
+        </section>
+
+        <p class="connector-boundary"><b>Honest boundary:</b> Rally has ten pinned, deny-by-default gateway adapters and exact safe presets. BigQuery has passed authenticated MCP discovery; every other provider account stays disconnected until its user completes setup and live discovery. Hermes and OpenClaw are verified interface candidates for Rally’s A2A admission layer—not shipped connections. “Adapter ready” never means “account connected.”</p>
       </section>
 
       <section class="section architecture-section" id="proof">
