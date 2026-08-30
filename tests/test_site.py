@@ -111,7 +111,9 @@ class TestProductSite(unittest.TestCase):
             self.assertIn(f'data-connector="{connector}"', self.html)
         for agent_connector in ("Hyperagent", "Hermes Agent", "OpenClaw"):
             self.assertIn(f'data-agent-connection="{agent_connector}"', self.html)
-        self.assertIn("Prime Intellect", self.html)
+        self.assertNotIn("Prime Intellect", self.html)
+        self.assertNotIn("Where is Prime Intellect?", self.html)
+        self.assertNotIn('class="execution-note"', self.html)
         for brand_asset in (
             "google.svg", "slack.svg", "github.svg", "cloudflare.svg", "n8n.svg",
             "stripe.svg", "bigquery.svg", "atlassian.svg", "salesforce.svg",

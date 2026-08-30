@@ -581,8 +581,6 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px soli
 .candidate-ready::before { background: #f9ab00; }
 .agent-protocol { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: auto; padding-top: 16px; border-top: 1px solid rgba(255,255,255,.075); }
 .agent-protocol > span { color: #7f93ae; font-size: .55rem; font-weight: 650; letter-spacing: .04em; text-transform: uppercase; }
-.execution-note { grid-column: 2; margin: -18px 0 0; color: #768ba4; font-size: .62rem; line-height: 1.5; }
-.execution-note b { color: #aebed2; }
 .architecture-section { max-width: none; padding-left: max(32px, calc((100vw - 1240px) / 2)); padding-right: max(32px, calc((100vw - 1240px) / 2)); background: var(--surface-alt); }
 .flow-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; overflow: hidden; border: 1px solid var(--line); border-radius: 22px; background: var(--line); }
 .flow-grid article { min-height: 320px; padding: 28px; background: #fff; }
@@ -719,7 +717,6 @@ details p a:hover { color: var(--blue-hover); text-decoration-color: currentColo
   .agent-network-intro .network-eyebrow { grid-column: 1 / -1; }
   .agent-network-intro > p:not(.network-eyebrow) { margin-top: 0; }
   .network-rule { grid-column: 1 / -1; }
-  .execution-note { grid-column: 1; margin-top: -18px; }
   .story-flow { grid-template-columns: 1fr 34px 1fr 34px 1fr; }
   .story-flow article { min-height: 350px; padding: 24px; }
   .a2a-proof { grid-template-columns: 150px minmax(0, 1fr); }
@@ -856,7 +853,6 @@ details p a:hover { color: var(--blue-hover); text-decoration-color: currentColo
   .agent-network-intro > p:not(.network-eyebrow) { margin-top: 14px; }
   .agent-network-list { grid-template-columns: 1fr; }
   .agent-connection > p { min-height: 0; margin-bottom: 20px; }
-  .execution-note { margin: -10px 0 0; }
   .connector-meta { grid-template-columns: auto auto; justify-content: space-between; }
   .connector-meta .guardrail { grid-column: 1 / -1; grid-row: 2; }
   .section-heading { margin-bottom: 36px; }
