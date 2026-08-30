@@ -18,6 +18,7 @@
 const MAX_BODY = 512 * 1024;
 const MAX_CONSOLE_BODY = 96 * 1024;
 const CONSOLE_ROOT = "/v1/console/runs";
+const SITE_ORIGIN = "https://agent9-rally.pages.dev";
 const RUN_ID = /^r-[0-9a-z-]{3,77}$/;
 const RUN_STATUSES = new Set(["running", "complete", "blocked", "halted"]);
 const TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/;
@@ -38,6 +39,23 @@ const publicJson = (obj, status = 200) => json(obj, status, {
   "access-control-allow-methods": "GET, OPTIONS",
   "x-rally-data-source": "live",
 });
+
+async function serveSite(request, url) {
+  const upstreamUrl = new URL(`${url.pathname}${url.search}`, SITE_ORIGIN);
+  try {
+    // Preserve the response stream and its security/cache headers. Rally's
+    // custom domain stays on this Worker so the console API is same-origin,
+    // while Cloudflare Pages remains the static asset origin.
+    return await fetch(new Request(upstreamUrl, request));
+  } catch (error) {
+    console.error(JSON.stringify({
+      event: "site_origin_failed",
+      path: url.pathname,
+      error: error instanceof Error ? error.message : String(error),
+    }));
+    return json({ error: "site temporarily unavailable" }, 502);
+  }
+}
 
 const text = (value, limit) =>
   typeof value === "string" ? value.trim().slice(0, limit) : "";
@@ -419,6 +437,10 @@ export default {
       }
       console.log(JSON.stringify({ event: "messages_acknowledged", count: ids.length }));
       return json({ ok: true, acked: ids.length });
+    }
+
+    if (request.method === "GET" || request.method === "HEAD") {
+      return serveSite(request, url);
     }
 
     return json({ error: "not found" }, 404);

@@ -48,6 +48,7 @@ class TestProductSite(unittest.TestCase):
             "Rally runs one model at a time",
             "The authoritative runner dispatches the next model locally",
             "The handshake now speaks a standard",
+            "Google introduced the Agent2Agent (A2A) Protocol",
             "introduced by Google",
             "Rally publishes an A2A v1.0 Agent Card",
             "Accepted into AAIF at Growth Stage",
@@ -62,6 +63,7 @@ class TestProductSite(unittest.TestCase):
         self.assertIn('src="a2a-icon.svg"', self.html)
         self.assertIn('class="a2a-trust"', self.html)
         self.assertIn('name="rally-console-api"', self.html)
+        self.assertIn('content="https://rally.agent9.dev/v1/console"', self.html)
         self.assertIn('rel="canonical" href="https://rally.agent9.dev/"', self.html)
         self.assertIn("data-second-wind", self.html)
         self.assertIn("Loading authoritative runs", self.html)
@@ -114,7 +116,19 @@ class TestProductSite(unittest.TestCase):
             headers = handle.read()
         self.assertIn("Content-Security-Policy", headers)
         self.assertIn("frame-ancestors 'none'", headers)
-        self.assertIn("connect-src 'self' https://rally-ingress.terry-c87.workers.dev", headers)
+        self.assertIn("connect-src 'self' https://rally.agent9.dev", headers)
+        with open(os.path.join(ROOT, "src", "worker", "wrangler.jsonc")) as handle:
+            worker_config = json.load(handle)
+        self.assertEqual(
+            worker_config["routes"],
+            [{"pattern": "rally.agent9.dev", "custom_domain": True}],
+        )
+        self.assertTrue(worker_config["workers_dev"])
+        self.assertFalse(worker_config["preview_urls"])
+        with open(os.path.join(ROOT, "src", "worker", "index.js")) as handle:
+            worker = handle.read()
+        self.assertIn('const SITE_ORIGIN = "https://agent9-rally.pages.dev"', worker)
+        self.assertIn("return await fetch(new Request(upstreamUrl, request))", worker)
 
 
 if __name__ == "__main__":
