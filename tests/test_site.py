@@ -84,6 +84,17 @@ class TestProductSite(unittest.TestCase):
         self.assertIn("routing next turn", self.html)
         for provider, worker in (("Google", "Gemini"), ("Anthropic", "Claude"), ("OpenAI", "Codex")):
             self.assertIn(f"<small>{provider}</small><strong>{worker}</strong>", self.html)
+        for agent_mark in ("antigravity.png", "claude.svg", "openai.svg"):
+            self.assertIn(f'src="brandmarks/{agent_mark}"', self.html)
+            path = os.path.join(SITE, "brandmarks", agent_mark)
+            self.assertTrue(os.path.exists(path))
+            self.assertGreater(os.path.getsize(path), 500)
+        for placeholder in (
+            '<span class="model-avatar">G</span>',
+            '<span class="model-avatar">C</span>',
+            '<span class="model-avatar">O</span>',
+        ):
+            self.assertNotIn(placeholder, self.html)
         self.assertNotIn('class="mission-context"', self.html)
         self.assertNotIn('class="connector-boundary"', self.html)
         self.assertNotIn("Explore the source", self.html)

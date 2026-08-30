@@ -180,19 +180,21 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px soli
 .core-state-routing { color: #9fc0f5 !important; animation: mission-core-state-routing 14s linear infinite; }
 .model-node { position: absolute; z-index: 6; min-width: 150px; display: grid; grid-template-columns: 35px 1fr; align-items: center; gap: 9px; padding: 10px 11px; border: 1px solid rgba(255,255,255,.11); border-radius: 14px; background: rgba(20,42,72,.96); box-shadow: 0 12px 28px rgba(0,0,0,.18); }
 .model-node::after { position: absolute; inset: -1px; pointer-events: none; border: 1px solid transparent; border-radius: inherit; content: ""; animation: mission-node 14s ease-in-out infinite; }
-.model-node .model-avatar { width: 35px; height: 35px; display: grid; place-items: center; color: #fff; border-radius: 11px; font-size: .68rem; font-weight: 800; }
+.model-node .model-avatar { width: 35px; height: 35px; display: grid; place-items: center; overflow: hidden; border: 1px solid rgba(255,255,255,.72); border-radius: 11px; background: #fff; box-shadow: 0 5px 14px rgba(0,0,0,.18), inset 0 0 0 1px rgba(10,35,67,.04); }
+.model-node .model-avatar img { width: 22px; height: 22px; display: block; object-fit: contain; }
 .model-node p, .model-node strong, .model-node small { display: block; margin: 0; }
 .model-node small { margin-bottom: 2px; color: #879bb7; font-size: .5rem; }
 .model-node strong { color: #fff; font-size: .7rem; }
 .node-state { position: absolute; top: -8px; right: 9px; padding: 4px 6px; color: #aef0d2; border: 1px solid rgba(80,220,155,.16); border-radius: 999px; background: #153b37; font-size: .43rem; font-style: normal; font-weight: 750; text-transform: uppercase; letter-spacing: .055em; opacity: .35; animation: mission-state 14s ease-in-out infinite; }
 .gemini-node { top: 22px; left: 3px; }
-.gemini-node .model-avatar { background: #4285f4; }
+.gemini-node .model-avatar img { width: 25px; height: 25px; }
 .gemini-node::after, .gemini-node .node-state { animation-delay: .4s; }
 .claude-node { top: 22px; right: 3px; }
-.claude-node .model-avatar { background: #d86654; }
+.claude-node .model-avatar { background: #f7f3ee; }
+.claude-node .model-avatar img { width: 23px; height: 23px; }
 .claude-node::after, .claude-node .node-state { animation-delay: 4s; }
 .openai-node { right: 50%; bottom: 0; transform: translateX(50%); }
-.openai-node .model-avatar { background: #202124; border: 1px solid #46484d; }
+.openai-node .model-avatar img { width: 25px; height: 25px; }
 .openai-node::after, .openai-node .node-state { animation-delay: 7.6s; }
 .network-line { position: absolute; z-index: 1; top: 148px; left: 50%; width: 145px; height: 1px; overflow: visible; background: linear-gradient(90deg, rgba(120,168,255,.5), rgba(120,168,255,.07)); transform-origin: left center; }
 .network-line::after { position: absolute; top: -4px; left: 105px; width: 7px; height: 7px; border: 1px solid rgba(120,168,255,.46); border-radius: 50%; background: #102846; box-shadow: 0 0 0 3px rgba(36,107,253,.04); content: ""; animation: mission-policy-gate 14s ease-in-out infinite; }
