@@ -18,7 +18,7 @@
     <meta name="rally-console-api" content="https://rally.agent9.dev/v1/console">
     <link rel="canonical" href="https://rally.agent9.dev/">
     <link rel="icon" href="rally-symbol.png" type="image/png">
-    <link rel="stylesheet" href="styles.css?v=20260830d">
+    <link rel="stylesheet" href="styles.css?v=20260830e">
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
@@ -97,32 +97,16 @@
               </div>
             </div>
 
-            <div class="mission-assets" aria-label="Connected company assets approved for this example run">
-              <div class="mission-assets-heading">
-                <span class="asset-policy-mark" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" role="img"><path d="M12 3 19 6v5c0 4.7-2.8 8.1-7 10-4.2-1.9-7-5.3-7-10V6l7-3Z"/><path d="m9.2 12 1.8 1.8 3.9-4"/></svg>
-                </span>
-                <p><small>Connected company assets</small><strong>Approved for this run</strong></p>
-                <b>Per-user authority</b>
-              </div>
+            <div class="mission-assets" aria-label="Company systems scoped to this example run: Google Workspace, BigQuery, and Slack">
+              <span class="asset-policy-mark" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M12 3 19 6v5c0 4.7-2.8 8.1-7 10-4.2-1.9-7-5.3-7-10V6l7-3Z"/><path d="m9.2 12 1.8 1.8 3.9-4"/></svg>
+              </span>
+              <p class="mission-assets-title"><strong>Approved systems</strong><small>Scoped for this run</small></p>
               <div class="mission-asset-list">
-                <article aria-label="Google Workspace Drive and Docs, read access">
-                  <span class="asset-avatar workspace-asset">G</span>
-                  <p><strong><span class="asset-google-word">Google </span>Workspace</strong><small>Drive · Docs</small></p>
-                  <em>Read</em>
-                </article>
-                <article aria-label="BigQuery trusted data, read access">
-                  <span class="asset-avatar bigquery-asset">BQ</span>
-                  <p><strong>BigQuery</strong><small>Trusted data</small></p>
-                  <em>Read</em>
-                </article>
-                <article aria-label="Slack team decisions, search access">
-                  <span class="asset-avatar slack-asset">S</span>
-                  <p><strong>Slack</strong><small>Team decisions</small></p>
-                  <em>Search</em>
-                </article>
+                <span><i class="asset-avatar workspace-asset">G</i><b>Workspace</b></span>
+                <span><i class="asset-avatar bigquery-asset">BQ</i><b>BigQuery</b></span>
+                <span><i class="asset-avatar slack-asset">S</i><b>Slack</b></span>
               </div>
-              <p class="mission-assets-rule"><span>Policy gate</span> Only these scoped assets can enter the run.</p>
             </div>
 
             <div class="mission-outcome">
@@ -423,15 +407,21 @@
         </div>
       </section>
 
-      <section class="final-cta"><div><img class="brand-lockup" src="rally-logo.png" alt="Rally"><p class="eyebrow">The accountable AI team</p><h2>Give your AIs one goal.<br><span>Let Rally make them a team.</span></h2><p>Connect the company once, define the authority, and receive one independently verified result instead of another answer to manage.</p><div class="hero-actions"><button class="button button-primary" type="button" data-open-setup>Give the team a goal</button><a class="button button-outline" href="https://github.com/Agent9AI/rally">Explore the source</a></div><p class="webmcp-cta"><span>WebMCP enabled</span> Browser agents can inspect live evidence and prepare a governed job for your approval.</p></div></section>
+      <section class="final-cta"><div><img class="brand-lockup" src="rally-logo.png" alt="Rally"><p class="eyebrow">The accountable AI team</p><h2>Give your AIs one goal.<br><span>Let Rally make them a team.</span></h2><p>Connect the company once, define the authority, and receive one independently verified result instead of another answer to manage.</p><div class="hero-actions"><button class="button button-primary" type="button" data-open-setup>Give the team a goal</button><a class="button button-outline" href="https://github.com/Agent9AI/rally">Explore the source</a></div></div></section>
     </main>
 
-    <aside class="a2a-trust" aria-label="A2A interoperability">
-      <a class="a2a-trust-badge" href="https://a2a-protocol.org/latest/">
-        <img src="a2a-icon.svg" alt="">
-        <span><b>A2A v1.0 compatible</b><small>Agent discovery + task exchange</small></span>
-      </a>
-      <p>Originally created by <a href="https://developers.googleblog.com/en/a2a-a-new-era-of-agent-interoperability/">Google</a> · now under <a href="https://a2a-protocol.org/latest/blog/2026/08/27/a-new-chapter-for-a2a-joining-the-agentic-ai-foundation/">Linux Foundation open governance</a></p>
+    <aside class="a2a-trust" id="interop" aria-label="Rally interoperability and browser-agent trust">
+      <div class="trust-badges">
+        <a class="a2a-trust-badge" href="https://a2a-protocol.org/latest/">
+          <img src="a2a-icon.svg" alt="">
+          <span><b>A2A v1.0 compatible</b><small>Agent discovery + task exchange</small></span>
+        </a>
+        <a class="webmcp-trust-badge" href="https://github.com/webmachinelearning/webmcp">
+          <span class="webmcp-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><rect x="3.5" y="5" width="25" height="22" rx="5"/><path d="M4 11h24M10 8h.1M7 8h.1M13 8h.1M11 19l3 3 7-8"/></svg></span>
+          <span><b>WebMCP enabled</b><small>3 browser tools · human-confirmed</small></span>
+        </a>
+      </div>
+      <p><span>Originally created by <a href="https://developers.googleblog.com/en/a2a-a-new-era-of-agent-interoperability/">Google</a> · now under <a href="https://a2a-protocol.org/latest/blog/2026/08/27/a-new-chapter-for-a2a-joining-the-agentic-ai-foundation/">Linux Foundation open governance</a></span><span><a href="https://github.com/webmachinelearning/webmcp">WebMCP</a> exposes three user-present browser tools without autonomous submission.</span></p>
     </aside>
 
     <footer class="site-footer">

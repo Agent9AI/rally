@@ -43,10 +43,8 @@ class TestProductSite(unittest.TestCase):
             "No model approves its own work",
             "OpenAI Codex",
             "Connections remain per user",
-            "Connected company assets",
-            "Approved for this run",
-            "Per-user authority",
-            "Only these scoped assets can enter the run",
+            "Approved systems",
+            "Scoped for this run",
             "Are AI and business-system connections shared between users?",
             "Second Wind recovery",
             "Bounded recovery, not auto-approval",
@@ -64,7 +62,8 @@ class TestProductSite(unittest.TestCase):
             "Originally created by",
             "Linux Foundation open governance",
             "WebMCP enabled",
-            "Browser agents can inspect live evidence",
+            "3 browser tools · human-confirmed",
+            "exposes three user-present browser tools without autonomous submission",
             "Can a browser agent use Rally directly?",
             "three WebMCP tools",
             "it cannot submit the job",
@@ -74,6 +73,8 @@ class TestProductSite(unittest.TestCase):
         self.assertIn('src="rally-logo.png"', self.html)
         self.assertIn('src="a2a-icon.svg"', self.html)
         self.assertIn('class="a2a-trust"', self.html)
+        self.assertIn('class="webmcp-trust-badge"', self.html)
+        self.assertNotIn('class="webmcp-cta"', self.html)
         self.assertIn('class="mission-assets"', self.html)
         self.assertNotIn('class="mission-context"', self.html)
         self.assertIn('name="rally-console-api"', self.html)
