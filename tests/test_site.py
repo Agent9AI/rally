@@ -99,6 +99,9 @@ class TestProductSite(unittest.TestCase):
         self.assertNotIn('class="connector-boundary"', self.html)
         self.assertNotIn("Explore the source", self.html)
         self.assertNotIn("View source", self.html)
+        self.assertEqual(self.html.count('class="flow-kicker"'), 4)
+        for phase in ("Commission", "Govern", "Execute", "Prove"):
+            self.assertIn(f'<p class="label">{phase}</p>', self.html)
         self.assertIn('name="rally-console-api"', self.html)
         self.assertIn('content="https://rally.agent9.dev/v1/console"', self.html)
         self.assertIn('rel="canonical" href="https://rally.agent9.dev/"', self.html)

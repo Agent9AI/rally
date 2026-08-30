@@ -340,10 +340,10 @@
       <section class="section architecture-section" id="proof">
         <div class="section-heading"><p class="eyebrow">The Google-governed control plane</p><h2>Every layer has one job—and a receipt.</h2><p>Google Cloud handles identity, durable coordination, and telemetry. Deterministic policy—not a model prompt—decides what may proceed.</p></div>
         <div class="flow-grid">
-          <article><span class="flow-number blue">1</span><p class="label">Commission</p><h3>Signed email ingress</h3><p>Resend and a Worker/D1 queue authenticate, deduplicate, and retain the request until handling succeeds.</p></article>
-          <article><span class="flow-number red">2</span><p class="label">Govern</p><h3>Gemini 3.7 + ADK</h3><p>An IAM-protected Cloud Run service preserves intent and atomically records the handoff in Firestore.</p></article>
-          <article><span class="flow-number yellow">3</span><p class="label">Execute</p><h3>Cross-family workers</h3><p>Claude, Gemini, and OpenAI Codex rotate through implementation and independent review in one controlled workspace.</p></article>
-          <article><span class="flow-number green">4</span><p class="label">Prove</p><h3>Evidence comes home</h3><p>Cloud Trace, test output, verifier identity, and residual risk arrive in the same executive email thread.</p></article>
+          <article><div class="flow-kicker"><span class="flow-number blue">1</span><p class="label">Commission</p></div><h3>Signed email ingress</h3><p>Resend and a Worker/D1 queue authenticate, deduplicate, and retain the request until handling succeeds.</p></article>
+          <article><div class="flow-kicker"><span class="flow-number red">2</span><p class="label">Govern</p></div><h3>Gemini 3.7 + ADK</h3><p>An IAM-protected Cloud Run service preserves intent and atomically records the handoff in Firestore.</p></article>
+          <article><div class="flow-kicker"><span class="flow-number yellow">3</span><p class="label">Execute</p></div><h3>Cross-family workers</h3><p>Claude, Gemini, and OpenAI Codex rotate through implementation and independent review in one controlled workspace.</p></article>
+          <article><div class="flow-kicker"><span class="flow-number green">4</span><p class="label">Prove</p></div><h3>Evidence comes home</h3><p>Cloud Trace, test output, verifier identity, and residual risk arrive in the same executive email thread.</p></article>
         </div>
         <div class="proof-grid">
           <article class="eval-card">
