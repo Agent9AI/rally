@@ -98,10 +98,14 @@ Customer administration uses a distinct boundary. Google Identity Services
 issues a browser ID token for Rally's registered web audience. The public
 control plane verifies the signature, issuer, expiry, audience, stable `sub`
 claim, verified email, and any configured account or Workspace-domain
-allowlist. That service identity can read connection metadata and use one KMS
-key, but it cannot invoke the private coordinator. A compromised browser token
-therefore cannot be exchanged for Rally's machine-to-machine authority.
-The browser carries its ID token in `X-Rally-ID-Token` so Cloud Run does not
+allowlist. Privacy browsers may use an exact same-origin full-page callback:
+Rally verifies Google's double-submit CSRF token, stores only the hash of a
+two-minute one-use exchange code, and returns a 30-minute browser session whose
+hash and verified identity are held in Firestore with TTL cleanup. That service
+identity can read connection metadata and use one KMS key, but it cannot invoke
+the private coordinator. A compromised browser token therefore cannot be
+exchanged for Rally's machine-to-machine authority. The browser carries exactly
+one identity in `X-Rally-ID-Token` or `X-Rally-Session` so Cloud Run does not
 mistake application identity for a service-to-service IAM credential.
 
 Each hosted connector credential is encrypted with a newly generated 256-bit

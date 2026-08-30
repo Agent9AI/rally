@@ -176,21 +176,38 @@ class TestProductSite(unittest.TestCase):
         admin_root = os.path.join(SITE, "admin")
         for admin_asset in ("index.html", "app.js", "config.js", "styles.css"):
             self.assertTrue(os.path.exists(os.path.join(admin_root, admin_asset)))
+        private_browser = os.path.join(admin_root, "private-browser")
+        for redirect_asset in ("index.html", "app.js"):
+            self.assertTrue(os.path.exists(os.path.join(private_browser, redirect_asset)))
         with open(os.path.join(admin_root, "index.html")) as handle:
             admin_html = handle.read()
         with open(os.path.join(admin_root, "app.js")) as handle:
             admin_app = handle.read()
         self.assertEqual(admin_html.count('class="connection-card'), 9)
         self.assertIn("Google Cloud KMS", admin_html)
+        self.assertIn("Stored in Google Cloud", admin_html)
+        self.assertIn("Ciphertext only · KMS protected", admin_html)
+        self.assertIn('href="private-browser/"', admin_html)
         self.assertNotIn("localStorage", admin_app)
         self.assertNotIn("sessionStorage", admin_app)
         self.assertIn("credentialInput.value = \"\"", admin_app)
         self.assertIn("https://accounts.google.com/gsi/client", admin_app)
         self.assertIn('headers.set("X-Rally-ID-Token", idToken)', admin_app)
+        self.assertIn('headers.set("X-Rally-Session", sessionToken)', admin_app)
+        self.assertIn("use_fedcm_for_button: true", admin_app)
+        self.assertIn('state.get("rally-login-code")', admin_app)
         self.assertNotIn('headers.set("Authorization"', admin_app)
+        with open(os.path.join(private_browser, "app.js")) as handle:
+            redirect_app = handle.read()
+        self.assertIn('ux_mode: "redirect"', redirect_app)
+        self.assertIn(
+            'loginUri = "https://rally.agent9.dev/admin/google/callback"',
+            redirect_app,
+        )
         with open(os.path.join(SITE, "_headers")) as handle:
             security_headers = handle.read()
         self.assertIn("https://accounts.google.com/gsi/client", security_headers)
+        self.assertIn("https://accounts.google.com/gsi/style", security_headers)
         self.assertIn("https://*.a.run.app", security_headers)
         self.assertIn("87  runner + ingress + policy + site", self.html)
         self.assertIn('href="privacy/"', self.html)
@@ -213,6 +230,8 @@ class TestProductSite(unittest.TestCase):
             "Rally does not sell personal information",
             "Public run evidence",
             "Retention and deletion",
+            "two-minute exchange code and 30-minute session",
+            "SHA-256 hashes",
             "terry@agent9.dev",
         ):
             self.assertIn(phrase, privacy)
@@ -262,6 +281,9 @@ class TestProductSite(unittest.TestCase):
             worker = handle.read()
         self.assertIn('const SITE_ORIGIN = "https://agent9-rally.pages.dev"', worker)
         self.assertIn("return await fetch(new Request(upstreamUrl, request))", worker)
+        self.assertIn('const GOOGLE_CALLBACK_PATH = "/admin/google/callback"', worker)
+        self.assertIn("return proxyGoogleCallback(request)", worker)
+        self.assertIn("MAX_GOOGLE_FORM_BODY", worker)
 
 
 if __name__ == "__main__":

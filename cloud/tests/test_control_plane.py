@@ -1,7 +1,11 @@
+import datetime as dt
+from urllib.parse import parse_qs, urlencode, urlsplit
+
 import httpx
 import pytest
 
 import control_plane
+from auth_sessions import MemoryAuthSessionStore
 from credential_vault import MemoryConnectorVault
 from user_auth import UserIdentity
 
@@ -70,3 +74,87 @@ async def test_control_plane_is_no_store_and_denies_unauthenticated_requests(mon
     assert denied.status_code == 401
     assert denied.headers["cache-control"] == "no-store"
     assert denied.headers["content-security-policy"] == "default-src 'none'; frame-ancestors 'none'"
+
+    now = [dt.datetime(2026, 8, 30, 16, 0, tzinfo=dt.UTC)]
+    auth_store = MemoryAuthSessionStore(clock=lambda: now[0])
+    identity = UserIdentity(uid="google-user-one", email="owner@example.com", name="Owner")
+    monkeypatch.setattr(control_plane, "_auth_store", auth_store)
+    monkeypatch.setattr(
+        control_plane,
+        "verify_google_id_token",
+        lambda token: identity if token == "signed-google-token" else None,
+    )
+    monkeypatch.setenv("RALLY_ADMIN_RETURN_URL", "https://rally.agent9.dev/admin/")
+    form = urlencode(
+        {"credential": "signed-google-token", "g_csrf_token": "csrf-value"}
+    )
+
+    try:
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=control_plane.app),
+            base_url="http://rally",
+            follow_redirects=False,
+        ) as client:
+            csrf_denied = await client.post(
+                "/auth/google/callback",
+                content=form,
+                headers={
+                    "content-type": "application/x-www-form-urlencoded",
+                    "cookie": "g_csrf_token=wrong-value",
+                },
+            )
+            callback = await client.post(
+                "/auth/google/callback",
+                content=form,
+                headers={
+                    "content-type": "application/x-www-form-urlencoded",
+                    "cookie": "g_csrf_token=csrf-value",
+                },
+            )
+            code = parse_qs(urlsplit(callback.headers["location"]).fragment)[
+                "rally-login-code"
+            ][0]
+            assert code not in repr(auth_store._codes)
+            assert all(len(token_hash) == 64 for token_hash in auth_store._codes)
+            exchanged = await client.post("/v1/auth/exchange", json={"code": code})
+            session_token = exchanged.json()["session_token"]
+            replayed = await client.post("/v1/auth/exchange", json={"code": code})
+            account = await client.get(
+                "/v1/me", headers={"X-Rally-Session": session_token}
+            )
+            ambiguous = await client.get(
+                "/v1/me",
+                headers={
+                    "X-Rally-ID-Token": "signed-google-token",
+                    "X-Rally-Session": session_token,
+                },
+            )
+            now[0] += dt.timedelta(minutes=31)
+            expired = await client.get(
+                "/v1/me", headers={"X-Rally-Session": session_token}
+            )
+            expiring_code = await auth_store.issue_code(identity)
+            assert expiring_code not in repr(auth_store._codes)
+            now[0] += dt.timedelta(minutes=3)
+            expired_code = await auth_store.exchange_code(expiring_code)
+    finally:
+        control_plane._auth_store = None
+
+    assert csrf_denied.status_code == 400
+    assert callback.status_code == 303
+    assert callback.headers["location"].startswith(
+        "https://rally.agent9.dev/admin/#rally-login-code="
+    )
+    assert callback.headers["cache-control"] == "no-store"
+    assert exchanged.status_code == 200
+    assert exchanged.json()["expires_in"] == 1800
+    assert exchanged.json()["account"]["uid"] == "google-user-one"
+    assert replayed.status_code == 401
+    assert account.status_code == 200
+    assert account.json()["email"] == "owner@example.com"
+    assert ambiguous.status_code == 401
+    assert expired.status_code == 401
+    assert expired_code is None
+    assert code not in repr(auth_store._codes)
+    assert session_token not in repr(auth_store._sessions)
+    assert "signed-google-token" not in repr(auth_store._codes)

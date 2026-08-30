@@ -11,11 +11,15 @@ present the independent `X-Rally-Service-Token` application credential. Prompt
 and response bodies are excluded from telemetry.
 
 The optional `rally-control-plane` service is public only at the network edge.
-Every customer route verifies a Google Identity Services ID token, derives
-tenant ownership from Google's immutable `sub` claim, and never receives
-permission to invoke the private coordinator. Connector credentials are
-encrypted with a new AES-256-GCM data key per connection; Cloud KMS wraps each
-data key, while Firestore stores only ciphertext and metadata.
+Every customer route verifies either a Google Identity Services ID token or a
+hashed, short-lived Rally browser session, derives tenant ownership from
+Google's immutable `sub` claim, and never receives permission to invoke the
+private coordinator. Redirect sign-in uses an exact same-origin callback,
+double-submit CSRF validation, a two-minute one-use exchange code, and a
+30-minute session; Firestore stores hashes rather than the raw values and TTL
+cleans expired records. Connector credentials are encrypted with a new
+AES-256-GCM data key per connection; Cloud KMS wraps each data key, while
+Firestore stores only ciphertext and metadata.
 
 Deployment is deliberately gated and two-phase so Cloud Run never references an
 image before its Terraform-managed registry exists. After tests and ADK
@@ -34,8 +38,10 @@ evaluations pass:
 
 Google requires Web OAuth client registration in Cloud Console. Create a Web
 application client named `Rally Web` and authorize the JavaScript origin
-`https://rally.agent9.dev`. Only the resulting public client ID is needed;
-Rally does not use or store an OAuth client secret for Google Sign-In.
+`https://rally.agent9.dev`. Also authorize the exact redirect URI
+`https://rally.agent9.dev/admin/google/callback` for privacy-browser fallback.
+Only the resulting public client ID is needed; Rally does not use or store an
+OAuth client secret for Google Sign-In.
 
 After the immutable image exists, review and apply a plan that preserves the
 private coordinator and enables the separate control plane:

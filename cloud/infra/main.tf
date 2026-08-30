@@ -103,6 +103,24 @@ resource "google_firestore_database" "rally" {
   depends_on = [google_project_service.required]
 }
 
+resource "google_firestore_field" "auth_code_ttl" {
+  project    = var.project_id
+  database   = google_firestore_database.rally.name
+  collection = "rally_auth_codes"
+  field      = "expires_at"
+
+  ttl_config {}
+}
+
+resource "google_firestore_field" "auth_session_ttl" {
+  project    = var.project_id
+  database   = google_firestore_database.rally.name
+  collection = "rally_auth_sessions"
+  field      = "expires_at"
+
+  ttl_config {}
+}
+
 resource "google_kms_key_ring" "connector_vault" {
   project  = var.project_id
   name     = "rally-connector-vault"
@@ -348,6 +366,14 @@ resource "google_cloud_run_v2_service" "control_plane" {
         name  = "RALLY_ALLOWED_USER_EMAILS"
         value = join(",", var.control_plane_allowed_user_emails)
       }
+      env {
+        name  = "RALLY_AUTH_BACKEND"
+        value = "firestore"
+      }
+      env {
+        name  = "RALLY_ADMIN_RETURN_URL"
+        value = "https://rally.agent9.dev/admin/"
+      }
 
       startup_probe {
         initial_delay_seconds = 2
@@ -369,6 +395,8 @@ resource "google_cloud_run_v2_service" "control_plane" {
 
   depends_on = [
     google_firestore_database.rally,
+    google_firestore_field.auth_code_ttl,
+    google_firestore_field.auth_session_ttl,
     google_kms_crypto_key_iam_member.control_plane,
     google_project_iam_member.control_plane,
   ]

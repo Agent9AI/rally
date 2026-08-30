@@ -1,9 +1,12 @@
 # Rally website
 
-The public site at `https://rally.agent9.dev` is deployed from this
-directory. It is intentionally static: it collects no credentials, stores no
-form data, and never pretends an external account is connected before a complete
-OAuth integration exists.
+The public site at `https://rally.agent9.dev` is deployed from this directory.
+Its marketing and evidence surfaces are static. The hosted `/admin/` frontend
+submits a credential only after verified Google sign-in, sends it directly over
+HTTPS to the separate Google Cloud control plane, and keeps identity, session,
+and credential values in browser memory only. The control plane encrypts each
+credential before Firestore persists it and never presents a stored credential
+as a verified or executable connection.
 
 Validate locally with:
 

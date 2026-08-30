@@ -118,12 +118,17 @@ Rally's hosted admin is intentionally separate from the private execution
 service. Google Identity Services supplies a short-lived ID token to the
 browser; Rally verifies its signature, issuer, expiration, audience, and
 verified email, then uses Google's immutable `sub` claim as the tenant key.
-The token stays in JavaScript memory and is never written to browser storage.
+FedCM is enabled for the standard button. Privacy browsers may instead use a
+full-page redirect through Rally's exact same-origin callback, where Google’s
+double-submit CSRF token is checked before a two-minute, single-use code becomes
+a 30-minute Rally session. Raw tokens stay in JavaScript memory; Firestore holds
+only their hashes, verified identity metadata, and expirations, with TTL cleanup.
 
 Google Web OAuth clients must be registered in Cloud Console. Create `Rally
 Web`, authorize `https://rally.agent9.dev` as a JavaScript origin, and retain
-only its public client ID. Do not create, transmit, or commit a client secret
-for this sign-in flow.
+only its public client ID. Add
+`https://rally.agent9.dev/admin/google/callback` as an exact authorized redirect
+URI. Do not create, transmit, or commit a client secret for this sign-in flow.
 
 Once the public client ID exists, activate the control plane without changing
 the private coordinator boundary:

@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#f7f9fc">
   <title>Rally Admin · Secure connections</title>
   <link rel="icon" href="../rally-symbol.png">
-  <link rel="stylesheet" href="styles.css?v=20260830a">
+  <link rel="stylesheet" href="styles.css?v=20260830b">
   <script src="config.js" defer></script>
   <script src="app.js" defer></script>
 </head>
@@ -24,18 +24,20 @@
       <div class="signin-copy">
         <p class="eyebrow">Rally admin</p>
         <h1>Connect the company.<br><span>Keep the keys away from every AI.</span></h1>
-        <p class="lede">Sign in with your Google account to manage only your organization’s connection vault. Rally stores no credential in this browser.</p>
+        <p class="lede">Your credential travels once over HTTPS to Rally’s isolated Google Cloud vault. It becomes AES-256-GCM ciphertext before Firestore stores it; Google Cloud KMS protects the data key. This browser does not retain it, and no AI model can read it.</p>
+        <div class="vault-location" aria-label="Credential storage location"><span>Stored in Google Cloud</span><b>Ciphertext only · KMS protected</b></div>
         <div class="signin-action">
           <div data-google-button></div>
           <p class="configuration-note" data-configuration-note>Checking secure sign-in…</p>
+          <a class="signin-fallback" href="private-browser/">Privacy browser or blocked pop-up? Use full-page sign-in <span aria-hidden="true">→</span></a>
         </div>
       </div>
       <aside class="security-receipt" aria-label="Credential security architecture">
         <div class="receipt-heading"><span class="shield">✓</span><div><p>Credential boundary</p><h2>Models get tools.<br>Never tokens.</h2></div></div>
         <ol>
           <li><span>1</span><div><b>Google verifies the account</b><small>The immutable Google subject—not an email address—owns the vault.</small></div></li>
-          <li><span>2</span><div><b>Rally encrypts per connection</b><small>A unique AES-GCM data key protects every credential.</small></div></li>
-          <li><span>3</span><div><b>Cloud KMS wraps the key</b><small>Firestore receives ciphertext and metadata, never usable secrets.</small></div></li>
+          <li><span>2</span><div><b>Rally encrypts before storage</b><small>A unique AES-256-GCM data key protects every credential.</small></div></li>
+          <li><span>3</span><div><b>Cloud KMS wraps the data key</b><small>Firestore receives ciphertext, a wrapped key, and non-secret metadata—not a usable credential.</small></div></li>
         </ol>
         <p class="receipt-rule"><span>owner</span><b>≠</b><span>model context</span></p>
       </aside>
@@ -77,7 +79,7 @@
       <button class="dialog-close" type="button" aria-label="Close" data-dialog-close>×</button>
       <p class="eyebrow">Tenant-isolated vault</p>
       <h2 id="credential-title">Secure a credential</h2>
-      <p data-dialog-copy>The value travels once over HTTPS to Rally’s Google Cloud control plane.</p>
+      <p data-dialog-copy>The value travels once over HTTPS to Rally’s isolated Google Cloud control plane and is encrypted before Firestore persists it.</p>
       <label for="credential-value">Credential value</label>
       <input id="credential-value" name="credential" type="password" autocomplete="off" spellcheck="false" required maxlength="65536">
       <div class="dialog-safety"><span>✓</span><p>Never stored in this browser. Never returned by the API. Never placed in model context.</p></div>

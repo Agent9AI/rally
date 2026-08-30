@@ -1,5 +1,5 @@
 /*
-  Content-Security-Policy: default-src 'self'; base-uri 'self'; connect-src 'self' https://rally.agent9.dev https://accounts.google.com/gsi/ https://*.a.run.app; font-src 'self'; form-action 'none'; frame-ancestors 'none'; frame-src https://accounts.google.com/gsi/; img-src 'self' data: https://lh3.googleusercontent.com; object-src 'none'; script-src 'self' https://accounts.google.com/gsi/client; style-src 'self'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; connect-src 'self' https://rally.agent9.dev https://accounts.google.com/gsi/ https://*.a.run.app; font-src 'self'; form-action 'none'; frame-ancestors 'none'; frame-src https://accounts.google.com/gsi/; img-src 'self' data: https://lh3.googleusercontent.com; object-src 'none'; script-src 'self' https://accounts.google.com/gsi/client; style-src 'self' https://accounts.google.com/gsi/style; upgrade-insecure-requests
   Cross-Origin-Opener-Policy: same-origin-allow-popups
   Cross-Origin-Resource-Policy: same-origin
   Permissions-Policy: camera=(), geolocation=(), microphone=(), payment=(), tools=(self), usb=()

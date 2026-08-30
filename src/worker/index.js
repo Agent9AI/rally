@@ -12,13 +12,17 @@
  *   PUT  /v1/console/runs/:id  Runner publishes an allowlisted run projection.
  *   GET  /v1/console/runs      Public, sanitized judge console feed.
  *   GET  /v1/console/runs/:id Public, sanitized run detail.
+ *   POST /admin/google/callback Exact, bounded Google redirect handoff.
  *   GET  /health           Liveness, no auth, no data.
  */
 
 const MAX_BODY = 512 * 1024;
 const MAX_CONSOLE_BODY = 96 * 1024;
+const MAX_GOOGLE_FORM_BODY = 32 * 1024;
 const CONSOLE_ROOT = "/v1/console/runs";
 const SITE_ORIGIN = "https://agent9-rally.pages.dev";
+const CONTROL_PLANE_ORIGIN = "https://rally-control-plane-u5xngrbzna-ue.a.run.app";
+const GOOGLE_CALLBACK_PATH = "/admin/google/callback";
 const RUN_ID = /^r-[0-9a-z-]{3,77}$/;
 const RUN_STATUSES = new Set(["running", "complete", "blocked", "halted"]);
 const TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/;
@@ -54,6 +58,56 @@ async function serveSite(request, url) {
       error: error instanceof Error ? error.message : String(error),
     }));
     return json({ error: "site temporarily unavailable" }, 502);
+  }
+}
+
+async function proxyGoogleCallback(request) {
+  const contentType = request.headers.get("content-type") || "";
+  if (!contentType.toLowerCase().startsWith("application/x-www-form-urlencoded")) {
+    return json({ error: "unsupported sign-in response" }, 415);
+  }
+  const raw = await boundedText(request, MAX_GOOGLE_FORM_BODY);
+  if (raw === null) return json({ error: "sign-in response too large" }, 413);
+
+  const headers = new Headers({ "content-type": contentType });
+  const csrfCookie = (request.headers.get("cookie") || "")
+    .split(";")
+    .map((part) => part.trim())
+    .find((part) => part.startsWith("g_csrf_token="));
+  if (csrfCookie) headers.set("cookie", csrfCookie);
+  for (const name of ["user-agent", "x-request-id"]) {
+    const value = request.headers.get(name);
+    if (value) headers.set(name, value);
+  }
+
+  try {
+    const upstream = await fetch(`${CONTROL_PLANE_ORIGIN}/auth/google/callback`, {
+      method: "POST",
+      headers,
+      body: raw,
+      redirect: "manual",
+    });
+    const responseHeaders = new Headers({
+      "cache-control": "no-store",
+      "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+      "referrer-policy": "no-referrer",
+      "x-content-type-options": "nosniff",
+    });
+    for (const name of ["content-type", "location", "pragma", "www-authenticate"]) {
+      const value = upstream.headers.get(name);
+      if (value) responseHeaders.set(name, value);
+    }
+    return new Response(upstream.body, {
+      status: upstream.status,
+      statusText: upstream.statusText,
+      headers: responseHeaders,
+    });
+  } catch (error) {
+    console.error(JSON.stringify({
+      event: "google_callback_failed",
+      error: error instanceof Error ? error.message : String(error),
+    }));
+    return json({ error: "sign-in temporarily unavailable" }, 502);
   }
 }
 
@@ -376,6 +430,13 @@ export default {
         }));
         return json({ ok: true, run_id: runId, updated_at: normalized.updated_at });
       }
+    }
+
+    // Same-origin landing point for Google redirect sign-in. Only this exact,
+    // bounded form POST is forwarded; the control plane verifies Google's
+    // double-submit CSRF token before issuing a one-time exchange code.
+    if (request.method === "POST" && path === GOOGLE_CALLBACK_PATH) {
+      return proxyGoogleCallback(request);
     }
 
     // --- inbound from Resend -------------------------------------------

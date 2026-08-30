@@ -11,6 +11,7 @@ delivery repeats, and autonomous loops eventually behave unexpectedly.
 | Public Cloud Run invocation | IAM allows one Google principal | `cloud/infra/main.tf` |
 | Stolen or omitted app credential | Secret Manager-backed token; constant-time check; fail closed | `cloud/service.py` |
 | Cross-tenant credential access | Verified Google `sub` ownership, tenant-derived document IDs, and owner-hash checks | `cloud/user_auth.py`; `cloud/credential_vault.py` |
+| Redirect login replay or CSRF | Exact callback route, Google's double-submit CSRF check, atomic one-use code, hashed short-lived session, Firestore TTL | `src/worker/index.js`; `cloud/auth_sessions.py`; control-plane tests |
 | Connector credential disclosure | Unique AES-256-GCM data key per connection, wrapped by Cloud KMS; ciphertext-only Firestore records | `cloud/credential_vault.py`; KMS tests |
 | Rejected credential reflected by API | Redacted `SecretStr` input plus a non-reflective validation handler | `cloud/control_plane.py`; control-plane tests |
 | Prompt injection changes policy | ADK is advisory; runner reconciles every transition | `cloud/rally_adk/agent.py`; `src/envelope.py` |
@@ -60,17 +61,24 @@ token, application token, Resend key, ingest-token URL, or raw eval histories.
 The coordinator and customer control plane are deliberately separate Cloud Run
 services. The private coordinator keeps Cloud Run IAM plus its independent
 Secret Manager application token. The public control plane is network
-reachable because a browser must call it, but every `/v1` route verifies a
-Google Identity Services ID token, its audience, issuer, expiry, verified
-email, and optional account/domain allowlists. Rally keys tenancy only by the
-Google `sub` claim; email is display data and may change.
+reachable because a browser must call it, but every protected customer route
+verifies a Google Identity Services ID token or a hashed, short-lived Rally
+session. The
+Google path verifies audience, issuer, expiry, verified email, and optional
+account/domain allowlists. Redirect sign-in additionally verifies Google's
+double-submit CSRF token and atomically consumes a two-minute exchange code.
+Rally keys tenancy only by the Google `sub` claim; email is display data and may
+change.
 
-The browser keeps the short-lived ID token and submitted credential only in
-memory. It never writes either value to cookies, local storage, session storage,
-HTML, logs, or repository files. The API never returns credential material and
-replaces FastAPI's default validation detail with a non-reflective error so an
-invalid oversized secret cannot be echoed.
+The browser keeps the short-lived ID token or 30-minute Rally session and a
+submitted credential only in memory. It never writes those raw values to
+cookies, local storage, session storage, HTML, logs, repository files, or
+Firestore. Firestore stores only hashes of redirect codes and sessions with
+verified identity metadata and expiration timestamps. The API never returns
+credential material and replaces FastAPI's default validation detail with a
+non-reflective error so an invalid oversized secret cannot be echoed.
 
-The browser sends that identity in `X-Rally-ID-Token`, not `Authorization`.
-Cloud Run reserves the latter for its own IAM token processing; the dedicated
-application header ensures the Google Sign-In token reaches Rally's verifier.
+The browser sends identity in exactly one dedicated application header:
+`X-Rally-ID-Token` for the Google fast path or `X-Rally-Session` for the
+full-page fallback. It never uses `Authorization`, which Cloud Run reserves for
+its own IAM token processing.

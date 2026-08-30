@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#f7f9fc">
+  <title>Rally Admin · Full-page Google sign-in</title>
+  <link rel="icon" href="../../rally-symbol.png">
+  <link rel="stylesheet" href="../styles.css?v=20260830b">
+  <script src="../config.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body class="redirect-page">
+  <header class="admin-header">
+    <a class="brand" href="../../" aria-label="Rally homepage"><img src="../../rally-symbol.png" alt=""><span>Rally</span></a>
+    <div class="header-trust"><span class="trust-dot"></span><span>Google-protected control plane</span></div>
+    <a class="text-link" href="../">Back to admin</a>
+  </header>
+
+  <main class="redirect-main">
+    <section class="redirect-shell">
+      <div class="redirect-copy">
+        <p class="eyebrow">Privacy-browser sign-in</p>
+        <h1>One secure detour.<br><span>The same protected vault.</span></h1>
+        <p class="lede">This full-page route avoids a pop-up. Google returns a signed identity response to Rally’s exact callback; Rally validates it and replaces it with a two-minute, single-use code.</p>
+        <div class="redirect-action">
+          <div data-google-redirect-button></div>
+          <p class="configuration-note" data-configuration-note>Checking secure sign-in…</p>
+        </div>
+        <a class="signin-fallback" href="../">Try the standard sign-in instead <span aria-hidden="true">→</span></a>
+      </div>
+
+      <aside class="redirect-proof" aria-label="Full-page sign-in security">
+        <div class="receipt-heading"><span class="shield">✓</span><div><p>Redirect boundary</p><h2>Identity crosses once.<br>Credentials stay sealed.</h2></div></div>
+        <ul>
+          <li><span>01</span><div><b>Exact callback only</b><small>Google may return only to rally.agent9.dev/admin/google/callback.</small></div></li>
+          <li><span>02</span><div><b>Double-submit CSRF check</b><small>Rally requires Google’s form token and browser cookie to match.</small></div></li>
+          <li><span>03</span><div><b>Raw session values are not stored</b><small>Firestore keeps SHA-256 hashes with enforced expiration; the browser keeps the session in memory only.</small></div></li>
+        </ul>
+        <p class="receipt-rule"><span>popup</span><b>→</b><span>full-page return</span></p>
+      </aside>
+    </section>
+  </main>
+
+  <footer class="admin-legal"><span>Rally early access</span><nav aria-label="Legal"><a href="../../privacy/">Privacy</a><a href="../../terms/">Terms</a><a href="mailto:terry@agent9.dev">Contact</a></nav></footer>
+</body>
+</html>

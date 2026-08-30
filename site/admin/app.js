@@ -15,6 +15,7 @@
   const formStatus = document.querySelector("[data-form-status]");
   const connectionCount = document.querySelector("[data-connection-count]");
   let idToken = "";
+  let sessionToken = "";
   let activeConnector = null;
 
   const configured =
@@ -28,9 +29,10 @@
   }
 
   async function api(path, options = {}) {
-    if (!idToken) throw new Error("Sign in again to continue");
+    if (!idToken && !sessionToken) throw new Error("Sign in again to continue");
     const headers = new Headers(options.headers || {});
-    headers.set("X-Rally-ID-Token", idToken);
+    if (idToken) headers.set("X-Rally-ID-Token", idToken);
+    if (sessionToken) headers.set("X-Rally-Session", sessionToken);
     if (options.body) headers.set("Content-Type", "application/json");
     const response = await fetch(`${safeApiBase()}${path}`, { ...options, headers });
     if (response.status === 401) {
@@ -43,6 +45,7 @@
 
   function resetSession(message = "") {
     idToken = "";
+    sessionToken = "";
     signedOut.hidden = false;
     dashboard.hidden = true;
     signOutButton.hidden = true;
@@ -75,14 +78,53 @@
     connectionCount.textContent = String(connections.length);
   }
 
-  async function finishSignIn(credential) {
-    idToken = credential;
-    const [account, connections] = await Promise.all([api("/v1/me"), api("/v1/connections")]);
+  async function showDashboard(account) {
+    const connections = await api("/v1/connections");
     setAccount(account);
     updateCards(connections.connections || []);
     signedOut.hidden = true;
     dashboard.hidden = false;
     signOutButton.hidden = false;
+  }
+
+  async function finishSignIn(credential) {
+    idToken = credential;
+    sessionToken = "";
+    const account = await api("/v1/me");
+    await showDashboard(account);
+  }
+
+  function takeRedirectState() {
+    if (!window.location.hash) return {};
+    const state = new URLSearchParams(window.location.hash.slice(1));
+    const code = state.get("rally-login-code") || "";
+    const error = state.get("rally-login-error") || "";
+    if (code || error) {
+      window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
+    }
+    return { code, error };
+  }
+
+  async function exchangeRedirectCode(code) {
+    configurationNote.textContent = "Completing secure Google sign-in…";
+    const response = await fetch(`${safeApiBase()}/v1/auth/exchange`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code }),
+    });
+    if (!response.ok) throw new Error("That sign-in link expired or was already used. Try again.");
+    const result = await response.json();
+    if (
+      !result ||
+      typeof result.session_token !== "string" ||
+      !/^[A-Za-z0-9_-]{32,128}$/.test(result.session_token) ||
+      !result.account
+    ) {
+      throw new Error("Rally received an invalid sign-in response. Try again.");
+    }
+    idToken = "";
+    sessionToken = result.session_token;
+    await showDashboard(result.account);
   }
 
   function installGoogleSignIn() {
@@ -107,6 +149,7 @@
         },
         auto_select: false,
         cancel_on_tap_outside: true,
+        use_fedcm_for_button: true,
       });
       window.google.accounts.id.renderButton(googleButton, {
         type: "standard",
@@ -172,5 +215,19 @@
   });
   signOutButton.addEventListener("click", () => resetSession("Signed out safely."));
 
-  installGoogleSignIn();
+  async function start() {
+    const redirect = takeRedirectState();
+    if (redirect.error) {
+      configurationNote.textContent = "Google sign-in did not complete. Please try again.";
+    } else if (redirect.code) {
+      try {
+        await exchangeRedirectCode(redirect.code);
+      } catch (error) {
+        resetSession(error.message || "Sign-in failed. Try again.");
+      }
+    }
+    installGoogleSignIn();
+  }
+
+  start().catch((error) => resetSession(error.message || "Sign-in failed. Try again."));
 })();
