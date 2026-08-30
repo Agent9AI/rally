@@ -82,6 +82,8 @@ class TestProductSite(unittest.TestCase):
         self.assertIn("One governed handoff moves sequentially", self.html)
         self.assertEqual(self.html.count('class="story-kicker"'), 3)
         self.assertEqual(self.html.count('class="feature-kicker"'), 3)
+        self.assertEqual(self.html.count('class="trust-domain '), 4)
+        self.assertEqual(self.html.count('class="trust-control"'), 8)
         self.assertIn("handoff accepted", self.html)
         self.assertIn("routing next turn", self.html)
         for provider, worker in (("Google", "Gemini"), ("Anthropic", "Claude"), ("OpenAI", "Codex")):

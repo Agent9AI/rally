@@ -18,7 +18,7 @@
     <meta name="rally-console-api" content="https://rally.agent9.dev/v1/console">
     <link rel="canonical" href="https://rally.agent9.dev/">
     <link rel="icon" href="rally-symbol.png" type="image/png">
-    <link rel="stylesheet" href="styles.css?v=20260830o">
+    <link rel="stylesheet" href="styles.css?v=20260830p">
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
@@ -366,14 +366,34 @@
       <section class="section trust-section" id="trust">
         <div class="section-heading centered"><p class="eyebrow">Fortified by design</p><h2>Autonomy with a chain of custody.</h2><p>Rally assumes messages repeat, models can be persuaded, workers fail, and loops eventually need a hard stop.</p></div>
         <div class="trust-grid">
-          <article><span>⌁</span><div><h3>Dual authentication</h3><p>Cloud Run IAM plus a Secret Manager-backed application credential.</p></div></article>
-          <article><span>↻</span><div><h3>Replay-safe runtime</h3><p>Atomic claims, retry leases, and attempt fencing prevent duplicate or stale work.</p></div></article>
-          <article><span>⌾</span><div><h3>Deterministic authority</h3><p>Prompts cannot change budgets, model families, ownership, or verification rules.</p></div></article>
-          <article><span>↗</span><div><h3>Second Wind recovery</h3><p>A failed model can hand recoverable work to its teammate without transferring approval authority.</p></div></article>
-          <article><span>◫</span><div><h3>Fleet discovery</h3><p>An authenticated catalog declares every agent’s capability, scope, and prohibitions.</p></div></article>
-          <article><span>◌</span><div><h3>Private telemetry</h3><p>Trace and logs prove execution while prompt and response capture remains off.</p></div></article>
-          <article><span>■</span><div><h3>Hard circuit breakers</h3><p>Turn, time, send, rejection, and stagnation ceilings stop runaway behavior.</p></div></article>
-          <article><span>◇</span><div><h3>Human control</h3><p>People can steer a live run, require approval for sensitive actions, or stop it immediately.</p></div></article>
+          <section class="trust-domain identity-domain">
+            <header><span class="trust-domain-icon">⌁</span><div><p class="trust-domain-label">Identity perimeter</p><h3>Only known actors enter.</h3></div></header>
+            <div class="trust-controls">
+              <article class="trust-control"><span>⌁</span><div><h4>Dual authentication</h4><p>Cloud Run IAM plus a Secret Manager-backed application credential.</p></div></article>
+              <article class="trust-control"><span>◫</span><div><h4>Fleet discovery</h4><p>An authenticated catalog declares every agent’s capability, scope, and prohibitions.</p></div></article>
+            </div>
+          </section>
+          <section class="trust-domain runtime-domain">
+            <header><span class="trust-domain-icon">↻</span><div><p class="trust-domain-label">Execution integrity</p><h3>Every turn is bounded.</h3></div></header>
+            <div class="trust-controls">
+              <article class="trust-control"><span>↻</span><div><h4>Replay-safe runtime</h4><p>Atomic claims, retry leases, and attempt fencing prevent duplicate or stale work.</p></div></article>
+              <article class="trust-control"><span>■</span><div><h4>Hard circuit breakers</h4><p>Turn, time, send, rejection, and stagnation ceilings stop runaway behavior.</p></div></article>
+            </div>
+          </section>
+          <section class="trust-domain authority-domain">
+            <header><span class="trust-domain-icon">⌾</span><div><p class="trust-domain-label">Governed authority</p><h3>Policy outranks every prompt.</h3></div></header>
+            <div class="trust-controls">
+              <article class="trust-control"><span>⌾</span><div><h4>Deterministic authority</h4><p>Prompts cannot change budgets, model families, ownership, or verification rules.</p></div></article>
+              <article class="trust-control"><span>◇</span><div><h4>Human control</h4><p>People can steer a run, require approval for sensitive actions, or stop it immediately.</p></div></article>
+            </div>
+          </section>
+          <section class="trust-domain recovery-domain">
+            <header><span class="trust-domain-icon">✓</span><div><p class="trust-domain-label">Recovery + evidence</p><h3>Failure never hides the trail.</h3></div></header>
+            <div class="trust-controls">
+              <article class="trust-control"><span>↗</span><div><h4>Second Wind recovery</h4><p>A failed model can hand recoverable work to a teammate without transferring approval authority.</p></div></article>
+              <article class="trust-control"><span>◌</span><div><h4>Private telemetry</h4><p>Trace and logs prove execution while prompt and response capture remains off.</p></div></article>
+            </div>
+          </section>
         </div>
       </section>
 

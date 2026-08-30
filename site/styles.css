@@ -619,11 +619,21 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px soli
 .test-card pre { margin: 0; padding: 24px; overflow: auto; color: #3c4043; border-radius: 14px; background: #f8fafd; font: .8rem/1.85 ui-monospace, SFMono-Regular, Menlo, monospace; }
 .test-card code { font: inherit; }
 
-.trust-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
-.trust-grid article { min-height: 190px; display: grid; grid-template-columns: 42px 1fr; gap: 15px; padding: 26px; border: 1px solid var(--line-soft); border-radius: 20px; background: #fff; }
-.trust-grid article > span { width: 42px; height: 42px; display: grid; place-items: center; color: var(--blue); border-radius: 13px; background: var(--blue-soft); font-size: 1.2rem; }
-.trust-grid h3 { margin: 4px 0 8px; font-size: 1rem; }
-.trust-grid p { margin: 0; font-size: .83rem; }
+.trust-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+.trust-domain { --trust-accent: #246bfd; --trust-soft: #edf3ff; overflow: hidden; border: 1px solid var(--line); border-radius: 26px; background: #fff; box-shadow: 0 14px 38px rgba(16,35,63,.055); }
+.trust-domain > header { min-height: 126px; display: flex; align-items: center; gap: 18px; padding: 24px 28px; background: linear-gradient(135deg, var(--trust-soft), #fff 78%); }
+.trust-domain-icon { width: 48px; height: 48px; display: grid; flex: none; place-items: center; color: #fff; border-radius: 15px; background: var(--trust-accent); box-shadow: 0 8px 20px color-mix(in srgb, var(--trust-accent) 22%, transparent); font-size: 1.3rem; }
+.trust-domain-label { margin: 0 0 5px; color: var(--trust-accent); font-size: .68rem; font-weight: 750; letter-spacing: .09em; text-transform: uppercase; }
+.trust-domain > header h3 { margin: 0; font-size: 1.28rem; letter-spacing: -.018em; }
+.trust-controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 1px solid var(--line-soft); }
+.trust-control { min-height: 164px; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 13px; padding: 24px 25px 26px; }
+.trust-control + .trust-control { border-left: 1px solid var(--line-soft); }
+.trust-control > span { width: 30px; height: 30px; display: grid; place-items: center; color: var(--trust-accent); border-radius: 10px; background: var(--trust-soft); font-size: .88rem; font-weight: 700; }
+.trust-control h4 { margin: 3px 0 8px; font-family: Arial, system-ui, sans-serif; font-size: .94rem; line-height: 1.3; }
+.trust-control p { margin: 0; font-size: .78rem; line-height: 1.58; }
+.runtime-domain { --trust-accent: #a86800; --trust-soft: #fff7df; }
+.authority-domain { --trust-accent: #b3261e; --trust-soft: #fff0ee; }
+.recovery-domain { --trust-accent: #137333; --trust-soft: #e9f7ee; }
 
 .faq-section { padding-top: 80px; }
 .faq-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -771,6 +781,7 @@ details p a:hover { color: var(--blue-hover); text-decoration-color: currentColo
   .proof-grid, .faq-grid { grid-template-columns: 1fr; }
   .feature-grid { grid-template-columns: 1fr; }
   .feature-card { min-height: auto; }
+  .trust-grid { grid-template-columns: 1fr; }
   .site-footer { grid-template-columns: 1fr auto; }
   .site-footer p { display: none; }
 }
@@ -876,8 +887,10 @@ details p a:hover { color: var(--blue-hover); text-decoration-color: currentColo
   .proof-grid { gap: 14px; }
   .eval-card, .test-card { min-height: auto; padding: 20px; border-radius: 18px; }
   .test-card pre { padding: 16px; font-size: .66rem; }
-  .trust-grid { grid-template-columns: 1fr; }
-  .trust-grid article { min-height: auto; padding: 22px; }
+  .trust-domain > header { min-height: 0; padding: 22px; }
+  .trust-controls { grid-template-columns: 1fr; }
+  .trust-control { min-height: 0; padding: 22px; }
+  .trust-control + .trust-control { border-top: 1px solid var(--line-soft); border-left: 0; }
   .final-cta { padding: 90px 20px; }
   .final-cta .button { width: 100%; }
   .a2a-trust { min-height: 0; align-items: flex-start; flex-direction: column; gap: 12px; padding: 22px 20px; }
