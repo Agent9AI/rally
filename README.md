@@ -261,8 +261,9 @@ receipt honestly preserves the older model used for that earlier call.
 | Authenticated customer control plane | `rally-control-plane-00011-pg6` |
 | Both Cloud Run services | image `sha256:b1836e2224518a8bed51da7e02ef256aeba1aeeae858808f470a0d02d33fa6e2` |
 | Release Cloud Build | `58a580b6-c6d2-45d6-945b-8fc1bb643cd5` (`SUCCESS`) |
-| Durable ingress Worker | `rally-ingress` · version `757237b2-8c72-4429-913a-f854d014cf2a` |
-| Public application | [rally.agent9.dev](https://rally.agent9.dev/) · Pages deployment [`f2d67f82.agent9-rally.pages.dev`](https://f2d67f82.agent9-rally.pages.dev/) |
+| Durable ingress Worker | `rally-ingress` · version `295418b0-6661-428a-b185-d04177c0cbe3` |
+| Private verified-artifact store | R2 bucket `rally-artifacts` · ENAM · tenant-scoped object keys |
+| Public application | [rally.agent9.dev](https://rally.agent9.dev/) · Pages deployment [`68b4b726.agent9-rally.pages.dev`](https://68b4b726.agent9-rally.pages.dev/) |
 
 These identifiers are reproducible recording anchors, not substitutes for the
 live Cloud Run, Firestore, IAM, and content-free Trace evidence shown in the
