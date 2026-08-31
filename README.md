@@ -18,6 +18,7 @@
 <p align="center">
   <a href="https://rally.agent9.dev/">Open Rally</a> ·
   <a href="https://rally.agent9.dev/#demo">Inspect a real run</a> ·
+  <a href="studio/demo-teleprompter.html">Demo teleprompter</a> ·
   <a href="#reproduce-rally">Run it</a> ·
   <a href="docs/ARCHITECTURE.md">Architecture</a> ·
   <a href="docs/SECURITY.md">Security</a> ·
@@ -558,6 +559,8 @@ docs/evidence/             sanitized run receipts and byte-exact audit snapshot
 docs/evidence/media/       live Lyria and Gemini image outputs with hashes
 runs/<run-id>/             authoritative state and isolated agent workspace
 site/                      public product, live proof, and private admin UI
+studio/demo-teleprompter.html
+                           timed 3:55 recording console and exact narration
 ```
 
 ## Hackathon fit: Fortified Enterprise Fleet

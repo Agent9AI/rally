@@ -1,0 +1,727 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Rally Demo Teleprompter</title>
+  <style>
+    :root {
+      --ink: #f7faff;
+      --muted: #9eb0cb;
+      --quiet: #7186a5;
+      --navy-950: #07162c;
+      --navy-900: #0b1e39;
+      --navy-850: #102747;
+      --navy-800: #173356;
+      --blue: #4b7cff;
+      --blue-soft: #9db8ff;
+      --green: #53d5a2;
+      --green-soft: #b9f5dd;
+      --amber: #ffca6a;
+      --red: #ff7a78;
+      --line: rgba(183, 205, 238, .16);
+      --shadow: 0 30px 90px rgba(0, 8, 24, .42);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body { min-height: 100%; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 72% -12%, rgba(75, 124, 255, .25), transparent 38%),
+        radial-gradient(circle at -8% 100%, rgba(83, 213, 162, .12), transparent 34%),
+        var(--navy-950);
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button { font: inherit; }
+
+    .app {
+      width: min(1680px, 100%);
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 24px 28px 118px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 22px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      min-width: 0;
+    }
+
+    .mark {
+      width: 48px;
+      height: 48px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(171, 198, 240, .2);
+      border-radius: 15px;
+      background: rgba(255, 255, 255, .06);
+      box-shadow: inset 0 1px rgba(255, 255, 255, .08);
+    }
+
+    .mark svg { width: 31px; height: 31px; }
+
+    .brand-copy strong {
+      display: block;
+      font-size: 1.05rem;
+      letter-spacing: -.01em;
+    }
+
+    .brand-copy span {
+      color: var(--muted);
+      font-size: .78rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .session {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--muted);
+      font-size: .84rem;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    .live-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 0 6px rgba(83, 213, 162, .11);
+    }
+
+    .progress-track {
+      height: 4px;
+      overflow: hidden;
+      margin-bottom: 24px;
+      border-radius: 99px;
+      background: rgba(255, 255, 255, .08);
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--blue), var(--green));
+      transition: width .35s ease;
+    }
+
+    .stage {
+      display: grid;
+      grid-template-columns: minmax(245px, .62fr) minmax(0, 2.38fr);
+      min-height: calc(100vh - 205px);
+      overflow: hidden;
+      border: 1px solid rgba(173, 201, 242, .18);
+      border-radius: 30px;
+      background: rgba(10, 29, 55, .86);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(24px);
+    }
+
+    .rail {
+      display: flex;
+      flex-direction: column;
+      padding: 30px;
+      border-right: 1px solid var(--line);
+      background: rgba(255, 255, 255, .026);
+    }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--blue-soft);
+      font-size: .73rem;
+      font-weight: 800;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+    }
+
+    .shot-count {
+      margin: 0;
+      font-size: clamp(2.2rem, 4vw, 4.3rem);
+      line-height: .98;
+      letter-spacing: -.06em;
+    }
+
+    .time-range {
+      margin: 12px 0 24px;
+      color: var(--muted);
+      font-size: 1.05rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .meta-block {
+      padding: 21px 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .meta-block:last-of-type { border-bottom: 1px solid var(--line); }
+
+    .meta-label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--quiet);
+      font-size: .7rem;
+      font-weight: 800;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .clip-name {
+      color: var(--ink);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: .93rem;
+      overflow-wrap: anywhere;
+    }
+
+    .timer-wrap { margin-top: auto; padding-top: 26px; }
+
+    .timer-label {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: .75rem;
+      font-weight: 800;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    .timer {
+      font-size: clamp(3.3rem, 6vw, 6.3rem);
+      font-weight: 700;
+      line-height: .95;
+      letter-spacing: -.065em;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .timer.warning { color: var(--amber); }
+    .timer.over { color: var(--red); }
+
+    .keys {
+      margin: 20px 0 0;
+      color: var(--quiet);
+      font-size: .75rem;
+      line-height: 1.55;
+    }
+
+    kbd {
+      display: inline-block;
+      min-width: 1.7em;
+      padding: 2px 6px;
+      margin: 0 2px;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      border-bottom-color: rgba(183, 205, 238, .28);
+      border-radius: 6px;
+      background: rgba(255, 255, 255, .04);
+      font: inherit;
+      text-align: center;
+    }
+
+    .prompter {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      min-width: 0;
+      padding: clamp(30px, 4vw, 68px);
+    }
+
+    .cue {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 16px;
+      align-items: start;
+      padding: 16px 18px;
+      border: 1px solid rgba(157, 184, 255, .18);
+      border-radius: 16px;
+      color: var(--muted);
+      background: rgba(75, 124, 255, .075);
+      font-size: clamp(.9rem, 1.2vw, 1.05rem);
+      line-height: 1.48;
+    }
+
+    .cue strong {
+      color: var(--blue-soft);
+      font-size: .72rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .voiceover {
+      align-self: center;
+      max-width: 25ch;
+      margin: clamp(36px, 5vh, 78px) auto;
+      font-size: clamp(2.15rem, 4.15vw, 5.4rem);
+      font-weight: 650;
+      line-height: 1.12;
+      letter-spacing: -.045em;
+      text-wrap: balance;
+    }
+
+    .voiceover::first-letter { color: var(--blue-soft); }
+
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: 1fr minmax(280px, .75fr);
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .proof,
+    .next-shot {
+      padding: 18px 20px;
+      border-radius: 17px;
+    }
+
+    .proof {
+      border: 1px solid rgba(83, 213, 162, .24);
+      background: rgba(83, 213, 162, .075);
+    }
+
+    .proof .meta-label { color: var(--green); }
+
+    .proof p,
+    .next-shot p {
+      margin: 0;
+      color: var(--green-soft);
+      font-size: clamp(.95rem, 1.2vw, 1.08rem);
+      font-weight: 650;
+      line-height: 1.4;
+    }
+
+    .next-shot {
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, .025);
+    }
+
+    .next-shot p { color: var(--muted); font-weight: 550; }
+
+    .controls {
+      position: fixed;
+      z-index: 10;
+      left: 50%;
+      bottom: 22px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: min(780px, calc(100% - 32px));
+      padding: 10px;
+      border: 1px solid rgba(182, 207, 242, .19);
+      border-radius: 20px;
+      background: rgba(8, 24, 46, .9);
+      box-shadow: 0 18px 50px rgba(0, 7, 20, .45);
+      backdrop-filter: blur(20px);
+      transform: translateX(-50%);
+    }
+
+    .control {
+      min-height: 50px;
+      padding: 0 18px;
+      color: var(--ink);
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: rgba(255, 255, 255, .035);
+      cursor: pointer;
+      font-weight: 750;
+    }
+
+    .control:hover { background: rgba(255, 255, 255, .08); }
+    .control:focus-visible { outline: 3px solid var(--blue-soft); outline-offset: 2px; }
+    .control:disabled { opacity: .35; cursor: not-allowed; }
+
+    .control.primary {
+      flex: 1;
+      color: white;
+      border-color: transparent;
+      background: linear-gradient(135deg, #3568fa, #5687ff);
+      box-shadow: 0 12px 30px rgba(53, 104, 250, .25);
+    }
+
+    .control.primary[data-running="true"] {
+      color: var(--navy-950);
+      background: var(--amber);
+      box-shadow: 0 12px 30px rgba(255, 202, 106, .18);
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @media (max-width: 900px) {
+      .app { padding: 16px 16px 112px; }
+      .session { display: none; }
+      .stage { grid-template-columns: 1fr; min-height: auto; }
+      .rail {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px 24px;
+        padding: 22px;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .rail-head { grid-column: 1; }
+      .meta-block { padding: 8px 0; border-top: 0; }
+      .meta-block:last-of-type { border-bottom: 0; }
+      .timer-wrap { grid-column: 2; grid-row: 1 / span 2; margin: 0; padding: 0; text-align: right; }
+      .keys { display: none; }
+      .prompter { padding: 24px; }
+      .voiceover { max-width: none; margin: 38px auto; font-size: clamp(2rem, 7vw, 3.6rem); }
+      .bottom-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 560px) {
+      .brand-copy span { display: none; }
+      .rail { grid-template-columns: 1fr; }
+      .timer-wrap { grid-column: 1; grid-row: auto; text-align: left; }
+      .cue { grid-template-columns: 1fr; gap: 6px; }
+      .controls { gap: 6px; }
+      .control { padding: 0 12px; }
+      .control span { display: none; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        transition-duration: .01ms !important;
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="mark" aria-hidden="true">
+          <svg viewBox="0 0 36 36" fill="none">
+            <circle cx="18" cy="18" r="6" stroke="#53d5a2" stroke-width="3"/>
+            <circle cx="18" cy="5" r="3" fill="#9db8ff"/>
+            <circle cx="31" cy="18" r="3" fill="#53d5a2"/>
+            <circle cx="7" cy="27" r="3" fill="#ffca6a"/>
+            <path d="M18 8v4M28 18h-4M11 25l3-3" stroke="#f7faff" stroke-width="2.2" stroke-linecap="round"/>
+            <path d="M18 24v8l4-4 4 4" stroke="#4b7cff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="brand-copy">
+          <strong>Rally Demo Studio</strong>
+          <span>All Things Agentic · Final Take</span>
+        </div>
+      </div>
+      <div class="session"><span class="live-dot"></span><span>3:55 target · 10 shots · 369 tests</span></div>
+    </header>
+
+    <div class="progress-track" aria-hidden="true"><div class="progress-fill" id="progressFill"></div></div>
+
+    <section class="stage" aria-labelledby="shotTitle">
+      <aside class="rail">
+        <div class="rail-head">
+          <p class="eyebrow">Current shot</p>
+          <h1 class="shot-count" id="shotTitle">01 / 10</h1>
+          <p class="time-range" id="timeRange">0:00–0:22</p>
+        </div>
+
+        <div class="meta-block">
+          <span class="meta-label">Capture file</span>
+          <span class="clip-name" id="clipName">01-homepage.mov</span>
+        </div>
+
+        <div class="meta-block">
+          <span class="meta-label">Target length</span>
+          <span id="targetLength">22 seconds</span>
+        </div>
+
+        <div class="timer-wrap">
+          <div class="timer-label"><span id="timerState">Ready</span><span>Countdown</span></div>
+          <div class="timer" id="timer" aria-live="polite">00:22</div>
+        </div>
+
+        <p class="keys"><kbd>←</kbd><kbd>→</kbd> shots &nbsp; <kbd>Space</kbd> start/pause &nbsp; <kbd>R</kbd> reset</p>
+      </aside>
+
+      <article class="prompter">
+        <div class="cue">
+          <strong>Screen cue</strong>
+          <span id="screenCue">Rally homepage, pause on hero, click Give Rally a job.</span>
+        </div>
+
+        <p class="voiceover" id="voiceover">Every company can buy excellent AI.</p>
+
+        <div class="bottom-grid">
+          <section class="proof">
+            <span class="meta-label">Proof to leave on screen</span>
+            <p id="proofCue">Hosted product; immediate value and “twist.”</p>
+          </section>
+          <section class="next-shot">
+            <span class="meta-label">Up next</span>
+            <p id="nextShot">Magic-link sign-in</p>
+          </section>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <nav class="controls" aria-label="Teleprompter controls">
+    <button class="control" id="previousButton" type="button" aria-label="Previous shot">← <span>Previous</span></button>
+    <button class="control" id="resetButton" type="button" aria-label="Reset shot timer">↺ <span>Reset</span></button>
+    <button class="control primary" id="timerButton" type="button" data-running="false">Start timer</button>
+    <button class="control" id="nextButton" type="button" aria-label="Next shot"><span>Next</span> →</button>
+  </nav>
+
+  <div class="sr-only" id="announcer" aria-live="polite"></div>
+
+  <script>
+    "use strict";
+
+    const shots = [
+      {
+        range: "0:00–0:22",
+        duration: 22,
+        clip: "01-homepage.mov",
+        label: "Homepage and value",
+        cue: "Rally homepage, pause on the hero, then click “Give Rally a job.”",
+        voiceover: "Every company can buy excellent AI. The broken part is the work between them: people carry context, restart failed jobs, and police confident answers. Rally removes that management tax. One business request becomes an accountable result across the AIs and systems a company already trusts.",
+        proof: "Hosted product · immediate value · the product twist"
+      },
+      {
+        range: "0:22–0:43",
+        duration: 21,
+        clip: "02-magic-link.mov",
+        label: "One-click company sign-in",
+        cue: "Show the company-email field, open the clean Rally email in Zoho, click “Sign in to Rally,” and land on Work.",
+        voiceover: "Rally begins where work already happens. An employee enters an approved company email and receives this one-time link. No new password, no mailbox credential handed to a model. One click opens a policy-governed workspace shared by email and dashboard.",
+        proof: "Real passwordless authentication · polished transactional email"
+      },
+      {
+        range: "0:43–1:08",
+        duration: 25,
+        clip: "03-dashboard-job.mov",
+        label: "Commission a dashboard job",
+        cue: "Click New job, enter the prepared goal, keep Second Wind on, click Accept into queue, then hold on the new run ID.",
+        voiceover: "Here I commission an executive brief from the dashboard. I specify the outcome, sources, and definition of done—not a chain of prompts. Rally attaches policy, selects specialized workers, allows one bounded recovery handoff, and issues a run receipt before work begins.",
+        proof: "Manual intake · real run ID · workspace policy attached"
+      },
+      {
+        range: "1:08–1:34",
+        duration: 26,
+        clip: "04-email-live.mov",
+        label: "Unedited email intake",
+        cue: "In Zoho, finish the last sentence, click Send, return to Rally, refresh once, and hold as the email run appears. Do not cut this clip.",
+        voiceover: "Now I send an assignment to rally at updates dot agent9 dot dev. Email enters the same durable queue, preserves subject and body, and creates its own run beside the dashboard request. Humans can reply later in this thread to refine or resume the work.",
+        proof: "LIVE · UNEDITED · two intake doors, one governed queue"
+      },
+      {
+        range: "1:34–1:59",
+        duration: 25,
+        clip: "05-multi-agent-proof.mov",
+        label: "Independent multi-agent proof",
+        cue: "Open the advancing run, then r-20260831-48141a. Show the timeline, 6/6 checklist, owner-to-verifier rows, and receipt.",
+        voiceover: "Inside the run, Gemini researches, Claude synthesizes, and Codex challenges. Deterministic policy—not a prompt—enforces owner not equal to verifier. This thirteen-turn run rejected unsupported claims, repaired them, and closed six of six independent checks with evidence. Zero items were self-approved.",
+        proof: "13 turns · 6/6 checks · three model families · zero self-approvals"
+      },
+      {
+        range: "1:59–2:17",
+        duration: 18,
+        clip: "06-media-proof.mov",
+        label: "Real Google media output",
+        cue: "Play 3–4 seconds of deliverable-song.mp3, then show the Vertex receipt and lyria-3-pro-preview. Show email delivery only if confirmed.",
+        voiceover: "This is the actual All Things Agentic song Rally generated with Lyria 3 Pro on Vertex AI—not a mock. Rally also generated an image through Google’s image model. Each file carries provider evidence and stays attributable to its governed request.",
+        proof: "Real MP3 + image · direct Vertex provider evidence · no mock data"
+      },
+      {
+        range: "2:17–2:42",
+        duration: 25,
+        clip: "07-second-wind.mov",
+        label: "Second Wind recovery",
+        cue: "Open r-20260830-447f2f and show 6/6 plus the two Second Wind events.",
+        voiceover: "Agents fail. Rally plans for it. When a worker blocked on invalid evidence, Second Wind preserved accepted state and handed recovery to another model. The replacement repaired the work but could not approve itself; Claude later verified the outcome. Recovery never weakened policy.",
+        proof: "Blocked-state recovery · preserved state · verification still independent"
+      },
+      {
+        range: "2:42–3:12",
+        duration: 30,
+        clip: "08-google-cloud.mov",
+        label: "Google is load-bearing",
+        cue: "Show Cloud Run service and ready revision, a sanitized Firestore rally_runs record, then a content-free trace or health response.",
+        voiceover: "Google is load-bearing. Gemini 3.7 Flash runs through Vertex AI and Google ADK at an IAM-protected Cloud Run coordination boundary. Firestore atomically claims work and fences retries. Cloud Trace records metadata without prompt content, and Cloud KMS protects connection secrets. Licensed model workers execute separately; Google owns the authenticated governance plane.",
+        proof: "Gemini 3.7 Flash · ADK · Cloud Run · Firestore · Trace · KMS"
+      },
+      {
+        range: "3:12–3:39",
+        duration: 27,
+        clip: "09-architecture-repo.mov",
+        label: "Architecture and reproducibility",
+        cue: "Move through the README architecture diagram, proof ledger, A2A/WebMCP section, and 369-test badge.",
+        voiceover: "The repository makes every decision reproducible: scoped tools, replay-safe state, independent verification, and honest evidence boundaries. A2A admits governed agent tasks; WebMCP lets browser agents inspect receipts and prepare requests while confirmation stays human. Three hundred sixty-nine tests and six live ADK evaluations protect this path.",
+        proof: "Architecture discipline · A2A · WebMCP · 369 tests · 6 live ADK evals"
+      },
+      {
+        range: "3:39–3:55",
+        duration: 16,
+        clip: "10-close.mov",
+        label: "Value close",
+        cue: "Return to the dashboard receipt or delivered email and finish on the Rally logo.",
+        voiceover: "Rally gives a small company what once required an AI operations team: accountable execution from the inbox to a verified deliverable. One request. The right specialists. Evidence before confidence. Rally is how your AIs work together.",
+        proof: "One request · accountable execution · evidence before confidence"
+      }
+    ];
+
+    const elements = {
+      shotTitle: document.getElementById("shotTitle"),
+      timeRange: document.getElementById("timeRange"),
+      clipName: document.getElementById("clipName"),
+      targetLength: document.getElementById("targetLength"),
+      screenCue: document.getElementById("screenCue"),
+      voiceover: document.getElementById("voiceover"),
+      proofCue: document.getElementById("proofCue"),
+      nextShot: document.getElementById("nextShot"),
+      progressFill: document.getElementById("progressFill"),
+      timer: document.getElementById("timer"),
+      timerState: document.getElementById("timerState"),
+      previousButton: document.getElementById("previousButton"),
+      nextButton: document.getElementById("nextButton"),
+      resetButton: document.getElementById("resetButton"),
+      timerButton: document.getElementById("timerButton"),
+      announcer: document.getElementById("announcer")
+    };
+
+    let currentIndex = 0;
+    let elapsedSeconds = 0;
+    let startedAt = 0;
+    let running = false;
+    let animationFrame = 0;
+
+    function twoDigits(value) {
+      return String(Math.max(0, Math.floor(value))).padStart(2, "0");
+    }
+
+    function formatTime(seconds, showOverrun) {
+      const absolute = Math.abs(Math.ceil(seconds));
+      const minutes = Math.floor(absolute / 60);
+      const remainder = absolute % 60;
+      return `${showOverrun && seconds < 0 ? "+" : ""}${twoDigits(minutes)}:${twoDigits(remainder)}`;
+    }
+
+    function totalElapsedBefore(index) {
+      return shots.slice(0, index).reduce((total, shot) => total + shot.duration, 0);
+    }
+
+    function updateTimer() {
+      const shot = shots[currentIndex];
+      const remaining = shot.duration - elapsedSeconds;
+      elements.timer.textContent = formatTime(remaining, true);
+      elements.timer.classList.toggle("warning", remaining > 0 && remaining <= 5);
+      elements.timer.classList.toggle("over", remaining <= 0);
+      elements.timerState.textContent = remaining <= 0 ? "Over target" : running ? "Running" : elapsedSeconds > 0 ? "Paused" : "Ready";
+      elements.timerButton.textContent = running ? "Pause timer" : elapsedSeconds > 0 ? "Resume timer" : "Start timer";
+      elements.timerButton.dataset.running = String(running);
+
+      const complete = totalElapsedBefore(currentIndex) + Math.min(elapsedSeconds, shot.duration);
+      const total = shots.reduce((sum, item) => sum + item.duration, 0);
+      elements.progressFill.style.width = `${Math.min(100, (complete / total) * 100)}%`;
+    }
+
+    function tick(now) {
+      if (!running) return;
+      elapsedSeconds = Math.max(0, (now - startedAt) / 1000);
+      updateTimer();
+      animationFrame = requestAnimationFrame(tick);
+    }
+
+    function toggleTimer() {
+      if (running) {
+        running = false;
+        cancelAnimationFrame(animationFrame);
+      } else {
+        running = true;
+        startedAt = performance.now() - elapsedSeconds * 1000;
+        animationFrame = requestAnimationFrame(tick);
+      }
+      updateTimer();
+    }
+
+    function resetTimer() {
+      running = false;
+      cancelAnimationFrame(animationFrame);
+      elapsedSeconds = 0;
+      updateTimer();
+    }
+
+    function renderShot(announce) {
+      const shot = shots[currentIndex];
+      const next = shots[currentIndex + 1];
+      elements.shotTitle.textContent = `${twoDigits(currentIndex + 1)} / ${twoDigits(shots.length)}`;
+      elements.timeRange.textContent = shot.range;
+      elements.clipName.textContent = shot.clip;
+      elements.targetLength.textContent = `${shot.duration} seconds`;
+      elements.screenCue.textContent = shot.cue;
+      elements.voiceover.textContent = shot.voiceover;
+      elements.proofCue.textContent = shot.proof;
+      elements.nextShot.textContent = next ? `${twoDigits(currentIndex + 2)} · ${next.label}` : "Finish on the Rally logo";
+      elements.previousButton.disabled = currentIndex === 0;
+      elements.nextButton.disabled = currentIndex === shots.length - 1;
+      resetTimer();
+      if (announce) elements.announcer.textContent = `Shot ${currentIndex + 1}: ${shot.label}`;
+      document.title = `${twoDigits(currentIndex + 1)} · ${shot.label} — Rally Demo`;
+    }
+
+    function moveShot(direction) {
+      const nextIndex = Math.min(shots.length - 1, Math.max(0, currentIndex + direction));
+      if (nextIndex === currentIndex) return;
+      currentIndex = nextIndex;
+      renderShot(true);
+    }
+
+    elements.previousButton.addEventListener("click", () => moveShot(-1));
+    elements.nextButton.addEventListener("click", () => moveShot(1));
+    elements.resetButton.addEventListener("click", resetTimer);
+    elements.timerButton.addEventListener("click", toggleTimer);
+
+    document.addEventListener("keydown", (event) => {
+      const tag = event.target && event.target.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        moveShot(-1);
+      } else if (event.key === "ArrowRight") {
+        event.preventDefault();
+        moveShot(1);
+      } else if (event.code === "Space") {
+        event.preventDefault();
+        toggleTimer();
+      } else if (event.key.toLowerCase() === "r") {
+        event.preventDefault();
+        resetTimer();
+      }
+    });
+
+    renderShot(false);
+  </script>
+</body>
+</html>
