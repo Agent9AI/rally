@@ -122,13 +122,14 @@ request keys, account menus, and raw prompt fields off screen.
 | Public product + professional proof run | <https://rally.agent9.dev/#demo> — `r-20260830-447f2f` |
 | Cloud project | `rally-agent9-2026` |
 | Cloud Run | `rally-google-coordinator-00006-v7q` in `us-east1` |
-| Digest-pinned container | `sha256:b51e64c4071da49f1b61b97f621c83249bb9b77be9470638a338d6a0125f562e` |
-| Cloud Build | `aee66131-0ecc-4fbe-b5ca-cd4f920f9c6f` (`SUCCESS`) |
+| Coordinator digest | `sha256:b4c8a20343aaeec64a602b108bfdcb73fa723525af1498cba0fa15c0fe64d769` |
+| Hosted control plane | `rally-control-plane-00006-cnp`; `sha256:8d8de1f7c6877c1124d2b78ff34452f88c9420b7e2b5ba83a7d91d1af3e1c532` |
+| Release Cloud Build | `fa539b5b-5966-440f-b55e-f143206db59e` (`SUCCESS`) |
 | Firestore proof record | `r-cloud-redaction-20260829` in `(default)` |
 | Content-free Cloud Trace | `05b54fcc39e0f869fcb486ed62d5350f` — eight linked spans, all ADK payload attributes `{}` |
-| Cloudflare Worker | `rally-ingress` version `24630795-591a-4615-b127-43940f8bb977` |
-| Pages production release | <https://rally.agent9.dev/>; immediately before recording, capture the first Production row from `wrangler pages deployment list --project-name agent9-rally` |
-| Public source | <https://github.com/Agent9AI/rally> — `main`, public, Apache-2.0; record the frozen submission commit after final evidence |
+| Cloudflare Worker | `rally-ingress` version `f9942b51-ac13-451d-a711-9636792c0c06` |
+| Pages production release | `4993d978.agent9-rally.pages.dev`; branded origin <https://rally.agent9.dev/> |
+| Submission source | <https://github.com/Agent9AI/rally> — keep `main` private during final hardening, then make it public under Apache-2.0 and record the frozen submission commit |
 
 Prepare these in order before recording:
 

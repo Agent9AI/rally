@@ -307,10 +307,20 @@ class TestProductSite(unittest.TestCase):
     def test_static_site_has_security_headers(self):
         with open(os.path.join(SITE, "_headers")) as handle:
             headers = handle.read()
+        self.assertIn(
+            "Cache-Control: public, max-age=0, must-revalidate, no-transform",
+            headers,
+        )
         self.assertIn("Content-Security-Policy", headers)
         self.assertIn("frame-ancestors 'none'", headers)
         self.assertIn("connect-src 'self' https://rally.agent9.dev", headers)
+        self.assertIn("style-src-attr 'unsafe-inline'", headers)
+        self.assertIn(
+            "style-src-elem 'self' https://accounts.google.com/gsi/style 'unsafe-inline'",
+            headers,
+        )
         self.assertIn("tools=(self)", headers)
+        self.assertNotIn("static.cloudflareinsights.com", headers)
         with open(os.path.join(ROOT, "src", "worker", "wrangler.jsonc")) as handle:
             worker_config = json.load(handle)
         self.assertEqual(
