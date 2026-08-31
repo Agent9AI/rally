@@ -219,7 +219,7 @@ and attempts to bypass independent review.
 Rally can now turn an explicit email or dashboard request into a real file—not
 just prose. Live Vertex calls produced a [69.96-second All Things Agentic song
 with Lyria 3 Pro](docs/evidence/media/all-things-agentic-lyria-3-pro.mp3), a
-[73.33-second soulful hip-hop variant](docs/evidence/media/all-things-agentic-soulful-hip-hop-lyria-3-pro.mp3),
+[▶ 73.33-second soulful hip-hop variant in a GitHub-native player](docs/evidence/media/all-things-agentic-soulful-hip-hop-lyria-3-pro.mp4),
 and a [1024×1024 beagle image](docs/evidence/media/beagle-gemini-image.png) with
 Gemini 2.5 Flash Image. The repository preserves their hashes and non-secret
 [generation receipt](docs/evidence/media/generation-receipt.json). The exact
