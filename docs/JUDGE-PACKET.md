@@ -112,7 +112,7 @@ turn plus the final report.
 
 ## Assets and tabs
 
-### Live proof anchors — August 29, 2026
+### Live proof anchors — August 31, 2026
 
 Use these identifiers to open the genuine records before recording. Keep tokens,
 request keys, account menus, and raw prompt fields off screen.
@@ -128,7 +128,7 @@ request keys, account menus, and raw prompt fields off screen.
 | Firestore proof record | `r-cloud-redaction-20260829` in `(default)` |
 | Content-free Cloud Trace | `05b54fcc39e0f869fcb486ed62d5350f` — eight linked spans, all ADK payload attributes `{}` |
 | Cloudflare Worker | `rally-ingress` version `f9942b51-ac13-451d-a711-9636792c0c06` |
-| Pages production release | `4993d978.agent9-rally.pages.dev`; branded origin <https://rally.agent9.dev/> |
+| Pages production release | <https://rally.agent9.dev/>; immediately before recording, confirm the first Production row from `wrangler pages deployment list --project-name agent9-rally` |
 | Submission source | <https://github.com/Agent9AI/rally> — keep `main` private during final hardening, then make it public under Apache-2.0 and record the frozen submission commit |
 
 Prepare these in order before recording:
