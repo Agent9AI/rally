@@ -1,9 +1,10 @@
-"""Publish an explicitly public, sanitized view of authoritative Rally state.
+"""Publish a sanitized workspace view of authoritative Rally state.
 
 The local state file contains operational details that must never reach a public
-demo surface (commissioner identity, worktree paths, thread IDs, and raw cloud
-records).  This module is the first allowlist.  The edge Worker applies a second
-allowlist before anything is stored or returned to a browser.
+or private browser surface (commissioner identity, worktree paths, thread IDs,
+and raw cloud records).  This module is the first allowlist.  The edge Worker
+applies a second allowlist and scopes private records to an authenticated
+workspace before anything is returned to a browser.
 """
 from __future__ import annotations
 
@@ -18,6 +19,7 @@ import transport
 
 USER_AGENT = "rally/1.0 (+https://github.com/Agent9AI/rally)"
 STATUSES = {"running", "complete", "blocked", "halted"}
+WORKSPACE_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,95}$")
 LOCAL_MARKDOWN_FILE_LINK_RE = re.compile(
     r"\[([^\]]+)\]\(file:///[^\s)]+\)"
 )
@@ -131,6 +133,10 @@ def _agent_label(name: str) -> str:
 def build_snapshot(state: Dict, cfg: Dict, published_at: Optional[str] = None) -> Dict:
     """Return the only shape the runner is allowed to publish."""
     stamp = published_at or _now()
+    settings = cfg.get("console") or {}
+    workspace_id = str(settings.get("workspace_id") or "").strip()
+    if not WORKSPACE_ID_RE.fullmatch(workspace_id):
+        raise ConsoleError("console workspace_id is not configured")
     redactions = _redactions(state)
     checklist = _checklist(state.get("checklist") or [], redactions)
     done = sum(1 for item in checklist if item["state"] == "done")
@@ -278,7 +284,10 @@ def build_snapshot(state: Dict, cfg: Dict, published_at: Optional[str] = None) -
     assert status in STATUSES
     return {
         "schema_version": 1,
-        "visibility": "public",
+        # The Worker hashes workspace_id before storage and removes it from the
+        # browser payload. Public visibility remains a separate explicit opt-in.
+        "workspace_id": workspace_id,
+        "visibility": "public" if settings.get("public") else "private",
         "run_id": _text(state.get("run_id"), 80),
         "title": title,
         "created_at": _text(state.get("created"), 40),
@@ -322,9 +331,9 @@ def build_snapshot(state: Dict, cfg: Dict, published_at: Optional[str] = None) -
 
 
 def publish(state: Dict, cfg: Dict) -> Optional[Dict]:
-    """Publish when and only when this configuration explicitly opts in."""
+    """Publish an allowlisted projection when workspace sync is enabled."""
     settings = cfg.get("console") or {}
-    if not settings.get("enabled") or not settings.get("public"):
+    if not settings.get("enabled"):
         return None
     base = (settings.get("worker_url") or
             (cfg.get("ingress") or {}).get("worker_url") or "").rstrip("/")

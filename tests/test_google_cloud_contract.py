@@ -76,6 +76,7 @@ class TestGoogleCloudContract(unittest.TestCase):
         self.assertIn('member   = "allUsers"', terraform)
         self.assertIn('variable "control_plane_image_uri"', variables)
         self.assertIn('var.control_plane_image_uri != ""', terraform)
+        self.assertIn('name  = "RALLY_WORKSPACE_ID"', terraform)
         self.assertIn("Depends(require_user)", control_plane)
         self.assertIn('alias="X-Rally-ID-Token"', identity)
         self.assertIn('"X-Rally-ID-Token"', control_plane)

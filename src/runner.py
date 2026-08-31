@@ -1026,8 +1026,8 @@ def cmd_status(run_id: str) -> int:
 
 def cmd_publish_console(run_id: str, cfg: Dict) -> int:
     settings = cfg.get("console") or {}
-    if not settings.get("enabled") or not settings.get("public"):
-        print("console publication is not explicitly enabled and public in this config")
+    if not settings.get("enabled"):
+        print("workspace projection is not enabled in this config")
         return 1
     try:
         run = Run.load(run_id)
@@ -1036,7 +1036,8 @@ def cmd_publish_console(run_id: str, cfg: Dict) -> int:
         return 1
     if not sync_console(run, cfg):
         return 1
-    print("published %s to the public console" % run_id)
+    destination = "public proof and private workspace" if settings.get("public") else "private workspace"
+    print("published %s to the %s" % (run_id, destination))
     return 0
 
 

@@ -6,6 +6,7 @@ import asyncio
 import hmac
 import json
 import os
+import re
 from typing import Annotated, Any, Literal
 from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
 
@@ -254,12 +255,23 @@ class HostedToolCallInput(BaseModel):
 
 
 def public_user(user: UserIdentity) -> dict[str, str | None]:
+    configured_workspace = os.getenv("RALLY_WORKSPACE_ID", "").strip()
+    if configured_workspace and not re.fullmatch(
+        r"[A-Za-z0-9][A-Za-z0-9._:-]{0,95}", configured_workspace
+    ):
+        raise HTTPException(status_code=503, detail="workspace identity is not configured")
     return {
         "uid": user.uid,
         "email": user.email,
         "name": user.name,
         "picture": user.picture,
         "hosted_domain": user.hosted_domain,
+        # The initial release is one explicitly configured workspace. Keeping
+        # this identifier separate from the Google subject lets the same
+        # company authorize multiple administrators without merging vaults.
+        # The subject-scoped fallback is safe for local tests and fails closed
+        # against production projections when the deployment variable is absent.
+        "workspace_id": configured_workspace or f"user:{user.uid}",
     }
 
 

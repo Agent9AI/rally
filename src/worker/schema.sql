@@ -22,7 +22,10 @@ CREATE TABLE IF NOT EXISTS console_runs (
   done_items   INTEGER NOT NULL DEFAULT 0 CHECK (done_items >= 0),
   total_items  INTEGER NOT NULL DEFAULT 0 CHECK (total_items >= 0),
   public       INTEGER NOT NULL DEFAULT 0 CHECK (public IN (0, 1)),
+  workspace_key TEXT NOT NULL DEFAULT '',
   payload      TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_console_runs_public_updated
   ON console_runs (public, updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_console_runs_workspace_updated
+  ON console_runs (workspace_key, updated_at DESC);

@@ -1,10 +1,14 @@
 # Rally
 
-**Rally is the accountable AI team: your best models, finally working
-together.** A company gets one Rally identity on the outside and a governed
-team of specialized models on the inside. Give it one difficult outcome; Rally
-coordinates the handoffs, works inside approved boundaries, and returns one
-independently verified result with evidence.
+**Rally gives companies accountable AI teammates employees can email like
+coworkers.** A teammate is a stable business role with an address, approved
+knowledge, tools, permissions, and a human owner. Rally coordinates specialized
+model workers behind that role and returns one independently verified result
+with evidence in the same thread.
+
+Email is Rally's front door, not its entire identity. Models are workers;
+teammates are roles; email and future chat surfaces are channels; Rally is the
+policy, task-management, and accountability system behind them.
 
 The current release proves that contract with three provider-native workers.
 Gemini, Claude, and OpenAI Codex, from **different model families**, rotate around
@@ -119,22 +123,23 @@ still cannot finish, Rally tells you exactly where and why.
 
 | Piece | State |
 |---|---|
-| Turn loop, state machine, console projection, guards | working, 88 product/integration tests |
+| Turn loop, state machine, console projection, guards | working, 92 product/integration tests |
 | Claude + Gemini CLI execution | working, live multi-turn runs completed |
 | OpenAI Codex CLI execution | working, live authenticated preflight passed with per-user ChatGPT sign-in |
 | Executive turn emails + report | working through Resend |
 | Ingress Worker (D1) | deployed, signed webhook and round trip verified |
 | Judge console | live Pages UI backed by a double-sanitized D1 run projection; professional proof run `r-20260830-447f2f` is public |
+| Authenticated workspace | Google-signed admin lands on a real Work dashboard with a workspace-scoped D1 queue, run detail, workforce, Connections, and policy views; Connections are no longer the whole product |
 | `rally@updates.agent9.dev` route | working; replies return to the commissioner |
 | Connector gateway | BigQuery live MCP handshake + six-tool discovery verified; ten pinned runtime adapters; provider-safe presets; exact one-time human approvals; per-run authority, payload ceilings, and content-free receipts |
-| Product + Cloud test suite | 259 automated tests passing |
+| Product + Cloud test suite | 263 automated tests passing |
 | Google ADK coordinator | implemented; live eval 6/6, both metrics 1.00 |
 | Cloud Run + Firestore + Trace | deployed privately in `rally-agent9-2026`; authenticated commission, replay, Firestore, logs, and content-free trace verified |
 | Customer identity + credential vault | verified Google-account boundary, tenant-isolated API, and Cloud KMS envelope encryption implemented; Google web sign-in and each business-system authorization remain separate trust grants |
 | A2A v1.0 boundary | Agent Card, JSON-RPC, HTTP+JSON, SSE streaming, polling, listing, Firestore tasks, and dual-auth tested with official SDK clients |
 | WebMCP browser surface | Three feature-detected tools shipped for public-run search, bounded verification inspection, and human-confirmed job drafting; production ChatGPT in-app invocation remains the final proof gate |
 
-The current release candidate has **259 automated tests**: 88 deterministic
+The current release candidate has **263 automated tests**: 92 deterministic
 runner, ingress, policy, bridge, connector, and site tests plus 171 Cloud, A2A,
 credential, preset, approval, and connector-gateway service tests.
 The separate live ADK scorecard remains 6/6 at 1.00 trajectory and 1.00 quality.

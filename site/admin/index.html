@@ -5,26 +5,26 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <meta name="theme-color" content="#f7f9fc">
-  <title>Rally Admin · Secure connections</title>
+  <title>Rally Workspace · Work, workforce, and connections</title>
   <link rel="icon" href="../rally-symbol.png">
-  <link rel="stylesheet" href="styles.css?v=20260831a">
+  <link rel="stylesheet" href="styles.css?v=20260831b">
   <script src="config.js" defer></script>
-  <script src="app.js?v=20260831b" defer></script>
+  <script src="app.js?v=20260831c" defer></script>
 </head>
 <body>
-  <a class="skip-link" href="#main">Skip to connections</a>
+  <a class="skip-link" href="#main">Skip to workspace</a>
   <header class="admin-header">
     <a class="brand" href="../" aria-label="Rally homepage"><img src="../rally-symbol.png" alt=""><span>Rally</span></a>
-    <div class="header-trust"><span class="trust-dot"></span><span>Google-protected control plane</span></div>
+    <div class="header-trust"><span class="trust-dot"></span><span>Policy-governed workspace</span></div>
     <button class="text-button" type="button" data-sign-out hidden>Sign out</button>
   </header>
 
   <main id="main" tabindex="-1">
     <section class="signin-shell" data-signed-out>
       <div class="signin-copy">
-        <p class="eyebrow">Rally admin</p>
-        <h1 tabindex="-1" data-signin-title>Connect the company.<br><span>Keep the keys away from every AI.</span></h1>
-        <p class="lede">Your credential travels once over HTTPS to Rally’s isolated Google Cloud vault. It becomes AES-256-GCM ciphertext before Firestore stores it; Google Cloud KMS protects the data key. Rally never saves it to browser storage, and no AI model can read it.</p>
+        <p class="eyebrow">Rally workspace</p>
+        <h1 tabindex="-1" data-signin-title>Your accountable AI team.<br><span>One secure workspace.</span></h1>
+        <p class="lede">Sign in to commission and track work, inspect independent verification receipts, manage the AI workforce, and approve the company systems each teammate may use.</p>
         <div class="vault-location" aria-label="Credential storage location"><span>Stored in Google Cloud</span><b>Ciphertext only · KMS protected</b></div>
         <div class="signin-action">
           <div data-google-button></div>
@@ -43,32 +43,91 @@
       </aside>
     </section>
 
-    <section class="dashboard" data-dashboard hidden>
-      <div class="dashboard-heading">
-        <div><p class="eyebrow">Connection vault</p><h1 tabindex="-1" data-dashboard-title>Your approved systems.</h1><p>Secure credentials here first. Rally will not call a provider until its capability check and policy preset also pass.</p></div>
+    <section class="dashboard workspace-shell" data-dashboard hidden>
+      <aside class="workspace-sidebar" aria-label="Rally workspace">
+        <div class="workspace-name"><span>Agent9</span><b>Rally workspace</b></div>
+        <nav class="workspace-nav" aria-label="Workspace navigation">
+          <button class="is-active" type="button" data-workspace-nav="work" aria-current="page"><span aria-hidden="true">▤</span>Work</button>
+          <button type="button" data-workspace-nav="workforce"><span aria-hidden="true">◎</span>AI workforce</button>
+          <button type="button" data-workspace-nav="connections"><span aria-hidden="true">⌁</span>Connections</button>
+          <button type="button" data-workspace-nav="policy"><span aria-hidden="true">✓</span>Policy</button>
+        </nav>
         <div class="account-card"><img data-user-picture alt="" hidden><span class="account-initial" data-user-initial>R</span><div><b data-user-name>Rally administrator</b><small data-user-email></small></div></div>
-      </div>
+      </aside>
 
-      <div class="vault-summary" aria-label="Vault status">
-        <div><span data-connection-count>0</span><p>certified connections</p></div>
-        <div><span>9</span><p>supported systems</p></div>
-        <div><span>0</span><p>keys exposed to models</p></div>
-        <div class="kms-proof"><span>✓</span><p><b>Google Cloud KMS</b><small>Envelope encryption active</small></p></div>
-      </div>
+      <div class="workspace-content">
+        <section class="workspace-view" data-workspace-view="work">
+          <div class="workspace-heading">
+            <div><p class="eyebrow">Work</p><h1 tabindex="-1" data-dashboard-title>Your accountable team at work.</h1><p>Commission work by email, follow every active job, and inspect the evidence before anything is called complete.</p></div>
+            <a class="workspace-primary" href="mailto:rally@updates.agent9.dev?subject=New%20Rally%20job&body=Outcome%3A%0A%0AContext%20or%20attachments%3A%0A%0ADue%20date%3A">New job</a>
+          </div>
 
-      <div class="connection-heading"><div><p class="eyebrow">Business systems</p><h2>Grant the minimum. Verify before use.</h2></div><p>A stored credential is not automatically a live connection. Rally keeps each adapter disabled until authenticated discovery proves exactly what it can do.</p></div>
-      <div class="connection-grid" data-connection-grid>
-        <article class="connection-card is-pending" data-connector="google-workspace"><header><img src="../brandmarks/google.svg" alt=""><span class="connection-state" role="status" aria-live="polite" aria-atomic="true">Coming soon</span></header><h3>Google Workspace</h3><p>One approval for a governed bundle of Drive, Docs, Sheets, Slides, Calendar, Gmail, Chat, and contacts.</p><footer><span>One secure sign-in</span><button type="button" data-primary-action disabled>Not available yet</button></footer></article>
-        <article class="connection-card is-pending" data-connector="slack"><header><img src="../brandmarks/slack.svg" alt=""><span class="connection-state" role="status" aria-live="polite" aria-atomic="true">Coming soon</span></header><h3>Slack</h3><p>Search decisions, understand history, and prepare governed team updates.</p><footer><span>Workspace approval</span><button type="button" data-primary-action disabled>Not available yet</button></footer></article>
-        <article class="connection-card" data-connector="github" data-kind="bearer_token"><header><img src="../brandmarks/github.svg" alt=""><span class="connection-state" role="status" aria-live="polite" aria-atomic="true">Ready to connect</span></header><h3>GitHub</h3><p>Repositories, issues, and pull requests through a read-only, locked-down MCP path.</p><footer><span>Fine-grained access</span><button type="button" data-primary-action>Connect</button></footer></article>
-        <article class="connection-card" data-connector="cloudflare" data-kind="api_key"><header><img src="../brandmarks/cloudflare.svg" alt=""><span class="connection-state" role="status" aria-live="polite" aria-atomic="true">Ready to connect</span></header><h3>Cloudflare</h3><p>Investigate Worker logs and metrics through Cloudflare’s scoped Observability MCP server.</p><footer><span>Secure sign-in</span><button type="button" data-primary-action>Connect</button></footer></article>
-        <article class="connection-card" data-connector="n8n" data-kind="api_key"><header><img src="../brandmarks/n8n.svg" alt=""><span class="connection-state" role="status" aria-live="polite" aria-atomic="true">Ready to connect</span></header><h3>n8n</h3><p>Only administrator-approved workflows exposed as bounded company tools.</p><footer><span>Choose workflows</span><button type="button" data-primary-action>Connect</button></footer></article>
-        <article class="connection-card" data-connector="stripe" data-kind="api_key"><header><img src="../brandmarks/stripe.svg" alt=""><span class="connection-state" role="status" aria-live="polite" aria-atomic="true">Ready to connect</span></header><h3>Stripe</h3><p>Inspect account context and Stripe’s API reference without enabling money movement.</p><footer><span>Secure sign-in</span><button type="button" data-primary-action>Connect</button></footer></article>
-        <article class="connection-card" data-connector="atlassian" data-kind="bearer_token"><header><img src="../brandmarks/atlassian.svg" alt=""><span class="connection-state" role="status" aria-live="polite" aria-atomic="true">Ready to connect</span></header><h3>Atlassian</h3><p>Jira, Confluence, and Compass context in one accountable assignment.</p><footer><span>Secure sign-in</span><button type="button" data-primary-action>Connect</button></footer></article>
-        <article class="connection-card is-pending" data-connector="salesforce"><header><img src="../brandmarks/salesforce.svg" alt=""><span class="connection-state" role="status" aria-live="polite" aria-atomic="true">Coming soon</span></header><h3>Salesforce</h3><p>Customer, pipeline, and service records through a read-first SObject boundary.</p><footer><span>Admin approval</span><button type="button" data-primary-action disabled>Not available yet</button></footer></article>
-        <article class="connection-card" data-connector="hyperagent"><header><img src="../brandmarks/hyperagent.svg" alt=""><span class="connection-state" role="status" aria-live="polite" aria-atomic="true">Ready to connect</span></header><h3>HyperAgent</h3><p>Review agent threads and pending approvals through a verified agent interface.</p><footer><span>Secure sign-in</span><button type="button" data-primary-action>Connect</button></footer></article>
+          <div class="work-metrics" aria-label="Work status">
+            <div><span data-metric-active>0</span><p>active jobs</p></div>
+            <div><span data-metric-attention>0</span><p>need attention</p></div>
+            <div><span data-metric-complete>0</span><p>completed</p></div>
+            <div><span data-connection-count>0</span><p>certified systems</p></div>
+          </div>
+
+          <section class="onboarding-card" data-onboarding aria-labelledby="onboarding-title">
+            <div class="onboarding-copy"><p class="eyebrow">First run</p><h2 id="onboarding-title">Useful immediately. More powerful when connected.</h2><p>Rally’s approved AI workforce is separate from your company systems. Connect trusted context now, or skip it and commission work from your email and attachments.</p></div>
+            <ol class="onboarding-steps">
+              <li class="is-ready"><span>1</span><div><b>AI workforce ready</b><small>Gemini, Claude, and OpenAI are available on the approved execution host.</small></div><strong>Ready</strong></li>
+              <li><span>2</span><div><b>Connect company systems</b><small>Optional. Add only the sources this workspace should use.</small></div><button type="button" data-open-connections>Choose connections</button></li>
+              <li><span>3</span><div><b>Commission the outcome</b><small>Email Rally normally; the thread becomes the task record.</small></div><a href="mailto:rally@updates.agent9.dev?subject=My%20first%20Rally%20job&body=Outcome%3A%0A%0AContext%20or%20attachments%3A">Skip connections &amp; start</a></li>
+            </ol>
+          </section>
+
+          <div class="work-board">
+            <section class="run-queue" aria-labelledby="queue-title">
+              <div class="queue-heading"><div><p class="eyebrow">Task management</p><h2 id="queue-title">Work queue</h2></div><label><span class="sr-only">Search work</span><input type="search" placeholder="Search jobs" autocomplete="off" data-work-search></label></div>
+              <div class="queue-filters" role="group" aria-label="Filter work"><button class="is-active" type="button" data-run-filter="all">All</button><button type="button" data-run-filter="running">Active</button><button type="button" data-run-filter="attention">Attention</button><button type="button" data-run-filter="complete">Complete</button></div>
+              <div class="run-list" data-work-run-list aria-live="polite"><div class="run-loading"><span></span><p>Loading your workspace queue…</p></div></div>
+            </section>
+            <section class="run-detail" data-work-run-detail aria-live="polite"><div class="run-detail-empty"><span>↗</span><h2>Select a job</h2><p>Open a run to inspect its progress, workers, checklist, and independent verification receipts.</p></div></section>
+          </div>
+        </section>
+
+        <section class="workspace-view" data-workspace-view="workforce" hidden>
+          <div class="workspace-heading"><div><p class="eyebrow">AI workforce</p><h1 tabindex="-1">The workers behind every teammate.</h1><p>These model families perform parts of a job. Your customer-facing teammates remain stable even when Rally routes work to a different provider.</p></div></div>
+          <div class="workforce-callout"><b>Current pilot boundary</b><p>The active fleet is authenticated on Rally’s approved execution host. Business-system OAuth does not authorize a model account, and Rally never copies consumer session tokens into its web control plane.</p></div>
+          <div class="workforce-grid">
+            <article><header><img src="../brandmarks/google.svg" alt=""><span class="worker-ready">Active</span></header><p class="worker-company">Google</p><h2>Gemini</h2><p>Coordinates the commission through Google ADK and participates as an independent worker.</p><footer><span>Google Cloud + approved host</span><b>Ready</b></footer></article>
+            <article><header><img src="../brandmarks/claude.svg" alt=""><span class="worker-ready">Active</span></header><p class="worker-company">Anthropic</p><h2>Claude</h2><p>Implements and reviews through an approved, separately authenticated Claude runtime.</p><footer><span>Approved host identity</span><b>Ready</b></footer></article>
+            <article><header><img src="../brandmarks/openai.svg" alt=""><span class="worker-ready">Active</span></header><p class="worker-company">OpenAI</p><h2>Codex</h2><p>Implements and verifies through a per-user Codex sign-in isolated from company connectors.</p><footer><span>Approved host identity</span><b>Ready</b></footer></article>
+            <article class="worker-candidate"><header><span class="xai-mark">xAI</span><span>Candidate</span></header><p class="worker-company">xAI</p><h2>Grok Build</h2><p>Headless CLI and device-code/API-key authentication make Grok a strong fourth-family candidate. It remains off until isolation and execution-symmetry tests pass.</p><footer><span>Evaluated, not enabled</span><b>Next</b></footer></article>
+          </div>
+          <p class="workforce-rule"><b>Rally’s minimum:</b> at least two distinct model families. A worker may repair another provider’s failure through Second Wind, but it still cannot approve its own work.</p>
+        </section>
+
+        <section class="workspace-view" data-workspace-view="connections" hidden>
+          <div class="workspace-heading connection-workspace-heading"><div><p class="eyebrow">Connections</p><h1 tabindex="-1">Bring approved company context.</h1><p>Connections are optional for a first run. When you add one, Rally prefers provider consent, certifies the exact read surface, and keeps every token away from model context.</p></div><button class="workspace-secondary" type="button" data-back-to-work>Skip for now</button></div>
+          <div class="vault-summary" aria-label="Vault status">
+            <div><span data-connection-count>0</span><p>certified connections</p></div>
+            <div><span>9</span><p>supported systems</p></div>
+            <div><span>0</span><p>keys exposed to models</p></div>
+            <div class="kms-proof"><span>✓</span><p><b>Google Cloud KMS</b><small>Envelope encryption active</small></p></div>
+          </div>
+          <div class="connection-heading"><div><p class="eyebrow">Business systems</p><h2>One approval when the provider allows it.</h2></div><p>OAuth is the default experience. A restricted credential appears only where a provider cannot yet complete a Rally-owned consent flow.</p></div>
+          <div class="connection-grid" data-connection-grid>
+            <article class="connection-card is-pending" data-connector="google-workspace"><header><img src="../brandmarks/google.svg" alt=""><span class="connection-state" role="status" aria-live="polite" aria-atomic="true">Coming soon</span></header><h3>Google Workspace</h3><p>One approval for a governed bundle of Drive, Docs, Sheets, Slides, Calendar, Gmail, Chat, and contacts.</p><footer><span data-connection-method>One secure sign-in</span><button type="button" data-primary-action disabled>Not available yet</button></footer></article>
+            <article class="connection-card is-pending" data-connector="slack"><header><img src="../brandmarks/slack.svg" alt=""><span class="connection-state" role="status" aria-live="polite" aria-atomic="true">Coming soon</span></header><h3>Slack</h3><p>Search decisions, understand history, and prepare governed team updates.</p><footer><span data-connection-method>Workspace approval</span><button type="button" data-primary-action disabled>Not available yet</button></footer></article>
+            <article class="connection-card" data-connector="github" data-kind="bearer_token"><header><img src="../brandmarks/github.svg" alt=""><span class="connection-state" role="status" aria-live="polite" aria-atomic="true">Ready to connect</span></header><h3>GitHub</h3><p>Repositories, issues, and pull requests through a read-only, locked-down MCP path.</p><footer><span data-connection-method>Fine-grained access</span><button type="button" data-primary-action>Connect</button></footer></article>
+            <article class="connection-card" data-connector="cloudflare" data-kind="api_key"><header><img src="../brandmarks/cloudflare.svg" alt=""><span class="connection-state" role="status" aria-live="polite" aria-atomic="true">Ready to connect</span></header><h3>Cloudflare</h3><p>Investigate Worker logs and metrics through Cloudflare’s scoped Observability MCP server.</p><footer><span data-connection-method>Secure sign-in</span><button type="button" data-primary-action>Connect</button></footer></article>
+            <article class="connection-card" data-connector="n8n" data-kind="api_key"><header><img src="../brandmarks/n8n.svg" alt=""><span class="connection-state" role="status" aria-live="polite" aria-atomic="true">Ready to connect</span></header><h3>n8n</h3><p>Only administrator-approved workflows exposed as bounded company tools.</p><footer><span data-connection-method>Choose workflows</span><button type="button" data-primary-action>Connect</button></footer></article>
+            <article class="connection-card" data-connector="stripe" data-kind="api_key"><header><img src="../brandmarks/stripe.svg" alt=""><span class="connection-state" role="status" aria-live="polite" aria-atomic="true">Ready to connect</span></header><h3>Stripe</h3><p>Inspect account context and Stripe’s API reference without enabling money movement.</p><footer><span data-connection-method>Secure sign-in</span><button type="button" data-primary-action>Connect</button></footer></article>
+            <article class="connection-card" data-connector="atlassian" data-kind="bearer_token"><header><img src="../brandmarks/atlassian.svg" alt=""><span class="connection-state" role="status" aria-live="polite" aria-atomic="true">Ready to connect</span></header><h3>Atlassian</h3><p>Jira, Confluence, and Compass context in one accountable assignment.</p><footer><span data-connection-method>Secure sign-in</span><button type="button" data-primary-action>Connect</button></footer></article>
+            <article class="connection-card is-pending" data-connector="salesforce"><header><img src="../brandmarks/salesforce.svg" alt=""><span class="connection-state" role="status" aria-live="polite" aria-atomic="true">Coming soon</span></header><h3>Salesforce</h3><p>Customer, pipeline, and service records through a read-first SObject boundary.</p><footer><span data-connection-method>Admin approval</span><button type="button" data-primary-action disabled>Not available yet</button></footer></article>
+            <article class="connection-card" data-connector="hyperagent"><header><img src="../brandmarks/hyperagent.svg" alt=""><span class="connection-state" role="status" aria-live="polite" aria-atomic="true">Ready to connect</span></header><h3>HyperAgent</h3><p>Review agent threads and pending approvals through a verified agent interface.</p><footer><span data-connection-method>Secure sign-in</span><button type="button" data-primary-action>Connect</button></footer></article>
+          </div>
+          <p class="vault-boundary"><b>Certification boundary:</b> “Certified” means Rally completed provider authorization, matched the live MCP tools to a committed safe preset, and passed one fixed read-only canary. An encrypted credential or a successful tool list alone never enables an adapter.</p>
+        </section>
+
+        <section class="workspace-view" data-workspace-view="policy" hidden>
+          <div class="workspace-heading"><div><p class="eyebrow">Policy</p><h1 tabindex="-1">Accountability outside the prompt.</h1><p>Models propose work. Rally’s deterministic control plane decides what may run, what needs approval, and when a claim is complete.</p></div></div>
+          <div class="policy-grid"><article><span>01</span><h2>No self-approval</h2><p>An item reaches done only when a different model family verifies the owner’s work.</p></article><article><span>02</span><h2>Least privilege</h2><p>Every run freezes its allowed systems and tools before a worker receives the job.</p></article><article><span>03</span><h2>Bounded recovery</h2><p>Second Wind may hand a failure to another family once; it never waives independent review.</p></article><article><span>04</span><h2>Receipts, not confidence</h2><p>Evidence, verifier identity, policy decisions, and residual risk stay attached to the run.</p></article></div>
+        </section>
       </div>
-      <p class="vault-boundary"><b>Certification boundary:</b> “Certified” means Rally completed provider authorization, matched the live MCP tools to a committed safe preset, and passed one fixed read-only canary. An encrypted credential or a successful tool list alone never enables an adapter.</p>
     </section>
   </main>
 

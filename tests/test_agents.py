@@ -81,6 +81,41 @@ class TestExecutionSymmetry(unittest.TestCase):
         }
         self.assertEqual(set(capabilities.values()), {True}, capabilities)
 
+    def test_optional_grok_worker_is_headless_and_profile_isolated(self):
+        cfg = {
+            **CFG,
+            "grok": {
+                "adapter": "grok",
+                "bin": "grok",
+                "model": "grok-build",
+                "family": "xai",
+                "profile_home": "/tmp/rally-grok-profile",
+                "exec_flags": ["--always-approve"],
+            },
+        }
+        cmd = capture("grok", cfg)
+        for flag in (
+            "--no-auto-update", "--no-plan", "--no-subagents",
+            "--no-memory", "--disable-web-search", "--always-approve",
+        ):
+            self.assertIn(flag, cmd)
+        self.assertEqual(cmd[-2:], ["-p", "do the thing"])
+        A.assert_pins(cfg)
+
+    def test_grok_refuses_default_profile_and_unisolated_connectors(self):
+        base = {
+            "adapter": "grok", "bin": "grok", "model": "grok-build",
+            "family": "xai", "exec_flags": ["--always-approve"],
+        }
+        with self.assertRaisesRegex(A.AgentError, "dedicated profile_home"):
+            A.run_agent("grok", "test", "/tmp", base, 60)
+        with self.assertRaisesRegex(A.AgentError, "connector isolation"):
+            A.run_agent("grok", "test", "/tmp", {
+                **base,
+                "profile_home": "/tmp/rally-grok-profile",
+                "mcp_config_path": "/tmp/rally-mcp.json",
+            }, 60)
+
 
 class TestModelPinning(unittest.TestCase):
     def test_pins_survive_into_argv(self):

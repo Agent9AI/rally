@@ -47,14 +47,16 @@ tabs.forEach((tab) => {
 const updateManagedSetupLink = () => {
   if (!managedSetupLink || !secondWindToggle) return;
   const target = new URL(managedSetupLink.href);
-  target.searchParams.set("body", [
+  const body = [
     `Company: ${jobCompany?.value.trim() || ""}`,
     `Team: ${jobTeam?.value.trim() || ""}`,
-    `First job for Rally: ${jobGoal?.value.trim() || ""}`,
-    `Trusted systems involved: ${jobSystems?.value.trim() || ""}`,
-    `Source run: ${jobSourceRun?.value.trim() || ""}`,
+    `Teammate's first outcome: ${jobGoal?.value.trim() || ""}`,
+    `Optional trusted systems: ${jobSystems?.value.trim() || ""}`,
     `Second Wind recovery: ${secondWindToggle.checked ? "On" : "Off"}`,
-  ].join("\n"));
+  ];
+  const sourceRun = jobSourceRun?.value.trim() || "";
+  if (sourceRun) body.push(`Related Rally run: ${sourceRun}`);
+  target.searchParams.set("body", body.join("\n"));
   managedSetupLink.href = target.href;
 };
 secondWindToggle?.addEventListener("change", updateManagedSetupLink);
@@ -707,7 +709,7 @@ async function webMcpDraftJob(input = {}, options = {}) {
     human_confirmation_required: true,
     transmitted: false,
     stored: false,
-    message: "The governed job draft is visible in Rally. Review it and click Tell us the first job yourself if it is correct.",
+    message: "The governed teammate draft is visible in Rally. Review it and click Create the first teammate yourself if it is correct.",
     draft: {
       company,
       team,

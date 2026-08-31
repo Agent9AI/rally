@@ -3,18 +3,31 @@
 ## The category
 
 Rally is not another chat window, model router, agent builder, or coding
-copilot. It is the **accountable AI team**: one company identity that rallies
-the right models around an outcome, lets them work through explicitly trusted
-systems, and returns one independently verified result with evidence.
+copilot. It is the operating system for **accountable AI teammates**: persistent
+business roles that people can email or message like coworkers. Rally rallies
+the right model workers around an outcome, lets them work through explicitly
+trusted systems, and returns one independently verified result with evidence.
 
-The public promise is:
+The public front door is:
+
+> You already have email. Add accountable AI teammates.
+
+The infrastructure promise remains useful one layer down:
 
 > Your AIs, finally on the same team.
 
-The customer should experience one Rally address and one accountable result.
-Behind that identity, Gemini, Claude, and future specialized agents can hold
-different roles. Rally owns the goal, handoffs, authority, and chain of custody;
-no individual model is the product.
+The customer should experience a role such as Research, Security, or Operations
+and one accountable result. Behind that teammate, Gemini, Claude, OpenAI, xAI,
+and future specialized agents are workers. Rally owns the goal, handoffs,
+authority, and chain of custody; no individual model is the product.
+
+Vocabulary is deliberate:
+
+- **teammate**: persistent role, address, knowledge, permissions, and owner
+- **worker**: model family or external A2A agent that performs part of a job
+- **channel**: email, Slack, Teams, Telegram, or API
+- **run**: one commissioned job and its audit record
+- **Rally**: the coordination, policy, task-management, and accountability layer
 
 The product's distinctive contract is:
 
@@ -71,6 +84,7 @@ them in a separate **agent network** surface so customers can distinguish
 | System | Interoperability path | Rally decision | Required boundary | Status |
 |---|---|---|---|---|
 | Gemini, Claude, OpenAI Codex | Provider-native CLI workers | Core workforce | Per-user provider sign-in, distinct model-family identity, shared checklist, no self-approval | Shipped and live-authenticated |
+| xAI Grok Build | Provider-native headless CLI | Fourth-family candidate | Dedicated `GROK_HOME`, official browser/device authorization or customer API key, no memory/subagents/web search, and no connector admission until Rally can inject its sole MCP gateway | Safe adapter shipped behind configuration; not in the active fleet until live execution-symmetry and isolation tests pass |
 | Hyperagent | Hosted OAuth MCP | Support as a managed external workforce | Read agent/thread state by default; start, send, and upload require exact approval; never resolve Hyperagent approvals autonomously | Gateway adapter and read-minimal preset shipped; customer auth pending |
 | Hermes Agent | Native bidirectional A2A v1.0 | Highest-priority external peer | Customer-hosted HTTPS endpoint, Agent Card pin, per-peer bearer identity, bounded task/turn limits, Rally-owned durable task mirror and independent verification | Official interface verified; Rally outbound A2A admission not yet shipped |
 | OpenClaw | Native authenticated A2A v1.0 | Support after Hermes through the same A2A admission boundary | Expose only selected agent IDs; unique peer token; 1 MiB request/64 KiB text ceilings; Rally persists task state because OpenClaw's A2A task store is memory-only | Official interface verified; Rally outbound A2A admission not yet shipped |
@@ -134,7 +148,7 @@ The sequence for every connector is:
 ```text
 company outcome
       ↓
-Google-governed intake and identity
+Policy-governed intake and identity on Google Cloud
       ↓
 Rally policy: is this connector + action allowed?
       ↓

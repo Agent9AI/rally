@@ -199,7 +199,42 @@ def run_codex(prompt: str, workdir: str, cfg: Dict, timeout: int,
                 pass
 
 
-DISPATCH = {"claude": run_claude, "agy": run_agy, "codex": run_codex}
+def run_grok(prompt: str, workdir: str, cfg: Dict, timeout: int) -> str:
+    """Run xAI Grok Build in a dedicated Rally profile.
+
+    Grok can load user plugins, MCP servers, memory, and compatibility settings.
+    Rally therefore refuses the default user profile: an operator first signs in
+    with the official browser/device flow (or configures XAI_API_KEY) under a
+    dedicated ``GROK_HOME``. Connector-backed runs stay disabled until Rally can
+    inject its sole gateway without admitting profile-global MCP servers.
+    """
+    profile_home = str(cfg.get("profile_home") or "").strip()
+    if not profile_home or not os.path.isabs(profile_home):
+        raise AgentError("Grok requires an absolute, dedicated profile_home")
+    if cfg.get("mcp_config_path"):
+        raise AgentError("Grok connector isolation is not enabled yet")
+    cmd = [
+        cfg.get("bin", "grok"),
+        "--no-auto-update",
+        "--cwd", workdir,
+        "--model", cfg["model"],
+        "--output-format", "plain",
+        "--no-plan",
+        "--no-subagents",
+        "--no-memory",
+        "--disable-web-search",
+    ]
+    effort = cfg.get("effort")
+    if effort in ("low", "medium", "high"):
+        cmd += ["--effort", effort]
+    cmd += list(cfg.get("exec_flags") or [])
+    cmd += ["-p", prompt]
+    env = dict(cfg.get("connector_env") or {})
+    env["GROK_HOME"] = profile_home
+    return _run(cmd, workdir, timeout, env)
+
+
+DISPATCH = {"claude": run_claude, "agy": run_agy, "codex": run_codex, "grok": run_grok}
 
 
 def run_agent(name: str, prompt: str, workdir: str, cfg: Dict, timeout: int,
@@ -211,4 +246,6 @@ def run_agent(name: str, prompt: str, workdir: str, cfg: Dict, timeout: int,
         return run_codex(prompt, workdir, cfg, timeout, schema_path)
     if adapter == "claude":
         return run_claude(prompt, workdir, cfg, timeout)
+    if adapter == "grok":
+        return run_grok(prompt, workdir, cfg, timeout)
     raise AgentError("unknown agent adapter %r for %s" % (adapter, name))

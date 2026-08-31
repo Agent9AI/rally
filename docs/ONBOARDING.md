@@ -1,19 +1,37 @@
 # Product onboarding strategy
 
+The onboarding order is:
+
+1. create or enter the Rally workspace;
+2. confirm the AI workforce (at least two distinct model families);
+3. connect company systems or explicitly skip them;
+4. create the first role-based teammate and commission a real outcome.
+
+AI workforce authorization and company-system authorization are separate trust
+grants. Gemini, Claude, OpenAI, and xAI are workers. Drive, Slack, GitHub,
+Stripe, and similar systems provide optional context and tools.
+
+For every worker or business provider, the preferred choice is its official
+OAuth/browser/device authorization flow. **Use an existing API key** is a
+parallel customer-managed option when the provider supports it, not an error
+fallback. Rally never collects a provider password or copies consumer browser
+cookies.
+
 The product goal is not “fewer API-key steps.” It is **no customer exposure to
 infrastructure credentials on the default path**.
 
 ## Path 1: managed onboarding (default)
 
-An administrator names the Rally team identity, supplies commissioner addresses,
-chooses the first outcome, and selects the systems and authority each user needs.
+An administrator names the first teammate, supplies commissioner addresses,
+chooses the first outcome, and may select the systems and authority it needs.
 Agent9 owns the Cloudflare account, Resend mail plane, Google Cloud control
 plane, model configuration, secret rotation, budgets, and upgrades. Everyone
 else receives one Rally address and simply gives the team work.
 
-This is the only credible no-key experience today. It removes three cloud
-accounts from the user's critical path instead of hiding their setup behind
-friendly-looking buttons.
+The administrator may skip business connections and start from the request and
+attachments. This is the credible no-key experience today: it removes cloud
+accounts from the critical path instead of hiding setup behind friendly-looking
+buttons.
 
 ## Path 2: self-hosted (advanced)
 

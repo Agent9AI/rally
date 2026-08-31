@@ -36,10 +36,19 @@
   const credentialInput = document.querySelector("#credential-value");
   const tokenGuide = document.querySelector("[data-token-guide]");
   const formStatus = document.querySelector("[data-form-status]");
-  const connectionCount = document.querySelector("[data-connection-count]");
+  const connectionCounts = document.querySelectorAll("[data-connection-count]");
   const toast = document.querySelector("[data-connection-toast]");
   const signinTitle = document.querySelector("[data-signin-title]");
   const dashboardTitle = document.querySelector("[data-dashboard-title]");
+  const workspaceNav = document.querySelectorAll("[data-workspace-nav]");
+  const workspaceViews = document.querySelectorAll("[data-workspace-view]");
+  const runList = document.querySelector("[data-work-run-list]");
+  const runDetail = document.querySelector("[data-work-run-detail]");
+  const workSearch = document.querySelector("[data-work-search]");
+  const runFilters = document.querySelectorAll("[data-run-filter]");
+  const metricActive = document.querySelector("[data-metric-active]");
+  const metricAttention = document.querySelector("[data-metric-attention]");
+  const metricComplete = document.querySelector("[data-metric-complete]");
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   let idToken = "";
   let sessionToken = "";
@@ -47,6 +56,9 @@
   let dialogReturnFocus = null;
   let connectors = new Map();
   let connectionRecords = new Map();
+  let workspaceRuns = [];
+  let activeRunId = "";
+  let activeRunFilter = "all";
 
   const configured =
     /^[0-9]+-[A-Za-z0-9_-]+\.apps\.googleusercontent\.com$/.test(config.googleClientId || "") &&
@@ -150,6 +162,28 @@
     return response.json();
   }
 
+  async function workspaceApi(path) {
+    if (!idToken && !sessionToken) throw new Error("Sign in again to continue");
+    const headers = new Headers();
+    if (idToken) headers.set("X-Rally-ID-Token", idToken);
+    if (sessionToken) headers.set("X-Rally-Session", sessionToken);
+    const response = await fetch(path, { headers, credentials: "same-origin" });
+    if (response.status === 401) {
+      resetSession("Your Google session expired. Sign in again.");
+      throw new Error("Your Google session expired. Sign in again.");
+    }
+    if (!response.ok) {
+      let detail = "";
+      try {
+        detail = (await response.json()).detail || "";
+      } catch (_) {
+        // Keep the user-facing boundary generic.
+      }
+      throw new Error(detail || "Your Rally work queue is temporarily unavailable");
+    }
+    return response.json();
+  }
+
   async function startOAuthApi(connectorId, body) {
     if (!idToken && !sessionToken) throw new Error("Sign in again to continue");
     const headers = new Headers({ "Content-Type": "application/json" });
@@ -195,6 +229,8 @@
     signedOut.hidden = false;
     dashboard.hidden = true;
     signOutButton.hidden = true;
+    workspaceRuns = [];
+    activeRunId = "";
     configurationNote.textContent = message;
     if (window.google?.accounts?.id) window.google.accounts.id.disableAutoSelect();
     focusSoon(signinTitle);
@@ -205,10 +241,226 @@
     document.querySelector("[data-user-email]").textContent = account.email || "";
     document.querySelector("[data-user-initial]").textContent = (account.name || account.email || "R").charAt(0).toUpperCase();
     const picture = document.querySelector("[data-user-picture]");
+    picture.hidden = true;
+    document.querySelector("[data-user-initial]").hidden = false;
     if (account.picture && /^https:\/\/lh3\.googleusercontent\.com\//.test(account.picture)) {
       picture.src = account.picture;
       picture.hidden = false;
       document.querySelector("[data-user-initial]").hidden = true;
+    }
+  }
+
+  function showWorkspaceView(name, { focusHeading = true } = {}) {
+    const target = [...workspaceViews].find((view) => view.dataset.workspaceView === name);
+    if (!target) return;
+    workspaceViews.forEach((view) => { view.hidden = view !== target; });
+    workspaceNav.forEach((button) => {
+      const active = button.dataset.workspaceNav === name;
+      button.classList.toggle("is-active", active);
+      if (active) button.setAttribute("aria-current", "page");
+      else button.removeAttribute("aria-current");
+    });
+    if (focusHeading) focusSoon(target.querySelector("h1"));
+  }
+
+  function element(tag, className = "", copy = "") {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (copy) node.textContent = copy;
+    return node;
+  }
+
+  function runStatus(status) {
+    return {
+      running: "In progress",
+      complete: "Complete",
+      blocked: "Needs attention",
+      halted: "Stopped",
+    }[status] || "Unknown";
+  }
+
+  function shortTime(value) {
+    const date = new Date(value);
+    if (!Number.isFinite(date.getTime())) return "";
+    const elapsed = Math.max(0, Date.now() - date.getTime());
+    const minutes = Math.floor(elapsed / 60000);
+    if (minutes < 1) return "Just now";
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    if (days < 8) return `${days}d ago`;
+    return new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" }).format(date);
+  }
+
+  function visibleRuns() {
+    const query = (workSearch?.value || "").trim().toLocaleLowerCase();
+    return workspaceRuns.filter((run) => {
+      const statusMatches = activeRunFilter === "all" ||
+        (activeRunFilter === "attention" && new Set(["blocked", "halted"]).has(run.status)) ||
+        run.status === activeRunFilter;
+      const queryMatches = !query || `${run.title || ""} ${run.run_id || ""}`
+        .toLocaleLowerCase()
+        .includes(query);
+      return statusMatches && queryMatches;
+    });
+  }
+
+  function updateWorkMetrics() {
+    metricActive.textContent = String(workspaceRuns.filter((run) => run.status === "running").length);
+    metricAttention.textContent = String(
+      workspaceRuns.filter((run) => new Set(["blocked", "halted"]).has(run.status)).length,
+    );
+    metricComplete.textContent = String(workspaceRuns.filter((run) => run.status === "complete").length);
+  }
+
+  function renderRunList() {
+    const runs = visibleRuns();
+    runList.replaceChildren();
+    if (!runs.length) {
+      const empty = element("div", "run-empty");
+      empty.append(
+        element("span", "", workspaceRuns.length ? "⌕" : "+"),
+        element("h3", "", workspaceRuns.length ? "No jobs match this view" : "Your queue is ready"),
+        element(
+          "p",
+          "",
+          workspaceRuns.length
+            ? "Try another status or search term."
+            : "Email Rally a finished outcome. The first accepted commission will appear here automatically.",
+        ),
+      );
+      if (!workspaceRuns.length) {
+        const start = element("a", "queue-start", "Commission the first job");
+        start.href = "mailto:rally@updates.agent9.dev?subject=My%20first%20Rally%20job&body=Outcome%3A%0A%0AContext%20or%20attachments%3A";
+        empty.append(start);
+      }
+      runList.append(empty);
+      return;
+    }
+
+    runs.forEach((run) => {
+      const button = element("button", "run-row");
+      button.type = "button";
+      button.classList.toggle("is-active", run.run_id === activeRunId);
+      button.dataset.runId = run.run_id;
+      const status = element("span", `run-status is-${run.status}`, runStatus(run.status));
+      const heading = element("b", "", run.title || run.run_id);
+      const meta = element("small", "", `${run.run_id} · ${shortTime(run.updated_at)}`);
+      const progress = element("span", "run-progress");
+      const total = Math.max(0, Number(run.total_items) || 0);
+      const done = Math.min(total, Math.max(0, Number(run.done_items) || 0));
+      const bar = element("i");
+      bar.style.width = `${total ? Math.round((done / total) * 100) : 0}%`;
+      progress.append(bar);
+      const count = element("em", "", `${done}/${total} checked`);
+      button.append(status, heading, meta, progress, count);
+      button.addEventListener("click", () => { void openWorkspaceRun(run.run_id); });
+      runList.append(button);
+    });
+  }
+
+  function receiptMetric(value, label) {
+    const metric = element("div");
+    metric.append(element("b", "", String(value ?? 0)), element("span", "", label));
+    return metric;
+  }
+
+  function renderRunDetail(record) {
+    runDetail.replaceChildren();
+    const header = element("header", "run-detail-header");
+    const copy = element("div");
+    copy.append(
+      element("span", `run-status is-${record.status}`, runStatus(record.status)),
+      element("h2", "", record.title || record.run_id),
+      element("p", "", `${record.run_id} · updated ${shortTime(record.updated_at)}`),
+    );
+    const total = Math.max(0, Number(record.progress?.total) || 0);
+    const done = Math.min(total, Math.max(0, Number(record.progress?.done) || 0));
+    const score = element("div", "run-score");
+    score.style.setProperty("--progress", `${total ? Math.round((done / total) * 100) : 0}%`);
+    score.append(element("b", "", `${done}/${total}`), element("span", "", "checked"));
+    header.append(copy, score);
+
+    const receipts = element("section", "receipt-metrics");
+    receipts.setAttribute("aria-label", "Value receipt");
+    receipts.append(
+      receiptMetric(record.value_receipt?.independently_verified, "independent checks"),
+      receiptMetric(record.value_receipt?.evidence_receipts, "evidence receipts"),
+      receiptMetric(record.value_receipt?.model_families, "model families"),
+      receiptMetric(record.value_receipt?.self_approved, "self-approved"),
+    );
+
+    const checklistSection = element("section", "detail-section");
+    checklistSection.append(element("p", "detail-label", "Authoritative checklist"));
+    const checklist = element("ol", "detail-checklist");
+    (record.checklist || []).forEach((item) => {
+      const row = element("li");
+      const mark = element("span", `check-state is-${item.state}`, item.state === "done" ? "✓" : "·");
+      const body = element("div");
+      body.append(element("b", "", item.description || item.id));
+      const custody = item.verified_by
+        ? `${item.owner || "Worker"} → verified by ${item.verified_by}`
+        : item.owner ? `Owned by ${item.owner}` : "Awaiting assignment";
+      body.append(element("small", "", custody));
+      if (item.evidence) body.append(element("p", "", item.evidence));
+      row.append(mark, body);
+      checklist.append(row);
+    });
+    if (!checklist.children.length) checklist.append(element("li", "detail-empty-line", "Rally is preparing the checklist."));
+    checklistSection.append(checklist);
+
+    const activitySection = element("section", "detail-section");
+    activitySection.append(element("p", "detail-label", "Latest activity"));
+    const activity = element("div", "detail-activity");
+    (record.timeline || []).slice(-8).reverse().forEach((entry) => {
+      const item = element("article");
+      const top = element("div");
+      top.append(
+        element("b", "", entry.label || entry.actor || "Rally"),
+        element("time", "", shortTime(entry.at)),
+      );
+      item.append(top, element("p", "", entry.narrative || "State updated."));
+      activity.append(item);
+    });
+    if (!activity.children.length) activity.append(element("p", "detail-empty-line", "No activity has been recorded yet."));
+    activitySection.append(activity);
+
+    runDetail.append(header, receipts, checklistSection, activitySection);
+  }
+
+  async function openWorkspaceRun(runId) {
+    activeRunId = runId;
+    renderRunList();
+    runDetail.setAttribute("aria-busy", "true");
+    const loading = element("div", "run-detail-empty");
+    loading.append(element("span", "", "↻"), element("h2", "", "Opening the evidence record…"));
+    runDetail.replaceChildren(loading);
+    try {
+      const record = await workspaceApi(`/v1/workspace/runs/${encodeURIComponent(runId)}`);
+      if (activeRunId === runId) renderRunDetail(record);
+    } catch (error) {
+      const failed = element("div", "run-detail-empty is-error");
+      failed.append(element("span", "", "!"), element("h2", "", "Could not open this job"), element("p", "", error.message));
+      runDetail.replaceChildren(failed);
+    } finally {
+      runDetail.setAttribute("aria-busy", "false");
+    }
+  }
+
+  async function loadWorkspaceRuns() {
+    try {
+      const result = await workspaceApi("/v1/workspace/runs?limit=60");
+      workspaceRuns = Array.isArray(result.runs) ? result.runs : [];
+      updateWorkMetrics();
+      renderRunList();
+      if (workspaceRuns.length && !activeRunId) await openWorkspaceRun(workspaceRuns[0].run_id);
+    } catch (error) {
+      workspaceRuns = [];
+      updateWorkMetrics();
+      const failed = element("div", "run-empty is-error");
+      failed.append(element("span", "", "!"), element("h3", "", "Work queue unavailable"), element("p", "", error.message));
+      runList.replaceChildren(failed);
     }
   }
 
@@ -235,8 +487,19 @@
     if (record?.status === "ready") return "Disconnect";
     if (record?.status === "needs_attention") return "Disconnect & replace";
     if (record) return "Disconnect";
-    if (!item?.activation_available || item?.readiness === "provider_app") return "Not available yet";
-    return "Connect";
+    if (!item?.activation_available || item?.readiness === "provider_app") return "Rally setup pending";
+    if (item.oauth_ready && item.endpoint_required) return "Configure & connect";
+    if (item.oauth_ready) return `Connect with ${item.name}`;
+    return "Add restricted token";
+  }
+
+  function connectionMethod(item) {
+    if (!item?.activation_available || item?.readiness === "provider_app") {
+      return "Provider app registration required";
+    }
+    if (item.oauth_ready && item.endpoint_required) return "OAuth · one setup detail";
+    if (item.oauth_ready) return "One-click OAuth";
+    return "Restricted credential · advanced";
   }
 
   function updateCards(records) {
@@ -248,6 +511,9 @@
       const primary = card.querySelector("[data-primary-action]");
       const heading = card.querySelector("h3");
       const description = card.querySelector(":scope > p");
+      const method = card.querySelector("[data-connection-method]");
+      const footer = card.querySelector("footer");
+      let apiKeyAction = card.querySelector("[data-api-key-action]");
       const semanticId = item?.id || card.dataset.connector;
       heading.id = `connection-${semanticId}-title`;
       description.id = `connection-${semanticId}-description`;
@@ -262,12 +528,25 @@
       // request is currently in flight.  The active verifier sets this to true.
       card.setAttribute("aria-busy", "false");
       state.textContent = cardState(item, record);
+      if (method) method.textContent = connectionMethod(item);
+      const showApiKeyChoice = Boolean(item?.oauth_ready && item?.token_ready && !record);
+      if (showApiKeyChoice && !apiKeyAction) {
+        apiKeyAction = document.createElement("button");
+        apiKeyAction.type = "button";
+        apiKeyAction.className = "api-key-action";
+        apiKeyAction.dataset.apiKeyAction = "";
+        apiKeyAction.textContent = "Use API key";
+        apiKeyAction.setAttribute("aria-label", `Use an existing ${item.name} API key instead`);
+        footer.insertBefore(apiKeyAction, primary);
+      }
+      if (apiKeyAction) apiKeyAction.hidden = !showApiKeyChoice;
       primary.textContent = primaryLabel(item, record);
       primary.disabled = !record && (!item?.activation_available || item?.readiness === "provider_app");
     });
-    connectionCount.textContent = String(
-      records.filter((record) => record.status === "ready" && record.certification?.live_read).length,
-    );
+    const certified = records.filter(
+      (record) => record.status === "ready" && record.certification?.live_read,
+    ).length;
+    connectionCounts.forEach((count) => { count.textContent = String(certified); });
   }
 
   async function showDashboard(account, { focusHeading = true } = {}) {
@@ -281,6 +560,8 @@
     signedOut.hidden = true;
     dashboard.hidden = false;
     signOutButton.hidden = false;
+    showWorkspaceView("work", { focusHeading: false });
+    await loadWorkspaceRuns();
     if (focusHeading) focusSoon(dashboardTitle);
   }
 
@@ -495,11 +776,11 @@
         workflowInput.required = true;
       }
       advancedTokenButton.hidden = !item.token_ready;
-      advancedTokenButton.textContent = "Advanced: use a restricted credential";
+      advancedTokenButton.textContent = "Use an existing API key instead";
       dialogSafetyCopy.textContent = "Provider tokens are exchanged and encrypted server-side. This page receives only connection status.";
       dialogSubmit.textContent = `Continue to ${item.name}`;
     } else {
-      dialogEyebrow.textContent = "Advanced secure connection";
+      dialogEyebrow.textContent = "API credential option";
       dialogTitle.textContent = `Connect ${item.name}`;
       dialogCopy.textContent = item.credential_help;
       credentialField.hidden = false;
@@ -587,8 +868,8 @@
           "token",
           document.querySelector(`[data-connector="${CSS.escape(item.id)}"]`)?.dataset.kind || "bearer_token",
         );
-        dialogEyebrow.textContent = "Advanced fallback";
-        dialogCopy.textContent = "Provider consent could not open. If your administrator already issued a dedicated restricted credential, Rally can encrypt and verify it here. Otherwise close this window and retry consent.";
+        dialogEyebrow.textContent = "Use an existing API key";
+        dialogCopy.textContent = "Provider consent could not open. If your company prefers a dedicated restricted API credential, Rally can encrypt and verify it here. You can also close this window and retry provider consent.";
         formStatus.textContent = message;
       } else {
         formStatus.textContent = message;
@@ -650,6 +931,10 @@
     if (!button || !card) return;
     const item = connectors.get(card.dataset.connector);
     if (!item) return;
+    if (button.matches("[data-api-key-action]")) {
+      openDialog(item, "token", card.dataset.kind || "bearer_token");
+      return;
+    }
     if (!button.matches("[data-primary-action]")) return;
     const record = connectionRecords.get(item.id);
     if (canFinishSetup(record)) {
@@ -669,6 +954,24 @@
     } else {
       openDialog(item, "token", card.dataset.kind || "bearer_token");
     }
+  });
+
+  workspaceNav.forEach((button) => {
+    button.addEventListener("click", () => showWorkspaceView(button.dataset.workspaceNav));
+  });
+  document.querySelectorAll("[data-open-connections]").forEach((button) => {
+    button.addEventListener("click", () => showWorkspaceView("connections"));
+  });
+  document.querySelectorAll("[data-back-to-work]").forEach((button) => {
+    button.addEventListener("click", () => showWorkspaceView("work"));
+  });
+  workSearch.addEventListener("input", renderRunList);
+  runFilters.forEach((button) => {
+    button.addEventListener("click", () => {
+      activeRunFilter = button.dataset.runFilter;
+      runFilters.forEach((candidate) => candidate.classList.toggle("is-active", candidate === button));
+      renderRunList();
+    });
   });
 
   dialogForm.addEventListener("submit", async (event) => {
@@ -833,6 +1136,7 @@
       try {
         await exchangeRedirectCode(redirect.code);
         if (redirect.connector || redirect.connectionStatus) {
+          showWorkspaceView("connections", { focusHeading: false });
           revealConnector(redirect.connector, redirect.connectionStatus);
           if (redirect.connector && redirect.connectionStatus === "verifying") {
             await verifyReturnedConnector(redirect.connector);

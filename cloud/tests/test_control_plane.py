@@ -89,6 +89,7 @@ async def test_account_and_connection_round_trip_never_echoes_secret(web_control
 
     assert account.status_code == 200
     assert account.json()["uid"] == "google-user-one"
+    assert account.json()["workspace_id"] == "user:google-user-one"
     assert stored.status_code == 200
     assert stored.json()["status"] == "ready"
     assert stored.json()["verified"] is True

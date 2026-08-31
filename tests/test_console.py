@@ -41,7 +41,11 @@ def config(enabled=False, public=False):
             "worker_url": "https://worker.example",
             "poll_token_keychain": "rally-poll-token",
         },
-        "console": {"enabled": enabled, "public": public},
+        "console": {
+            "enabled": enabled,
+            "public": public,
+            "workspace_id": "workspace-test",
+        },
     }
 
 
@@ -156,9 +160,19 @@ class ConsoleSnapshotTests(unittest.TestCase):
         self.assertEqual(coordinated["coordination"]["framework"], "Google ADK")
         self.assertIn("Cloud Run", coordinated["coordination"]["services"])
 
-    def test_publication_is_double_opt_in(self):
+    def test_private_workspace_publication_does_not_enable_public_visibility(self):
+        response = io.BytesIO(b'{"ok":true}')
+        with mock.patch.object(rally_console.transport, "get_key", return_value="secret"), \
+                mock.patch.object(rally_console.urllib.request, "urlopen", return_value=response):
+            result = rally_console.publish(state(), config(enabled=True, public=False))
+        self.assertEqual(result, {"ok": True})
+        payload = rally_console.build_snapshot(state(), config(enabled=True, public=False))
+        self.assertEqual(payload["visibility"], "private")
+        self.assertEqual(payload["workspace_id"], "workspace-test")
+
+    def test_disabled_workspace_sync_does_not_publish(self):
         with mock.patch.object(rally_console.urllib.request, "urlopen") as urlopen:
-            self.assertIsNone(rally_console.publish(state(), config(enabled=True, public=False)))
+            self.assertIsNone(rally_console.publish(state(), config(enabled=False, public=False)))
         urlopen.assert_not_called()
 
     def test_publication_uses_bearer_auth_and_the_run_route(self):

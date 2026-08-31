@@ -3,22 +3,22 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Rally — Your AIs, finally on the same team</title>
-    <meta name="description" content="Give Rally one hard outcome. Your best AI models work together across approved company tools and return one independently verified result.">
-    <meta property="og:title" content="Rally — Your AIs, finally on the same team.">
-    <meta property="og:description" content="The accountable AI team: one goal, the right models, approved tools, and an independently verified result.">
+    <title>Rally — Accountable AI teammates, where work already happens</title>
+    <meta name="description" content="Give your company accountable AI teammates employees can email like coworkers. Rally coordinates approved systems and independent workers, then returns verified work with receipts.">
+    <meta property="og:title" content="Rally — Accountable AI teammates, where work already happens.">
+    <meta property="og:description" content="Email a role-based AI teammate. Rally coordinates the work behind it and returns one verified outcome with receipts.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://rally.agent9.dev/">
     <meta property="og:image" content="https://rally.agent9.dev/og-card.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="Rally: your AIs, finally on the same team.">
+    <meta property="og:image:alt" content="Rally: accountable AI teammates, where work already happens.">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="theme-color" content="#ffffff">
     <meta name="rally-console-api" content="https://rally.agent9.dev/v1/console">
     <link rel="canonical" href="https://rally.agent9.dev/">
     <link rel="icon" href="rally-symbol.png" type="image/png">
-    <link rel="stylesheet" href="styles.css?v=20260830p">
+    <link rel="stylesheet" href="styles.css?v=20260831a">
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
@@ -42,7 +42,8 @@
         <a href="#trust">Security</a>
       </nav>
       <div class="header-actions">
-        <button class="button button-primary button-small" type="button" data-open-setup>Give Rally a job</button>
+        <a class="button button-quiet button-small" href="admin/">Sign in</a>
+        <button class="button button-primary button-small" type="button" data-open-setup>Create a teammate</button>
       </div>
     </header>
 
@@ -51,101 +52,64 @@
         <div class="hero-grid">
           <div class="hero-copy">
             <p class="eyebrow">The accountable AI team</p>
-            <h1>Your AIs, finally <span>on the same team.</span></h1>
-            <p class="hero-lede">Give Rally one hard outcome. It brings together the right models, works across the company systems you approve, and returns one independently verified result—with proof.</p>
+            <h1>You already have email. <span>Add accountable AI teammates.</span></h1>
+            <p class="hero-lede">Create role-based AI specialists with real company addresses. Each teammate uses only the knowledge and systems you approve, coordinates the right workers behind the scenes, and replies in the same thread with verified work and receipts.</p>
           </div>
 
-          <aside class="mission-visual" aria-label="Rally turns one company goal into a verified outcome">
-            <div class="mission-topbar">
-              <span><i></i> Live coordination</span>
-              <b class="relay-label">Agent <i>→</i> Rally <i>→</i> Agent</b>
+          <aside class="email-visual" aria-label="One email to a Rally Research teammate becomes a verified strategy memo in the same thread">
+            <header class="teammate-header"><div><img src="rally-symbol.png" alt=""><span><b>Rally Research</b><small>research@acme.com</small></span></div><span class="teammate-live"><i></i> Available</span></header>
+            <article class="email-message email-request">
+              <div class="email-meta"><span class="email-avatar">M</span><div><b>Maya Chen</b><small>to Rally Research · 9:14 AM</small></div></div>
+              <p class="email-subject">Where should we invest in AI next quarter?</p>
+              <p>Use Drive, Salesforce, and BigQuery. Return a sourced recommendation with risks before Thursday’s planning meeting.</p>
+              <div class="email-context"><span>Drive</span><span>Salesforce</span><span>BigQuery</span></div>
+            </article>
+            <div class="teammate-work" aria-label="Behind the teammate: planner, researcher, analyst, and independent verifier">
+              <div class="work-label"><span>Behind the teammate</span><b>Rally coordinates the work</b></div>
+              <ol><li><span>1</span><b>Plan</b></li><li><span>2</span><b>Research</b></li><li><span>3</span><b>Analyze</b></li><li class="is-verified"><span>✓</span><b>Verify</b></li></ol>
             </div>
-
-            <div class="mission-goal">
-              <span class="mission-step-label"><b>1</b> Your goal</span>
-              <p>“Build a sourced executive briefing on our biggest AI opportunities.”</p>
-              <small>Rally decomposes the outcome and assigns the right work.</small>
-            </div>
-
-            <div class="mission-network" aria-label="One governed handoff moves sequentially from Google Gemini through Rally to Anthropic Claude, then through Rally to OpenAI Codex for independent verification. Approved company systems remain inside Rally's authority boundary.">
-              <span class="network-line line-gemini" aria-hidden="true"><i></i></span>
-              <span class="network-line line-claude" aria-hidden="true"><i></i></span>
-              <span class="network-line line-openai" aria-hidden="true"><i></i></span>
-
-              <div class="model-node gemini-node" data-layer="agent-workforce">
-                <span class="model-avatar" aria-hidden="true"><img src="brandmarks/antigravity.png" alt=""></span>
-                <p><small>Google</small><strong>Gemini</strong></p>
-                <i class="node-state">Planning</i>
-              </div>
-              <div class="model-node claude-node" data-layer="agent-workforce">
-                <span class="model-avatar" aria-hidden="true"><img src="brandmarks/claude.svg" alt=""></span>
-                <p><small>Anthropic</small><strong>Claude</strong></p>
-                <i class="node-state">Using tools</i>
-              </div>
-              <div class="model-node openai-node" data-layer="agent-workforce">
-                <span class="model-avatar" aria-hidden="true"><img src="brandmarks/openai.svg" alt=""></span>
-                <p><small>OpenAI</small><strong>Codex</strong></p>
-                <i class="node-state">Verifying</i>
-              </div>
-
-              <div class="access-ring" data-layer="approved-systems" aria-label="Approved systems scoped to this run: Google Workspace, BigQuery, and Slack">
-                <span class="access-ring-label"><b>Approved systems</b><small>Scoped for this run</small></span>
-                <span class="orbit-asset workspace-orbit"><i><img src="brandmarks/google.svg" alt=""></i><b>Workspace</b></span>
-                <span class="orbit-asset bigquery-orbit"><i><img src="brandmarks/bigquery.svg" alt=""></i><b>BigQuery</b></span>
-                <span class="orbit-asset slack-orbit"><i><img src="brandmarks/slack.svg" alt=""></i><b>Slack</b></span>
-              </div>
-
-              <div class="rally-core">
-                <span class="core-orbit" aria-hidden="true"></span>
-                <span class="governance-marker" aria-hidden="true"></span>
-                <img src="rally-symbol.png" alt="">
-                <strong>Rally</strong>
-                <small class="sr-only">Rally governs, records, and routes every agent handoff.</small>
-                <span class="core-state" aria-hidden="true"><small class="core-state-default">governs handoffs</small><small class="core-state-accepted">handoff accepted</small><small class="core-state-routing">routing next turn</small></span>
-              </div>
-            </div>
-
-            <div class="mission-outcome">
-              <span class="outcome-check" aria-hidden="true">✓</span>
-              <div><small>Verified outcome</small><strong>Executive briefing ready</strong><p>5 independent checks · 5 evidence receipts</p></div>
-              <b class="outcome-status">Complete</b>
-            </div>
-            <p class="mission-rule"><span>owner ≠ verifier</span> No model approves its own work.</p>
+            <article class="email-message email-response">
+              <div class="email-meta"><span class="email-avatar rally-avatar"><img src="rally-symbol.png" alt=""></span><div><b>Rally Research</b><small>to Maya Chen · 9:38 AM</small></div><strong>Completed</strong></div>
+              <p class="email-subject">Re: Where should we invest in AI next quarter?</p>
+              <div class="email-deliverable"><span>▤</span><div><b>AI investment strategy.pdf</b><small>Recommendation, risks, sources, and decision memo</small></div></div>
+              <div class="email-receipt"><span>14 sources</span><span>3 company systems</span><span>Independently reviewed</span></div>
+            </article>
+            <footer><span>Same thread. One accountable owner.</span><b>View full receipt →</b></footer>
           </aside>
 
           <div class="hero-conversion">
             <div class="hero-actions">
-              <button class="button button-primary" type="button" data-open-setup>Give the team a goal</button>
-              <a class="button button-outline" href="#demo">Watch a real run</a>
+              <button class="button button-primary" type="button" data-open-setup>Create your first teammate</button>
+              <a class="button button-outline" href="#demo">Watch an email become an outcome</a>
             </div>
-            <p class="hero-note"><span aria-hidden="true">✓</span> Gemini, Claude, and OpenAI Codex are real Rally workers—not decorative integrations. Connections remain per user.</p>
+            <p class="hero-note"><span aria-hidden="true">✓</span> No new app for employees. No ambient access for agents. No model approves its own work.</p>
           </div>
         </div>
 
         <div class="hero-proof" aria-label="Rally verification results">
-          <div><strong>1</strong><span>goal from your team</span></div>
-          <div><strong>3</strong><span>model families ready</span></div>
-          <div><strong>Every</strong><span>claim returns with proof</span></div>
+          <div><strong>1</strong><span>teammate your people can reach</span></div>
+          <div><strong>3</strong><span>independent worker families ready</span></div>
+          <div><strong>Every</strong><span>completion returns with receipts</span></div>
           <div><strong>0</strong><span>self-approvals allowed</span></div>
         </div>
       </section>
 
       <section class="story-section" id="how" aria-labelledby="story-title">
         <div class="story-heading">
-          <p class="eyebrow">Why Rally</p>
-          <h2 id="story-title">Your AIs can solve the problem.<br><span>Rally helps them solve it together.</span></h2>
-          <p>Today, capable agents still operate in isolation. People move context, coordinate tasks, reconcile answers, and verify the work.</p>
-          <p>Rally gives agents a shared operating system for communication, delegation, and execution—turning disconnected AI capabilities into coordinated, accountable outcomes.</p>
+          <p class="eyebrow">Behind every teammate</p>
+          <h2 id="story-title">Your AIs, finally <span>on the same team.</span></h2>
+          <p>The employee delegates to a stable business role—not to a model picker. Rally decides which workers should plan, execute, recover, and independently review the outcome.</p>
+          <p>Models are workers. Teammates are roles. Email and chat are doors. Rally is the policy and accountability system behind them.</p>
         </div>
         <div class="story-flow" aria-label="How Rally turns one goal into a verified outcome">
           <article>
-            <div class="story-kicker"><span class="story-step">01</span><p class="label">One hard goal</p></div>
+            <div class="story-kicker"><span class="story-step">01</span><p class="label">One familiar message</p></div>
             <h3>“Build a sourced executive briefing on Google’s AI launches from the last 12 months.”</h3>
             <small>Ask for a finished professional outcome—not a chain of prompts.</small>
           </article>
           <span class="story-arrow" aria-hidden="true">→</span>
           <article class="rally-step">
-            <div class="story-kicker"><span class="story-step">02</span><p class="label">The models rally</p></div>
+            <div class="story-kicker"><span class="story-step">02</span><p class="label">The workers rally</p></div>
             <h3>The right AIs share the work across approved systems.</h3>
             <small>Rally coordinates the handoffs, limits, and evidence.</small>
           </article>
@@ -156,7 +120,7 @@
             <small>No model is allowed to sign off on itself.</small>
           </article>
         </div>
-        <p class="story-thesis"><b>Rally is the handshake between your best models—and the accountability layer around their work.</b></p>
+        <p class="story-thesis"><b>Email is how people commission the work. Rally is what makes that work coordinated, safe, and accountable.</b></p>
         <aside class="a2a-proof" aria-labelledby="a2a-title">
           <a class="a2a-brand" href="https://a2a-protocol.org/latest/" aria-label="Visit the official Agent2Agent Protocol site">
             <img src="a2a-icon.svg" alt="">
@@ -335,7 +299,7 @@
       </section>
 
       <section class="section architecture-section" id="proof">
-        <div class="section-heading"><p class="eyebrow">The Google-governed control plane</p><h2>Every layer has one job—and a receipt.</h2><p>Google Cloud handles identity, durable coordination, and telemetry. Deterministic policy—not a model prompt—decides what may proceed.</p></div>
+        <div class="section-heading"><p class="eyebrow">A policy-governed control plane, built on Google Cloud</p><h2>Every layer has one job—and a receipt.</h2><p>Google Cloud handles identity, durable coordination, and telemetry. Deterministic policy—not a model prompt—decides what may proceed.</p></div>
         <div class="flow-grid">
           <article><div class="flow-kicker"><span class="flow-number blue">1</span><p class="label">Commission</p></div><h3>Signed email ingress</h3><p>Resend and a Worker/D1 queue authenticate, deduplicate, and retain the request until handling succeeds.</p></article>
           <article><div class="flow-kicker"><span class="flow-number red">2</span><p class="label">Govern</p></div><h3>Gemini 3.7 + ADK</h3><p>An IAM-protected Cloud Run service preserves intent and atomically records the handoff in Firestore.</p></article>
@@ -344,17 +308,17 @@
         </div>
         <div class="proof-grid">
           <article class="eval-card">
-            <div class="card-header"><div><span class="google-dots small" aria-hidden="true"><i></i><i></i><i></i><i></i></span><b>Live ADK evaluation</b></div><span class="status-chip complete">All passed</span></div>
-            <div class="eval-row"><div><b>Six live scenarios</b><span>Small business to multi-system release</span></div><strong>6/6</strong></div>
-            <div class="eval-row"><div><b>Exact handoff + scope</b><span>Trajectory and response quality</span></div><strong>1.00</strong></div>
-            <div class="eval-row"><div><b>Adversarial controls</b><span>Policy bypass + hostile instructions</span></div><strong>PASS</strong></div>
+            <div class="card-header"><div><span class="google-dots small" aria-hidden="true"><i></i><i></i><i></i><i></i></span><b>Coordinator reliability</b></div><span class="status-chip complete">All passed</span></div>
+            <div class="eval-row"><div><b>Six real scenarios</b><span>From a simple briefing to a multi-system release</span></div><strong>6/6</strong></div>
+            <div class="eval-row"><div><b>Request preserved exactly</b><span>Every handoff kept the intended outcome and limits</span></div><strong>1.00</strong></div>
+            <div class="eval-row"><div><b>Hostile input resisted</b><span>External content could not rewrite Rally policy</span></div><strong>PASS</strong></div>
           </article>
           <article class="test-card">
-            <div class="card-header"><div><span class="terminal-icon">›_</span><b>Release gates</b></div><span class="status-chip complete">Green</span></div>
-            <pre><code>88  runner + ingress + policy + site
+            <div class="card-header"><div><span class="terminal-icon">›_</span><b>Product safety checks</b></div><span class="status-chip complete">Green</span></div>
+            <pre><code>92  runner + ingress + policy + site
 171 Cloud, A2A + connector security
 ───
-259 automated tests
+263 automated tests
 
 ✓ Terraform validated
 ✓ Worker bundle verified
@@ -404,11 +368,13 @@
           <details><summary>Are the agents just agreeing with each other?</summary><p>No. They execute as separate provider-native processes, come from different model families, and cannot verify checklist work they own. The live receipt counts only families that actually participated.</p></details>
           <details><summary>Do the agents wait for each other?</summary><p>Yes. Rally runs one model at a time and saves only validated state before the next handoff. With Second Wind enabled, a timeout, failed process, or reported blocker gives the other model one bounded recovery attempt from that saved state—including inspection of partial workspace edits—without auto-approving anything.</p></details>
           <details><summary>Do emails literally trigger every model turn?</summary><p>The first email starts the real run and every turn is mirrored to the thread. The authoritative runner dispatches the next model locally.</p></details>
+          <details><summary>Can anyone who finds a teammate’s email address commission work?</summary><p>No. A message may arrive without becoming an authorized job. Rally authenticates the transport, checks the sender against the teammate, channel, and company policy, and treats quoted history, attachments, and linked pages as untrusted evidence—not authority.</p></details>
           <details><summary>What happens when the agents cannot finish?</summary><p>Second Wind first asks the next independent model to diagnose and take over a recoverable failure. Rally still stops with a precise report when the fleet remains blocked, disagrees repeatedly, stops making progress, hits a hard budget, crosses an authority boundary, or receives a human STOP.</p></details>
           <details><summary>Is Rally an official Google product?</summary><p>No. Rally is an independent Agent9 project built with Gemini, Google ADK, and Google Cloud for the All Things Agentic Hackathon.</p></details>
           <details><summary>How does A2A fit—and is Rally A2A compatible?</summary><p>Yes. Rally publishes an A2A v1.0 Agent Card and accepts tasks over JSON-RPC and HTTP+JSON; official SDK clients exercise both paths. A2A enables discovery and task exchange. Rally adds the controls around the work: authority, durable state, recovery, evidence, and independent verification. The protocol was <a href="https://developers.googleblog.com/en/a2a-a-new-era-of-agent-interoperability/">introduced by Google</a> and now advances under <a href="https://a2a-protocol.org/latest/blog/2026/08/27/a-new-chapter-for-a2a-joining-the-agentic-ai-foundation/">Linux Foundation open governance</a>. Compatibility is not certification or endorsement.</p></details>
           <details><summary>What stays private?</summary><p>Commissioner identity, worktree paths, mail IDs, raw prompts, credentials, and cloud request keys never enter the public console record.</p></details>
-          <details><summary>Are AI and business-system connections shared between users?</summary><p>No. Each user authorizes their own provider accounts. Rally selects a separate one-way connection profile from the authenticated commissioner, namespaces OAuth storage to that profile, and freezes only that user’s approved systems and tools into the run.</p></details>
+          <details><summary>When do administrators connect Gemini, Claude, OpenAI, or Grok?</summary><p>AI workforce authorization is separate from company systems. The current pilot uses provider-approved identities on its controlled execution host. The self-service design starts each provider’s official OAuth or device-code flow on a user-bound host, with an existing API key offered as an alternative route. Rally never asks for a consumer password or copies a browser session cookie.</p></details>
+          <details><summary>Are AI and business-system connections shared between users?</summary><p>No. Model identities, company-system grants, and run authority are separate. Rally namespaces each user’s approved systems and tools, then freezes only the commissioned scope into that run.</p></details>
           <details><summary>Can a browser agent use Rally directly?</summary><p>Yes. Rally exposes three WebMCP tools in supported browsers: search the live public run index, inspect a run’s verification record, and prepare a governed job draft in the visible onboarding panel. The browser agent shares the page state with you, but it cannot submit the job, send email, grant access, or bypass your confirmation.</p></details>
           <details><summary>Can Rally connect a custom MCP server?</summary><p>Not through an arbitrary URL box. Custom remote MCP is a Labs path that must pass HTTPS and network admission, OAuth origin checks, bounded discovery, schema fingerprint review, exact tool policy, payload ceilings, and one-time approval for writes. WebMCP is complementary: Rally uses it for human-present browser collaboration, while asynchronous jobs continue through the governed server-side gateway.</p></details>
           <details><summary>What does “give Rally a job” mean?</summary><p>Ask for a finished professional outcome—such as a sourced market briefing, an executive presentation, a customer-risk review, or a launch plan—then grant only the sources, limits, and approval rules that outcome needs.</p></details>
@@ -416,7 +382,7 @@
         </div>
       </section>
 
-      <section class="final-cta"><div><img class="brand-lockup" src="rally-logo.png" alt="Rally"><p class="eyebrow">The accountable AI team</p><h2>Give your AIs one goal.<br><span>Let Rally make them a team.</span></h2><p>Connect the company once, define the authority, and receive one independently verified result instead of another answer to manage.</p><div class="hero-actions"><button class="button button-primary" type="button" data-open-setup>Give the team a goal</button></div></div></section>
+      <section class="final-cta"><div><img class="brand-lockup" src="rally-logo.png" alt="Rally"><p class="eyebrow">The accountable AI team</p><h2>Your next AI teammate<br><span>already has an email address.</span></h2><p>Create the role, approve its context, and give your people a teammate they already know how to reach.</p><div class="hero-actions"><button class="button button-primary" type="button" data-open-setup>Create your first teammate</button></div></div></section>
     </main>
 
     <aside class="a2a-trust" id="interop" aria-label="Rally interoperability and browser-agent trust">
@@ -430,46 +396,45 @@
           <span><b>WebMCP enabled</b><small>3 browser tools · human-confirmed</small></span>
         </a>
       </div>
-      <p><span>Originally created by <a href="https://developers.googleblog.com/en/a2a-a-new-era-of-agent-interoperability/">Google</a> · now under <a href="https://a2a-protocol.org/latest/blog/2026/08/27/a-new-chapter-for-a2a-joining-the-agentic-ai-foundation/">Linux Foundation open governance</a></span><span><a href="https://github.com/webmachinelearning/webmcp">WebMCP</a> exposes three user-present browser tools without autonomous submission.</span></p>
     </aside>
 
     <footer class="site-footer">
       <a class="brand" href="#top"><img class="brand-mark mini" src="rally-symbol.png" alt=""><span class="brand-name">Rally</span></a>
       <p>Independent Agent9 project · Built with Gemini, Google ADK, and Google Cloud</p>
-      <div><a href="privacy/">Privacy</a><a href="terms/">Terms</a><a href="mailto:terry@agent9.dev?subject=Rally%20pilot">Contact</a></div>
+      <div><a href="#trust">Security &amp; audit</a><a href="privacy/">Privacy</a><a href="terms/">Terms</a><a href="mailto:terry@agent9.dev?subject=Rally%20pilot">Contact</a></div>
     </footer>
 
     <dialog class="setup-dialog" data-setup-dialog aria-labelledby="setup-title">
       <button class="dialog-close" type="button" data-close-setup aria-label="Close setup">×</button>
       <img class="brand-mark large" src="rally-symbol.png" alt="">
-      <p class="eyebrow">Onboard Rally</p>
-      <h2 id="setup-title">Give your company an accountable AI team.</h2>
+      <p class="eyebrow">Create a teammate</p>
+      <h2 id="setup-title">Give your team a specialist they can already reach.</h2>
       <div class="setup-tabs" role="tablist" aria-label="Launch options"><button class="is-active" type="button" role="tab" aria-selected="true" data-setup-tab="managed">Managed setup</button><button type="button" role="tab" aria-selected="false" data-setup-tab="self">Self-hosted</button></div>
       <section class="setup-panel is-active" data-setup-panel="managed">
-        <div class="setup-promise"><b>Connect the company once.</b><span>Your team gets one Rally identity; administrators keep control of every system, scope, and approval rule behind it.</span></div>
+        <div class="setup-promise"><b>Start with email. Connections are optional.</b><span>Commission useful work from the request and attachments now, then add approved company context whenever you are ready.</span></div>
         <div class="webmcp-ready" data-webmcp-status><span>WebMCP agent-ready</span><p>Your browser agent can prepare this visible draft with you. It cannot send, submit, or widen authority.</p></div>
         <div class="job-draft-fields" data-job-draft>
           <label><span>Company</span><input type="text" maxlength="120" autocomplete="organization" placeholder="Your company" data-job-company></label>
           <label><span>Team</span><input type="text" maxlength="120" autocomplete="organization-title" placeholder="Team or function" data-job-team></label>
           <label class="job-field-wide"><span>Outcome</span><textarea maxlength="2000" rows="4" placeholder="The finished professional outcome Rally should deliver" data-job-goal></textarea></label>
-          <label class="job-field-wide"><span>Trusted systems</span><input type="text" maxlength="320" placeholder="Google Workspace, BigQuery, Slack" data-job-systems></label>
-          <label class="job-field-wide"><span>Source run <small>optional</small></span><input type="text" maxlength="128" placeholder="A blocked or related Rally run ID" data-job-source-run></label>
+          <label class="job-field-wide"><span>Trusted systems <small>optional</small></span><input type="text" maxlength="320" placeholder="Skip this, or name approved systems such as Drive or Slack" data-job-systems></label>
+          <details class="job-field-wide advanced-job"><summary>Relate this to an existing Rally run</summary><label><span>Run ID</span><input type="text" maxlength="128" placeholder="A blocked or related Rally run ID" data-job-source-run></label></details>
         </div>
         <div class="continuity-setting">
           <label for="second-wind-toggle"><span class="toggle-copy"><b>Second Wind</b><span>Let the teammate diagnose and recover from a failed turn or reported blocker.</span></span><span class="switch"><input id="second-wind-toggle" type="checkbox" checked data-second-wind><span aria-hidden="true"></span></span></label>
           <small>Bounded recovery, not auto-approval. Human stops, permissions, budgets, and independent verification remain enforced.</small>
         </div>
-        <ol><li><span>1</span><div><b>Choose one difficult outcome</b><p>Start with a real, repeatable job that crosses people, models, or systems—not an open-ended chatbot prompt.</p></div></li><li><span>2</span><div><b>Connect systems and define authority</b><p>Select what Rally may read, draft, execute, or execute only after human approval.</p></div></li><li><span>3</span><div><b>Watch the accountable team work</b><p>Review the model handoffs, tool actions, independent verification, evidence, and final result.</p></div></li></ol>
-        <a class="button button-primary full-width" data-managed-setup-link href="mailto:terry@agent9.dev?subject=Give%20Rally%20its%20first%20job&body=Company%3A%0ATeam%3A%0AFirst%20job%20for%20Rally%3A%0ATrusted%20systems%20involved%3A">Tell us the first job</a>
+        <ol><li><span>1</span><div><b>Name the teammate and outcome</b><p>Start with a real, repeatable responsibility—not another open-ended chatbot prompt.</p></div></li><li><span>2</span><div><b>Connect context or skip it</b><p>Use the request and attachments immediately, or approve company systems for deeper work.</p></div></li><li><span>3</span><div><b>Watch the accountable team work</b><p>Review handoffs, tool actions, independent verification, evidence, and the final result.</p></div></li></ol>
+        <a class="button button-primary full-width" data-managed-setup-link href="mailto:terry@agent9.dev?subject=Create%20our%20first%20Rally%20teammate&body=Company%3A%0ATeam%3A%0ATeammate%20role%3A%0AFirst%20outcome%3A%0AOptional%20trusted%20systems%3A">Create the first teammate</a>
         <p class="setup-note">Nothing is sent until you click. The draft only prepares a pre-filled email; no form data is stored on this site.</p>
       </section>
       <section class="setup-panel" data-setup-panel="self" hidden>
         <div class="setup-promise"><b>Provider-native authorization.</b><span>Credentials stay in provider tooling and your operating-system keychain.</span></div>
-        <div class="provider-list"><div><span class="provider-mark google-mark">G</span><div><b>Google Cloud + Gemini</b><p>Browser sign-in through Google tooling; Terraform provisions the control plane.</p></div><span class="provider-status">Per user</span></div><div><span class="provider-mark anthropic-mark">A</span><div><b>Anthropic Claude</b><p>Each operator authorizes their own Claude CLI account; Rally never shares a seat.</p></div><span class="provider-status">Per user</span></div><div><span class="provider-mark openai-mark">O</span><div><b>OpenAI Codex</b><p>Sign in with ChatGPT through Codex CLI; credentials stay in provider tooling.</p></div><span class="provider-status">Per user</span></div><div><span class="provider-mark cloudflare-mark">C</span><div><b>Cloudflare</b><p>Wrangler opens Cloudflare consent; no API token is pasted into Rally.</p></div><span class="provider-status">Per user</span></div><div><span class="provider-mark resend-mark">R</span><div><b>Resend</b><p>Managed mail avoids customer credentials. Bring-your-own mail is optional.</p></div><span class="provider-status muted-status">Optional</span></div></div>
+        <div class="provider-list"><div><span class="provider-mark google-mark">G</span><div><b>Google Cloud + Gemini</b><p>Browser sign-in through Google tooling; Terraform provisions the control plane.</p></div><span class="provider-status">Per user</span></div><div><span class="provider-mark anthropic-mark">A</span><div><b>Anthropic Claude</b><p>Each operator authorizes their own Claude CLI account; Rally never shares a seat.</p></div><span class="provider-status">Per user</span></div><div><span class="provider-mark openai-mark">O</span><div><b>OpenAI Codex</b><p>Sign in with ChatGPT through Codex CLI; credentials stay in provider tooling.</p></div><span class="provider-status">Per user</span></div><div><span class="provider-mark xai-provider-mark">X</span><div><b>xAI Grok Build</b><p>Official browser or device authorization, with an existing API key as an alternative route.</p></div><span class="provider-status muted-status">Candidate</span></div><div><span class="provider-mark cloudflare-mark">C</span><div><b>Cloudflare</b><p>Wrangler opens Cloudflare consent; no API token is pasted into Rally.</p></div><span class="provider-status">Per user</span></div><div><span class="provider-mark resend-mark">R</span><div><b>Resend</b><p>Managed mail avoids customer credentials. Bring-your-own mail is optional.</p></div><span class="provider-status muted-status">Optional</span></div></div>
         <a class="button button-outline full-width" href="mailto:terry@agent9.dev?subject=Rally%20self-hosted%20access">Request self-host access</a>
       </section>
     </dialog>
 
-    <script src="app.js?v=20260830c"></script>
+    <script src="app.js?v=20260831a"></script>
   </body>
 </html>

@@ -452,6 +452,10 @@ resource "google_cloud_run_v2_service" "control_plane" {
         value = join(",", var.control_plane_allowed_user_emails)
       }
       env {
+        name  = "RALLY_WORKSPACE_ID"
+        value = var.workspace_id
+      }
+      env {
         name  = "RALLY_AUTH_BACKEND"
         value = "firestore"
       }

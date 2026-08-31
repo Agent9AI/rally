@@ -12,6 +12,8 @@
  *   PUT  /v1/console/runs/:id  Runner publishes an allowlisted run projection.
  *   GET  /v1/console/runs      Public, sanitized judge console feed.
  *   GET  /v1/console/runs/:id Public, sanitized run detail.
+ *   GET  /v1/workspace/runs    Authenticated, workspace-scoped work queue.
+ *   GET  /v1/workspace/runs/:id Authenticated, workspace-scoped run detail.
  *   POST /admin/google/callback Exact, bounded Google redirect handoff.
  *   POST /admin/connect/start/:id Same-origin provider OAuth start and browser binding.
  *   GET  /admin/connect/callback Exact, bounded provider OAuth handoff.
@@ -24,7 +26,9 @@ const MAX_GOOGLE_FORM_BODY = 32 * 1024;
 const MAX_CONNECTOR_START_BODY = 16 * 1024;
 const MAX_CONNECTOR_START_RESPONSE = 16 * 1024;
 const MAX_CONNECTOR_CALLBACK_QUERY = 12 * 1024;
+const MAX_WORKSPACE_IDENTITY_RESPONSE = 16 * 1024;
 const CONSOLE_ROOT = "/v1/console/runs";
+const WORKSPACE_ROOT = "/v1/workspace/runs";
 const SITE_ORIGIN = "https://agent9-rally.pages.dev";
 const CONTROL_PLANE_ORIGIN = "https://rally-control-plane-u5xngrbzna-ue.a.run.app";
 const GOOGLE_CALLBACK_PATH = "/admin/google/callback";
@@ -34,6 +38,7 @@ const CONNECTOR_ID = /^[a-z0-9-]{1,64}$/;
 const OAUTH_SECRET = /^[A-Za-z0-9_-]{32,128}$/;
 const OAUTH_COOKIE_PREFIX = "__Secure-rally-oauth-";
 const RUN_ID = /^r-[0-9a-z-]{3,77}$/;
+const WORKSPACE_ID = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,95}$/;
 const RUN_STATUSES = new Set(["running", "complete", "blocked", "halted"]);
 const TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/;
 
@@ -107,6 +112,73 @@ function safeUpstreamDetail(value) {
     : "provider authorization is unavailable";
 }
 
+function userAuthHeaders(request) {
+  const idToken = request.headers.get("x-rally-id-token") || "";
+  const session = request.headers.get("x-rally-session") || "";
+  if (Boolean(idToken) === Boolean(session)) return null;
+  const headers = new Headers();
+  if (/^[A-Za-z0-9._-]{100,16384}$/.test(idToken)) {
+    headers.set("x-rally-id-token", idToken);
+  } else if (OAUTH_SECRET.test(session)) {
+    headers.set("x-rally-session", session);
+  } else {
+    return null;
+  }
+  return headers;
+}
+
+async function workspaceKey(workspaceId, secret) {
+  if (!WORKSPACE_ID.test(workspaceId) || typeof secret !== "string" || !secret) {
+    return null;
+  }
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const digest = await crypto.subtle.sign("HMAC", key, encoder.encode(workspaceId));
+  return [...new Uint8Array(digest)]
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+async function authenticatedWorkspace(request, env) {
+  const headers = userAuthHeaders(request);
+  if (!headers) return { response: json({ detail: "authentication required" }, 401) };
+  let upstream;
+  try {
+    upstream = await fetch(`${CONTROL_PLANE_ORIGIN}/v1/me`, {
+      method: "GET",
+      headers,
+      redirect: "manual",
+    });
+  } catch (_) {
+    return { response: json({ detail: "workspace authentication is unavailable" }, 502) };
+  }
+  const raw = await boundedText(upstream, MAX_WORKSPACE_IDENTITY_RESPONSE);
+  if (raw === null) {
+    return { response: json({ detail: "workspace authentication is unavailable" }, 502) };
+  }
+  if (!upstream.ok) {
+    const status = upstream.status === 401 || upstream.status === 403 ? upstream.status : 502;
+    return { response: json({ detail: "authentication required" }, status) };
+  }
+  let identity;
+  try {
+    identity = JSON.parse(raw);
+  } catch (_) {
+    return { response: json({ detail: "workspace authentication is unavailable" }, 502) };
+  }
+  const key = await workspaceKey(identity?.workspace_id || "", env.POLL_TOKEN || "");
+  if (!key) {
+    return { response: json({ detail: "workspace is not configured" }, 503) };
+  }
+  return { key };
+}
+
 async function proxyConnectorStart(request, connectorId) {
   if (!CONNECTOR_ID.test(connectorId)) {
     return json({ detail: "connector not found" }, 404);
@@ -118,19 +190,11 @@ async function proxyConnectorStart(request, connectorId) {
   const raw = await boundedText(request, MAX_CONNECTOR_START_BODY);
   if (raw === null) return json({ detail: "invalid connection request" }, 413);
 
-  const idToken = request.headers.get("x-rally-id-token") || "";
-  const session = request.headers.get("x-rally-session") || "";
-  if (Boolean(idToken) === Boolean(session)) {
+  const headers = userAuthHeaders(request);
+  if (!headers) {
     return json({ detail: "authentication required" }, 401);
   }
-  const headers = new Headers({ "content-type": "application/json" });
-  if (/^[A-Za-z0-9._-]{100,16384}$/.test(idToken)) {
-    headers.set("x-rally-id-token", idToken);
-  } else if (OAUTH_SECRET.test(session)) {
-    headers.set("x-rally-session", session);
-  } else {
-    return json({ detail: "authentication required" }, 401);
-  }
+  headers.set("content-type", "application/json");
 
   let upstream;
   try {
@@ -451,6 +515,10 @@ function normalizeConsoleRun(value, expectedRunId) {
   if (!TIMESTAMP.test(createdAt) || !TIMESTAMP.test(updatedAt)) {
     throw new Error("created_at and updated_at must be UTC timestamps");
   }
+  const workspaceId = text(value.workspace_id, 96);
+  if (!WORKSPACE_ID.test(workspaceId)) {
+    throw new Error("workspace_id is invalid");
+  }
   const checklist = Array.isArray(value.checklist) ? value.checklist.slice(0, 50).map((item) => ({
     id: text(item?.id, 48),
     description: text(item?.description, 500),
@@ -497,6 +565,7 @@ function normalizeConsoleRun(value, expectedRunId) {
   ).size;
   return {
     schema_version: 1,
+    workspace_id: workspaceId,
     visibility: value.visibility === "public" ? "public" : "private",
     run_id: runId,
     title: text(value.title, 120) || runId,
@@ -591,6 +660,56 @@ export default {
       return json({ ok: true, service: "rally-ingress" });
     }
 
+    // --- authenticated workspace ---------------------------------------
+    if (request.method === "GET" &&
+        (path === WORKSPACE_ROOT || path.startsWith(WORKSPACE_ROOT + "/"))) {
+      const workspace = await authenticatedWorkspace(request, env);
+      if (workspace.response) return workspace.response;
+
+      if (path === WORKSPACE_ROOT) {
+        try {
+          const requested = Number.parseInt(url.searchParams.get("limit") || "40", 10);
+          const limit = Number.isFinite(requested) ? Math.max(1, Math.min(requested, 100)) : 40;
+          const { results } = await env.INBOX.prepare(
+            `SELECT run_id, title, status, created_at, updated_at, turn,
+                    done_items, total_items
+               FROM console_runs
+              WHERE workspace_key = ?
+              ORDER BY updated_at DESC
+              LIMIT ?`
+          ).bind(workspace.key, limit).all();
+          return json({
+            runs: results || [],
+            provenance: "workspace-scoped Cloudflare D1",
+            generated_at: new Date().toISOString(),
+          });
+        } catch (error) {
+          console.error(JSON.stringify({
+            event: "workspace_run_list_failed",
+            error: error instanceof Error ? error.message : String(error),
+          }));
+          return json({ detail: "workspace runs are temporarily unavailable" }, 503);
+        }
+      }
+
+      const runId = path.slice((WORKSPACE_ROOT + "/").length);
+      if (!RUN_ID.test(runId)) return json({ detail: "run not found" }, 404);
+      try {
+        const record = await env.INBOX.prepare(
+          "SELECT payload FROM console_runs WHERE run_id = ? AND workspace_key = ? LIMIT 1"
+        ).bind(runId, workspace.key).first();
+        if (!record) return json({ detail: "run not found" }, 404);
+        return json(JSON.parse(record.payload));
+      } catch (error) {
+        console.error(JSON.stringify({
+          event: "workspace_run_read_failed",
+          run_id: runId,
+          error: error instanceof Error ? error.message : String(error),
+        }));
+        return json({ detail: "workspace run is temporarily unavailable" }, 503);
+      }
+    }
+
     // --- public console --------------------------------------------------
     if (request.method === "OPTIONS" &&
         (path === CONSOLE_ROOT || path.startsWith(CONSOLE_ROOT + "/"))) {
@@ -663,14 +782,17 @@ export default {
         } catch (error) {
           return json({ error: error instanceof Error ? error.message : "invalid record" }, 400);
         }
-        const payload = JSON.stringify(normalized);
+        const key = await workspaceKey(normalized.workspace_id, env.POLL_TOKEN || "");
+        if (!key) return json({ error: "workspace projection is unavailable" }, 503);
+        const { workspace_id: _workspaceId, ...browserRecord } = normalized;
+        const payload = JSON.stringify(browserRecord);
         let result;
         try {
           result = await env.INBOX.prepare(
             `INSERT INTO console_runs
              (run_id, created_at, updated_at, status, title, turn,
-              done_items, total_items, public, payload)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              done_items, total_items, public, workspace_key, payload)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
            ON CONFLICT(run_id) DO UPDATE SET
              updated_at = excluded.updated_at,
              status = excluded.status,
@@ -679,6 +801,7 @@ export default {
              done_items = excluded.done_items,
              total_items = excluded.total_items,
              public = excluded.public,
+             workspace_key = excluded.workspace_key,
              payload = excluded.payload`
           ).bind(
             normalized.run_id,
@@ -690,6 +813,7 @@ export default {
             normalized.progress.done,
             normalized.progress.total,
             normalized.visibility === "public" ? 1 : 0,
+            key,
             payload,
           ).run();
         } catch (error) {

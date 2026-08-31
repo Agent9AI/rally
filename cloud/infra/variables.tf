@@ -51,6 +51,17 @@ variable "control_plane_service_name" {
   default     = "rally-control-plane"
 }
 
+variable "workspace_id" {
+  description = "Stable non-secret workspace identifier shared by approved Rally administrators."
+  type        = string
+  default     = "agent9-rally"
+
+  validation {
+    condition     = can(regex("^[A-Za-z0-9][A-Za-z0-9._:-]{0,95}$", var.workspace_id))
+    error_message = "workspace_id must be 1-96 safe identifier characters."
+  }
+}
+
 variable "google_web_client_id" {
   description = "Public Google Identity Services web client ID accepted by Rally."
   type        = string

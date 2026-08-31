@@ -69,6 +69,7 @@
   "console": {
     "enabled": true,
     "public": true,
+    "workspace_id": "agent9-rally",
     "worker_url": "https://rally-ingress.terry-c87.workers.dev",
     "token_keychain": "rally-poll-token"
   },

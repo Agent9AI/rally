@@ -37,16 +37,20 @@ class TestProductSite(unittest.TestCase):
         for phrase in (
             "Your AIs, finally",
             "The accountable AI team",
-            "Your AIs can solve the problem",
-            "shared operating system for communication, delegation, and execution",
-            "One hard goal",
+            "You already have email",
+            "Add accountable AI teammates",
+            "Rally Research",
+            "research@acme.com",
+            "Behind the teammate",
+            "Same thread. One accountable owner.",
+            "Models are workers. Teammates are roles.",
+            "Email is how people commission the work",
             "Watch the accountable team work",
             "No model approves its own work",
             "OpenAI Codex",
-            "Connections remain per user",
-            "Approved systems",
-            "Scoped for this run",
             "Are AI and business-system connections shared between users?",
+            "When do administrators connect Gemini, Claude, OpenAI, or Grok?",
+            "Can anyone who finds a teammate’s email address commission work?",
             "Second Wind recovery",
             "Bounded recovery, not auto-approval",
             "Gemini 3.7 + ADK",
@@ -59,11 +63,9 @@ class TestProductSite(unittest.TestCase):
             "Accepted into AAIF at Growth Stage",
             "A2A v1.0 compatible",
             "Agent discovery + task exchange",
-            "Originally created by",
             "Linux Foundation open governance",
             "WebMCP enabled",
             "3 browser tools · human-confirmed",
-            "exposes three user-present browser tools without autonomous submission",
             "Can a browser agent use Rally directly?",
             "three WebMCP tools",
             "it cannot submit the job",
@@ -75,22 +77,18 @@ class TestProductSite(unittest.TestCase):
         self.assertIn('class="a2a-trust"', self.html)
         self.assertIn('class="webmcp-trust-badge"', self.html)
         self.assertNotIn('class="webmcp-cta"', self.html)
-        self.assertIn('class="access-ring"', self.html)
-        self.assertIn('data-layer="approved-systems"', self.html)
-        self.assertEqual(self.html.count('data-layer="agent-workforce"'), 3)
-        self.assertNotIn('class="mission-assets"', self.html)
-        self.assertIn("Agent <i>→</i> Rally <i>→</i> Agent", self.html)
-        self.assertIn("One governed handoff moves sequentially", self.html)
+        self.assertIn('class="email-visual"', self.html)
+        self.assertEqual(self.html.count('class="email-message '), 2)
+        self.assertIn('class="teammate-work"', self.html)
+        self.assertNotIn('class="mission-visual"', self.html)
+        self.assertNotIn('class="access-ring"', self.html)
+        self.assertNotIn('data-layer="approved-systems"', self.html)
+        self.assertNotIn('data-layer="agent-workforce"', self.html)
         self.assertEqual(self.html.count('class="story-kicker"'), 3)
         self.assertEqual(self.html.count('class="feature-kicker"'), 3)
         self.assertEqual(self.html.count('class="trust-domain '), 4)
         self.assertEqual(self.html.count('class="trust-control"'), 8)
-        self.assertIn("handoff accepted", self.html)
-        self.assertIn("routing next turn", self.html)
-        for provider, worker in (("Google", "Gemini"), ("Anthropic", "Claude"), ("OpenAI", "Codex")):
-            self.assertIn(f"<small>{provider}</small><strong>{worker}</strong>", self.html)
         for agent_mark in ("antigravity.png", "claude.svg", "openai.svg"):
-            self.assertIn(f'src="brandmarks/{agent_mark}"', self.html)
             path = os.path.join(SITE, "brandmarks", agent_mark)
             self.assertTrue(os.path.exists(path))
             self.assertGreater(os.path.getsize(path), 500)
@@ -139,9 +137,8 @@ class TestProductSite(unittest.TestCase):
         with open(os.path.join(SITE, "styles.css")) as handle:
             styles = handle.read()
         self.assertIn("rally-handoff", styles)
-        self.assertIn("mission-control-rotate", styles)
-        self.assertIn('class="governance-marker"', self.html)
-        self.assertIn("mission-governance-marker", styles)
+        self.assertIn(".email-visual", styles)
+        self.assertIn(".teammate-work", styles)
         self.assertIn("prefers-reduced-motion", styles)
         with open(os.path.join(SITE, ".well-known", "agent-card.json")) as handle:
             agent_card = json.load(handle)
@@ -191,6 +188,17 @@ class TestProductSite(unittest.TestCase):
         self.assertEqual(admin_html.count("data-primary-action"), 9)
         self.assertNotIn("data-token-action", admin_html)
         self.assertIn("data-advanced-token", admin_html)
+        self.assertIn('data-workspace-view="work"', admin_html)
+        self.assertIn('data-workspace-view="workforce"', admin_html)
+        self.assertIn('data-workspace-view="connections"', admin_html)
+        self.assertIn('data-workspace-view="policy"', admin_html)
+        self.assertIn("Task management", admin_html)
+        self.assertIn("Work queue", admin_html)
+        self.assertIn("Skip connections &amp; start", admin_html)
+        self.assertIn("Grok Build", admin_html)
+        self.assertIn("Use an existing API key instead", admin_app)
+        self.assertIn('/v1/workspace/runs', admin_app)
+        self.assertIn("workspaceApi", admin_app)
         self.assertIn("Google Cloud KMS", admin_html)
         self.assertIn("Stored in Google Cloud", admin_html)
         self.assertIn("Ciphertext only · KMS protected", admin_html)
@@ -213,7 +221,8 @@ class TestProductSite(unittest.TestCase):
         self.assertIn('/verify`', admin_app)
         self.assertIn('return "Finish setup"', admin_app)
         self.assertNotIn('return "Reconnect"', admin_app)
-        self.assertNotIn("data-secondary-action", admin_app)
+        self.assertIn("data-api-key-action", admin_app)
+        self.assertIn("Use API key", admin_app)
         self.assertNotIn("window.open", admin_app)
         self.assertNotIn('headers.set("Authorization"', admin_app)
         self.assertIn('target="_blank"', admin_html)
@@ -245,9 +254,12 @@ class TestProductSite(unittest.TestCase):
         self.assertNotIn("form-action 'self' https://*.a.run.app", security_headers)
         self.assertIn("/admin/connect/callback*", security_headers)
         self.assertIn("Referrer-Policy: no-referrer", security_headers)
-        self.assertIn("88  runner + ingress + policy + site", self.html)
+        self.assertIn("92  runner + ingress + policy + site", self.html)
         self.assertIn('href="privacy/"', self.html)
         self.assertIn('href="terms/"', self.html)
+        self.assertIn('href="#trust">Security &amp; audit</a>', self.html)
+        self.assertNotIn("Originally created by", self.html)
+        self.assertNotIn("exposes three user-present browser tools", self.html)
         self.assertNotIn('href="https://github.com/Agent9AI/rally"', self.html)
         self.assertNotIn("github.com/Agent9AI/rally", self.html)
         legal_css = os.path.join(SITE, "legal.css")
@@ -264,7 +276,7 @@ class TestProductSite(unittest.TestCase):
             "Google account subject identifier",
             "unique AES-256-GCM data-encryption key",
             "Rally does not sell personal information",
-            "Public run evidence",
+            "Private workspace and public run evidence",
             "Retention and deletion",
             "two-minute exchange code and 30-minute session",
             "SHA-256 hashes",
@@ -286,8 +298,9 @@ class TestProductSite(unittest.TestCase):
             card = handle.read()
         for phrase in (
             "THE ACCOUNTABLE AI TEAM",
-            "Your AIs, finally",
-            "259",
+            "You already have email",
+            "Add accountable AI teammates",
+            "263",
             "6/6",
             "0",
         ):
@@ -357,6 +370,18 @@ class TestProductSite(unittest.TestCase):
         self.assertIn("return proxyConnectorCallback(request, url)", worker)
         self.assertIn("MAX_GOOGLE_FORM_BODY", worker)
         self.assertIn("MAX_CONNECTOR_CALLBACK_QUERY", worker)
+        self.assertIn('const WORKSPACE_ROOT = "/v1/workspace/runs"', worker)
+        self.assertIn("authenticatedWorkspace(request, env)", worker)
+        self.assertIn("WHERE workspace_key = ?", worker)
+        self.assertIn("crypto.subtle.importKey", worker)
+        workspace_migration = os.path.join(
+            ROOT, "src", "worker", "migrations", "0003_private_workspaces.sql"
+        )
+        self.assertTrue(os.path.exists(workspace_migration))
+        with open(workspace_migration) as handle:
+            migration = handle.read()
+        self.assertIn("workspace_key TEXT NOT NULL", migration)
+        self.assertIn("idx_console_runs_workspace_updated", migration)
 
     def test_worker_callback_contract(self):
         result = subprocess.run(
@@ -367,6 +392,16 @@ class TestProductSite(unittest.TestCase):
             text=True,
         )
         self.assertIn("worker callback contract passed", result.stdout)
+
+    def test_worker_workspace_isolation_contract(self):
+        result = subprocess.run(
+            ["node", os.path.join(ROOT, "tests", "test_worker_workspace.mjs")],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        self.assertIn("worker workspace isolation contract passed", result.stdout)
 
 
 if __name__ == "__main__":
