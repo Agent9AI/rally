@@ -27,5 +27,11 @@
       "database_id": "8f66248a-5b72-452e-bffa-37bca493b511",
       "migrations_dir": "migrations"
     }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "ARTIFACTS",
+      "bucket_name": "rally-artifacts"
+    }
   ]
 }

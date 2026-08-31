@@ -1,7 +1,7 @@
 {
   "project": "rally-agent9-2026",
   "generated_at": "2026-08-31T22:14:12Z",
-  "updated_at": "2026-08-31T22:47:05Z",
+  "updated_at": "2026-08-31T23:31:10Z",
   "outputs": [
     {
       "kind": "song",
@@ -41,6 +41,48 @@
       "bytes": 1302162,
       "sha256": "5066a8d52d1fd81d772b0f52b726c3206f5c2ca11be3a0c8b16150f373bf87e5",
       "prompt_fingerprint": "a003164b8839a864182af54dcfb93a3e0bddaa2166e186ed8ff2816e5d08d871"
+    },
+    {
+      "kind": "image",
+      "request": "Accountable-AI cover art for the verified soulful hip-hop deliverable",
+      "model": "gemini-3.1-flash-image",
+      "filename": "rally-accountable-ai-nano-banana-2.png",
+      "mime_type": "image/png",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1431911,
+      "sha256": "39ea3f1a015db71cb71bec1f65f761cf8bd6fdddddb9efd590a20ead5727fa63",
+      "generated_at": "2026-08-31T23:08:58Z",
+      "prompt_fingerprint": "3b4f98aac29d078620b1cf39d1268547bbfff7569bc280be4659eb2eb559cca3"
+    }
+  ],
+  "derived_outputs": [
+    {
+      "kind": "presentation_wrapper",
+      "filename": "all-things-agentic-soulful-hip-hop-lyria-3-pro.mp4",
+      "mime_type": "video/mp4",
+      "source_filename": "all-things-agentic-soulful-hip-hop-lyria-3-pro.mp3",
+      "cover_filename": "rally-accountable-ai-nano-banana-2.png",
+      "video_codec": "h264",
+      "audio_codec": "aac",
+      "width": 1200,
+      "height": 630,
+      "duration_seconds": 73.325011,
+      "bytes": 1843696,
+      "sha256": "a2964ac56f3f07152b1eb339ad42d683e5cbca60420bf1c11c19a00c825dced9",
+      "claim": "Deterministic GitHub presentation wrapper; not an additional model generation"
+    },
+    {
+      "kind": "submission_brand_composite",
+      "repo_path": "docs/assets/rally-devpost-featured-google-style.png",
+      "mime_type": "image/png",
+      "width": 1600,
+      "height": 1600,
+      "bytes": 1833510,
+      "sha256": "fecd5bab20f2dcfa518b9b043856d9971e1157105a93e07faee14f0908525041",
+      "method": "Deterministic Rally brand composition in a Google-style visual language",
+      "model_generation": false,
+      "claim": "Devpost presentation asset; not a Nano Banana generation or model proof"
     }
   ]
 }

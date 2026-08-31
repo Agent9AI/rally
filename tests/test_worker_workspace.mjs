@@ -181,6 +181,14 @@ class MemoryD1 {
                 ? { ...job }
                 : null;
             }
+            if (
+              query.includes("FROM console_runs") &&
+              query.includes("SELECT workspace_key, payload")
+            ) {
+              const [runId] = values;
+              const row = database.rows.get(runId);
+              return row ? { workspace_key: row.workspace_key, payload: row.payload } : null;
+            }
             if (query.includes("FROM console_runs") && query.includes("workspace_key = ?")) {
               const [runId, workspaceKey] = values;
               const row = database.rows.get(runId);
@@ -209,17 +217,81 @@ class MemoryD1 {
   }
 }
 
+class MemoryR2 {
+  constructor() {
+    this.objects = new Map();
+  }
+
+  async put(key, value, options = {}) {
+    const bytes = new Uint8Array(
+      value instanceof Uint8Array ? value : await new Response(value).arrayBuffer()
+    );
+    const digest = await crypto.subtle.digest("SHA-256", bytes);
+    const sha256 = Buffer.from(digest).toString("hex");
+    if (options.sha256 && options.sha256 !== sha256) {
+      throw new Error("checksum mismatch");
+    }
+    const record = {
+      key,
+      bytes: Uint8Array.from(bytes),
+      size: bytes.byteLength,
+      etag: sha256,
+      httpEtag: `"${sha256}"`,
+      checksums: { sha256: digest },
+      httpMetadata: { ...(options.httpMetadata || {}) },
+      customMetadata: { ...(options.customMetadata || {}) },
+    };
+    this.objects.set(key, record);
+    return record;
+  }
+
+  async get(key) {
+    const record = this.objects.get(key);
+    if (!record) return null;
+    return {
+      ...record,
+      body: new Blob([record.bytes]).stream(),
+    };
+  }
+
+  async head(key) {
+    const record = this.objects.get(key);
+    if (!record) return null;
+    const { bytes: _bytes, ...head } = record;
+    return head;
+  }
+
+  async delete(key) {
+    this.objects.delete(key);
+  }
+}
+
 const resendSigningKey = Buffer.from("rally-test-resend-webhook-key-32b");
 const env = {
   INBOX: new MemoryD1(),
+  ARTIFACTS: new MemoryR2(),
   POLL_TOKEN: "workspace-test-secret",
   WORKSPACE_KEY_SECRET: "workspace-test-secret",
   INGEST_TOKEN: "workspace-ingest-token",
   RESEND_WEBHOOK_SECRET: `whsec_${resendSigningKey.toString("base64")}`,
 };
 const now = "2026-08-31T12:00:00Z";
+const artifactBytes = new TextEncoder().encode("verified Rally audio deliverable");
+const artifactSha256 = Buffer.from(
+  await crypto.subtle.digest("SHA-256", artifactBytes)
+).toString("hex");
+const artifactReceipt = {
+  filename: "verified-song.mp3",
+  label: "Verified hackathon song",
+  mime_type: "audio/mpeg",
+  size_bytes: artifactBytes.byteLength,
+  sha256: artifactSha256,
+  kind: "audio",
+};
+const stagedArtifactReceipt = { ...artifactReceipt, status: "staged" };
+const readyArtifactReceipt = { ...artifactReceipt, status: "ready" };
 
-function projection(runId, workspaceId, visibility = "private") {
+function projection(runId, workspaceId, visibility = "private", artifacts = []) {
   return {
     schema_version: 1,
     workspace_id: workspaceId,
@@ -241,6 +313,7 @@ function projection(runId, workspaceId, visibility = "private") {
       { id: "claude", label: "Claude worker", family: "anthropic", model: "sonnet", role: "implementation", participated: true },
       { id: "agy", label: "Gemini worker", family: "google", model: "flash", role: "review", participated: true },
     ],
+    artifacts,
     timeline: [],
     policy: { continuity: { mode: "halt", recoveries_used: 0, max_recoveries_per_run: 0 } },
     coordination: { status: "ready_for_rally", framework: "Google ADK", services: ["Cloud Run"] },
@@ -248,8 +321,8 @@ function projection(runId, workspaceId, visibility = "private") {
   };
 }
 
-async function publish(runId, workspaceId, visibility = "private") {
-  const response = await worker.fetch(new Request(
+async function publishResponse(runId, workspaceId, visibility = "private", artifacts = []) {
+  return worker.fetch(new Request(
     `https://rally.agent9.dev/v1/console/runs/${runId}`,
     {
       method: "PUT",
@@ -257,13 +330,17 @@ async function publish(runId, workspaceId, visibility = "private") {
         authorization: `Bearer ${env.POLL_TOKEN}`,
         "content-type": "application/json",
       },
-      body: JSON.stringify(projection(runId, workspaceId, visibility)),
+      body: JSON.stringify(projection(runId, workspaceId, visibility, artifacts)),
     },
   ), env, {});
+}
+
+async function publish(runId, workspaceId, visibility = "private", artifacts = []) {
+  const response = await publishResponse(runId, workspaceId, visibility, artifacts);
   assert.equal(response.status, 200);
 }
 
-await publish("r-20260831-agent9", "agent9-rally", "public");
+await publish("r-20260831-agent9", "agent9-rally", "public", [stagedArtifactReceipt]);
 await publish("r-20260831-other", "another-company");
 
 globalThis.fetch = async (input, init = {}) => {
@@ -296,6 +373,179 @@ assert.equal(detail.status, 200);
 const detailBody = await detail.json();
 assert.equal(detailBody.run_id, "r-20260831-agent9");
 assert.equal(detailBody.workspace_id, undefined);
+assert.deepEqual(detailBody.artifacts, []);
+
+const prematureReady = await publishResponse(
+  "r-20260831-agent9",
+  "agent9-rally",
+  "public",
+  [readyArtifactReceipt],
+);
+assert.equal(prematureReady.status, 409);
+
+function artifactUploadRequest(runId, receipt, bytes, overrides = {}) {
+  return new Request(
+    `https://rally.agent9.dev/v1/console/artifacts/${runId}/${encodeURIComponent(receipt.filename)}`,
+    {
+      method: "PUT",
+      headers: {
+        authorization: `Bearer ${env.POLL_TOKEN}`,
+        "content-length": String(bytes.byteLength),
+        "content-type": receipt.mime_type,
+        "x-rally-artifact-kind": receipt.kind,
+        "x-rally-artifact-label": receipt.label,
+        "x-rally-artifact-sha256": receipt.sha256,
+        ...(overrides.headers || {}),
+      },
+      body: bytes,
+    },
+  );
+}
+
+const unauthenticatedArtifactPut = await worker.fetch(new Request(
+  "https://rally.agent9.dev/v1/console/artifacts/r-20260831-agent9/verified-song.mp3",
+  {
+    method: "PUT",
+    headers: {
+      "content-length": String(artifactBytes.byteLength),
+      "content-type": artifactReceipt.mime_type,
+      "x-rally-artifact-kind": artifactReceipt.kind,
+      "x-rally-artifact-label": artifactReceipt.label,
+      "x-rally-artifact-sha256": artifactReceipt.sha256,
+    },
+    body: artifactBytes,
+  },
+), env, {});
+assert.equal(unauthenticatedArtifactPut.status, 401);
+assert.equal(env.ARTIFACTS.objects.size, 0);
+
+const artifactBeforeProjection = await worker.fetch(artifactUploadRequest(
+  "r-20260831-not-published",
+  artifactReceipt,
+  artifactBytes,
+), env, {});
+assert.equal(artifactBeforeProjection.status, 404);
+assert.equal(env.ARTIFACTS.objects.size, 0);
+
+const metadataMismatch = await worker.fetch(artifactUploadRequest(
+  "r-20260831-agent9",
+  artifactReceipt,
+  artifactBytes,
+  { headers: { "x-rally-artifact-label": "A different artifact" } },
+), env, {});
+assert.equal(metadataMismatch.status, 409);
+assert.equal(env.ARTIFACTS.objects.size, 0);
+
+const wrongArtifactBytes = new Uint8Array(artifactBytes.byteLength).fill(120);
+const checksumMismatch = await worker.fetch(artifactUploadRequest(
+  "r-20260831-agent9",
+  artifactReceipt,
+  wrongArtifactBytes,
+), env, {});
+assert.equal(checksumMismatch.status, 422);
+assert.equal(env.ARTIFACTS.objects.size, 0);
+
+const artifactPut = await worker.fetch(artifactUploadRequest(
+  "r-20260831-agent9",
+  artifactReceipt,
+  artifactBytes,
+), env, {});
+assert.equal(artifactPut.status, 201);
+assert.equal(
+  artifactPut.headers.get("location"),
+  "/v1/workspace/artifacts/r-20260831-agent9/verified-song.mp3",
+);
+const artifactPutBody = await artifactPut.json();
+assert.equal(artifactPutBody.ok, true);
+assert.deepEqual(artifactPutBody.artifact, stagedArtifactReceipt);
+assert.equal(env.ARTIFACTS.objects.size, 1);
+const [storedArtifactKey] = env.ARTIFACTS.objects.keys();
+assert.match(storedArtifactKey, /^[0-9a-f]{64}\/r-20260831-agent9\/verified-song\.mp3$/);
+assert.doesNotMatch(storedArtifactKey, /agent9-rally/);
+
+const stagedArtifactGet = await worker.fetch(new Request(
+  "https://rally.agent9.dev/v1/workspace/artifacts/r-20260831-agent9/verified-song.mp3",
+  { headers: agent9Headers },
+), env, {});
+assert.equal(stagedArtifactGet.status, 404);
+
+await publish("r-20260831-agent9", "agent9-rally", "public", [readyArtifactReceipt]);
+const readyDetail = await worker.fetch(new Request(
+  "https://rally.agent9.dev/v1/workspace/runs/r-20260831-agent9",
+  { headers: agent9Headers },
+), env, {});
+assert.equal(readyDetail.status, 200);
+assert.deepEqual((await readyDetail.json()).artifacts, [artifactReceipt]);
+
+const authenticatedArtifactGet = await worker.fetch(new Request(
+  "https://rally.agent9.dev/v1/workspace/artifacts/r-20260831-agent9/verified-song.mp3",
+  { headers: agent9Headers },
+), env, {});
+assert.equal(authenticatedArtifactGet.status, 200);
+assert.equal(authenticatedArtifactGet.headers.get("content-type"), "audio/mpeg");
+assert.equal(
+  authenticatedArtifactGet.headers.get("content-disposition"),
+  'attachment; filename="verified-song.mp3"',
+);
+assert.equal(authenticatedArtifactGet.headers.get("cache-control"), "private, no-store, max-age=0");
+assert.equal(authenticatedArtifactGet.headers.get("x-content-type-options"), "nosniff");
+assert.equal(authenticatedArtifactGet.headers.get("x-rally-artifact-sha256"), artifactSha256);
+assert.deepEqual(
+  new Uint8Array(await authenticatedArtifactGet.arrayBuffer()),
+  artifactBytes,
+);
+
+const webpBytes = new TextEncoder().encode("RIFF-rally-WEBP");
+const webpReceipt = {
+  filename: "deliverable-image.webp",
+  label: "Generated image",
+  mime_type: "image/webp",
+  size_bytes: webpBytes.byteLength,
+  sha256: Buffer.from(await crypto.subtle.digest("SHA-256", webpBytes)).toString("hex"),
+  kind: "image",
+};
+await publish(
+  "r-20260831-webp",
+  "agent9-rally",
+  "private",
+  [{ ...webpReceipt, status: "staged" }],
+);
+const webpPut = await worker.fetch(artifactUploadRequest(
+  "r-20260831-webp",
+  webpReceipt,
+  webpBytes,
+), env, {});
+assert.equal(webpPut.status, 201);
+await publish(
+  "r-20260831-webp",
+  "agent9-rally",
+  "private",
+  [{ ...webpReceipt, status: "ready" }],
+);
+const webpGet = await worker.fetch(new Request(
+  "https://rally.agent9.dev/v1/workspace/artifacts/r-20260831-webp/deliverable-image.webp",
+  { headers: agent9Headers },
+), env, {});
+assert.equal(webpGet.status, 200);
+assert.equal(webpGet.headers.get("content-type"), "image/webp");
+assert.deepEqual(new Uint8Array(await webpGet.arrayBuffer()), webpBytes);
+
+const unauthenticatedArtifactGet = await worker.fetch(new Request(
+  "https://rally.agent9.dev/v1/workspace/artifacts/r-20260831-agent9/verified-song.mp3",
+), env, {});
+assert.equal(unauthenticatedArtifactGet.status, 401);
+
+const crossTenantArtifactGet = await worker.fetch(new Request(
+  "https://rally.agent9.dev/v1/workspace/artifacts/r-20260831-agent9/verified-song.mp3",
+  { headers: { "x-rally-session": "b".repeat(43) } },
+), env, {});
+assert.equal(crossTenantArtifactGet.status, 404);
+
+const malformedArtifactRoute = await worker.fetch(new Request(
+  "https://rally.agent9.dev/v1/workspace/artifacts/r-20260831-agent9/%2E%2E",
+  { headers: agent9Headers },
+), env, {});
+assert.equal(malformedArtifactRoute.status, 404);
 
 const crossTenant = await worker.fetch(new Request(
   "https://rally.agent9.dev/v1/workspace/runs/r-20260831-other",

@@ -85,7 +85,7 @@
   "media": {
     "enabled": true,
     "project": "rally-agent9-2026",
-    "image_model": "gemini-2.5-flash-image",
+    "image_model": "gemini-3.1-flash-image",
     "music_model": "lyria-3-pro-preview",
     "image_timeout_sec": 180,
     "music_timeout_sec": 300

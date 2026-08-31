@@ -267,12 +267,12 @@
 
     .voiceover {
       align-self: center;
-      max-width: 25ch;
+      max-width: 35ch;
       margin: clamp(36px, 5vh, 78px) auto;
-      font-size: clamp(2.15rem, 4.15vw, 5.4rem);
+      font-size: clamp(1.6rem, 2.75vw, 3.55rem);
       font-weight: 650;
-      line-height: 1.12;
-      letter-spacing: -.045em;
+      line-height: 1.18;
+      letter-spacing: -.035em;
       text-wrap: balance;
     }
 
@@ -434,7 +434,7 @@
           <span>All Things Agentic · Final Take</span>
         </div>
       </div>
-      <div class="session"><span class="live-dot"></span><span>3:55 target · 10 shots · 369 tests</span></div>
+      <div class="session"><span class="live-dot"></span><span>3:24 target · 10 shots · 369 tests</span></div>
     </header>
 
     <div class="progress-track" aria-hidden="true"><div class="progress-fill" id="progressFill"></div></div>
@@ -471,7 +471,7 @@
           <span id="screenCue">Rally homepage, pause on hero, click Give Rally a job.</span>
         </div>
 
-        <p class="voiceover" id="voiceover">Every company can buy excellent AI.</p>
+        <p class="voiceover" id="voiceover">Every company can buy excellent AI. Many already pay for several.</p>
 
         <div class="bottom-grid">
           <section class="proof">
@@ -501,94 +501,94 @@
 
     const shots = [
       {
-        range: "0:00–0:22",
-        duration: 22,
+        range: "0:00–0:24",
+        duration: 24,
         clip: "01-homepage.mov",
         label: "Homepage and value",
-        cue: "Rally homepage, pause on the hero, then click “Give Rally a job.”",
-        voiceover: "Every company can buy excellent AI. The broken part is the work between them: people carry context, restart failed jobs, and police confident answers. Rally removes that management tax. One business request becomes an accountable result across the AIs and systems a company already trusts and pays for.",
-        proof: "Hosted product · immediate value · the product twist"
+        cue: "Rally homepage: begin on the hero, let the coordination visual move once, then click “Give Rally a job.”",
+        voiceover: "Every company can buy excellent AI. Many already pay for several. But those tools still work like brilliant employees who have never met—and when one hits a usage limit, the job stops. Rally adds the missing teamwork: email-based specialists, connected through one secure layer that sees work through.",
+        proof: "The hook: companies own the intelligence—Rally adds teamwork and continuity"
       },
       {
-        range: "0:22–0:43",
-        duration: 21,
+        range: "0:24–0:42",
+        duration: 18,
         clip: "02-magic-link.mov",
         label: "One-click company sign-in",
-        cue: "Show the company-email field, open the clean Rally email in Zoho, click “Sign in to Rally,” and land on Work.",
-        voiceover: "Rally begins where work already happens. An employee enters an approved company email and receives this one-time link. No new password, no mailbox credential handed to a model. One click opens a policy-governed workspace shared by email and dashboard.",
-        proof: "Real passwordless authentication · polished transactional email"
+        cue: "On /admin, enter terry@agent9.dev. Cut to the Rally email in Zoho, click “Sign in to Rally,” and hold on the authenticated Work dashboard.",
+        voiceover: "Rally starts with identity people understand. Enter an approved company address, click a magic link, and you are inside. Rally stores no new password, and no model receives a mailbox credential.",
+        proof: "Real company-email authentication · one expiring link · authenticated workspace"
       },
       {
-        range: "0:43–1:08",
-        duration: 25,
+        range: "0:42–1:02",
+        duration: 20,
         clip: "03-dashboard-job.mov",
         label: "Commission a dashboard job",
-        cue: "Click New job, enter the prepared goal, keep Second Wind on, click Accept into queue, then hold on the new run ID.",
-        voiceover: "Here I commission an executive brief from the dashboard. I specify the outcome, sources, and definition of done—not a chain of prompts. Rally attaches policy, selects specialized workers, allows one bounded recovery handoff, and issues a run receipt before work begins.",
-        proof: "Manual intake · real run ID · workspace policy attached"
+        cue: "Show the four-step teammate setup briefly. Click New job, paste the prepared outcome, keep Second Wind on, submit, and hold on the queued run receipt.",
+        voiceover: "I choose a specialist role, set its expertise and recovery, and approve only the company systems it may use. Rally handles policy and model routing underneath, then returns a durable run receipt.",
+        proof: "Human-friendly setup · manual intake · real run ID · policy attached"
       },
       {
-        range: "1:08–1:34",
-        duration: 26,
+        range: "1:02–1:22",
+        duration: 20,
         clip: "04-email-live.mov",
         label: "Unedited email intake",
-        cue: "In Zoho, finish the last sentence, click Send, return to Rally, refresh once, and hold as the email run appears. Do not cut this clip.",
-        voiceover: "Now I send an assignment to rally at updates dot agent9 dot dev. Email enters the same durable queue, preserves subject and body, and creates its own run beside the dashboard request. Humans can reply later in this thread to refine or resume the work.",
-        proof: "LIVE · UNEDITED · two intake doors, one governed queue"
+        cue: "In Zoho, show the real request addressed to rally@updates.agent9.dev, click Send, return to Work, and hold as its run appears. Keep the send-to-queue sequence unedited.",
+        voiceover: "This specialist has a real company address. My ordinary email enters the same governed queue as the dashboard request. Rally works asynchronously, and I can reply later to refine or resume the job.",
+        proof: "LIVE · ordinary email · asynchronous work · one governed queue"
       },
       {
-        range: "1:34–1:59",
-        duration: 25,
+        range: "1:22–1:44",
+        duration: 22,
         clip: "05-multi-agent-proof.mov",
         label: "Independent multi-agent proof",
-        cue: "Open the advancing run, then r-20260831-48141a. Show the timeline, 6/6 checklist, owner-to-verifier rows, and receipt.",
-        voiceover: "Inside the run, Gemini researches, Claude synthesizes, and Codex challenges. Deterministic policy—not a prompt—enforces owner not equal to verifier. This thirteen-turn run rejected unsupported claims, repaired them, and closed six of six independent checks with evidence. Zero items were self-approved.",
-        proof: "13 turns · 6/6 checks · three model families · zero self-approvals"
+        cue: "Open real run r-20260831-48141a. Move slowly across the timeline, 6/6 checklist, owner-to-verifier identities, evidence count, and completed receipt.",
+        voiceover: "This is not a chat transcript. Gemini researches, Claude synthesizes, and Codex challenges. Policy prevents self-approval. This real thirteen-turn run rejected unsupported claims, repaired them, and closed six of six checks with evidence.",
+        proof: "REAL RUN · 13 turns · 6/6 checks · three families · zero self-approval"
       },
       {
-        range: "1:59–2:17",
+        range: "1:44–2:02",
         duration: 18,
         clip: "06-media-proof.mov",
         label: "Real Google media output",
-        cue: "Play 3–4 seconds of deliverable-song.mp3, then show the Vertex receipt and lyria-3-pro-preview. Show email delivery only if confirmed.",
-        voiceover: "This is the actual All Things Agentic song Rally generated with Lyria 3 Pro on Vertex AI—not a mock. Rally also generated an image through Google’s image model. Each file carries provider evidence and stays attributable to its governed request.",
-        proof: "Real MP3 + image · direct Vertex provider evidence · no mock data"
+        cue: "Open the README media proof, press play on the committed MP4 for 4 seconds, show the Nano Banana 2 image, then pause on the generation receipt and model IDs.",
+        voiceover: "Rally delivers files, not just text. This song came from Lyria 3 Pro; this image from Nano Banana 2. The playable outputs, exact prompts, hashes, and provider receipts are public evidence.",
+        proof: "PLAYABLE OUTPUT · Lyria 3 Pro · Nano Banana 2 · prompts + hashes + receipts"
       },
       {
-        range: "2:17–2:42",
-        duration: 25,
+        range: "2:02–2:24",
+        duration: 22,
         clip: "07-second-wind.mov",
         label: "Second Wind recovery",
-        cue: "Open r-20260830-447f2f and show 6/6 plus the two Second Wind events.",
-        voiceover: "Agents fail. Rally plans for it. When a worker blocked on invalid evidence, Second Wind preserved accepted state and handed recovery to another model. The replacement repaired the work but could not approve itself; Claude later verified the outcome. Recovery never weakened policy.",
-        proof: "Blocked-state recovery · preserved state · verification still independent"
+        cue: "Open run r-20260830-447f2f. Hold on the first blocked event, follow both Second Wind handoffs, then finish on 6/6 verified.",
+        voiceover: "An API balance runs dry. A subscription window closes. Second Wind preserves accepted work, hands it to the next eligible specialist, and keeps approval independent. This real run recovered and still finished six of six.",
+        proof: "REAL RECOVERY · usage failure survived · output improved · authority unchanged"
       },
       {
-        range: "2:42–3:12",
-        duration: 30,
+        range: "2:24–2:48",
+        duration: 24,
         clip: "08-google-cloud.mov",
         label: "Google is load-bearing",
-        cue: "Show Cloud Run service and ready revision, a sanitized Firestore rally_runs record, then a content-free trace or health response.",
-        voiceover: "Google is load-bearing. Gemini 3.7 Flash runs through Vertex AI and Google ADK at an IAM-protected Cloud Run coordination boundary. Firestore atomically claims work and fences retries. Cloud Trace records metadata without prompt content, and Cloud KMS protects connection secrets. Licensed model workers execute separately; Google owns the authenticated governance plane.",
-        proof: "Gemini 3.7 Flash · ADK · Cloud Run · Firestore · Trace · KMS"
+        cue: "In Google Cloud Console show project rally-agent9-2026, the Ready Cloud Run coordinator, one sanitized Firestore run record, and a content-free Cloud Trace entry.",
+        voiceover: "Google secures the control plane behind every specialist. Gemini and ADK coordinate on IAM-protected Cloud Run. Firestore claims work and fences retries. Cloud Trace proves execution without prompt content, and Cloud KMS protects connection secrets.",
+        proof: "VISIBLE GOOGLE CLOUD PROOF · Gemini · ADK · Cloud Run · Firestore · Trace · KMS"
       },
       {
-        range: "3:12–3:39",
-        duration: 27,
+        range: "2:48–3:08",
+        duration: 20,
         clip: "09-architecture-repo.mov",
         label: "Architecture and reproducibility",
-        cue: "Move through the README architecture diagram, proof ledger, A2A/WebMCP section, and 369-test badge.",
-        voiceover: "The repository makes every decision reproducible: scoped tools, replay-safe state, independent verification, and honest evidence boundaries. A2A admits governed agent tasks; WebMCP lets browser agents inspect receipts and prepare requests while confirmation stays human. Three hundred sixty-nine tests and six live ADK evaluations protect this path.",
-        proof: "Architecture discipline · A2A · WebMCP · 369 tests · 6 live ADK evals"
+        cue: "Scroll the README from the architecture diagram to the proof ledger, A2A and WebMCP boundaries, test evidence, then the reproducible setup section.",
+        voiceover: "The public repo proves what the demo claims: replay-safe state, scoped tools, independent authority, A2A, WebMCP, tests, live ADK evaluations, deployment identities, and reproducible setup.",
+        proof: "PUBLIC PROOF · architecture · A2A · WebMCP · tests · live evals · reproducibility"
       },
       {
-        range: "3:39–3:55",
+        range: "3:08–3:24",
         duration: 16,
         clip: "10-close.mov",
         label: "Value close",
-        cue: "Return to the dashboard receipt or delivered email and finish on the Rally logo.",
-        voiceover: "Rally gives a small company what once required an AI operations team: accountable execution from the inbox to a verified deliverable. One request. The right specialists. Evidence before confidence. Rally is how your AIs work together.",
-        proof: "One request · accountable execution · evidence before confidence"
+        cue: "Return to the completed dashboard receipt or polished delivery email. End on the Rally logo and the line “Rally is how your AIs work together.”",
+        voiceover: "Rally gives your company email-based AI specialists, equipped with approved tools and protected by a Google-backed control plane. It keeps work moving and raises quality through independent review. One request. Finished work. Rally is how your AIs work together.",
+        proof: "The close: keep your tools · remove the management tax · trust the result"
       }
     ];
 

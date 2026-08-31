@@ -425,6 +425,54 @@ class TestProductSite(unittest.TestCase):
         ):
             self.assertNotIn(composer_state, refresh_body)
 
+    def test_workspace_deliverables_use_authenticated_fetch_and_accessible_controls(self):
+        admin_root = os.path.join(SITE, "admin")
+        with open(os.path.join(admin_root, "app.js")) as handle:
+            admin_app = handle.read()
+        with open(os.path.join(admin_root, "styles.css")) as handle:
+            admin_styles = handle.read()
+
+        for contract in (
+            "function renderDeliverables(record)",
+            "Verified deliverables",
+            "Your finished work",
+            "Load & play",
+            "Load preview",
+            "Verified output · SHA-256",
+            "/v1/workspace/artifacts/",
+            "encodeURIComponent(artifact.filename)",
+            'headers.set("X-Rally-ID-Token", idToken)',
+            'headers.set("X-Rally-Session", sessionToken)',
+            "URL.createObjectURL(blob)",
+            "URL.revokeObjectURL(entry.url)",
+            'player.addEventListener("canplay", handleCanPlay, { once: true })',
+            'player.addEventListener("error", handleError, { once: true })',
+            "await waitForAudioCanPlay(player)",
+            "await image.decode()",
+            "button.textContent = retryLabel",
+            "player.controls = true",
+            "link.download = artifact.filename",
+            'status.setAttribute("aria-live", "polite")',
+        ):
+            self.assertIn(contract, admin_app)
+        self.assertNotIn("artifact.token", admin_app)
+        self.assertNotIn("?token=", admin_app)
+        for selector in (
+            ".deliverables-section",
+            ".deliverable-card",
+            ".deliverable-preview audio",
+            ".deliverable-preview img",
+            ".deliverable-action.is-primary",
+            ".deliverable-proof",
+        ):
+            self.assertIn(selector, admin_styles)
+        self.assertIn(".deliverable-action { min-height: 44px", admin_styles)
+
+        with open(os.path.join(SITE, "_headers")) as handle:
+            headers = handle.read()
+        self.assertIn("img-src 'self' blob: data:", headers)
+        self.assertIn("media-src 'self' blob:;", headers)
+
     def test_local_assets_exist_and_no_dead_hash_links(self):
         parser = LinkCollector()
         parser.feed(self.html)

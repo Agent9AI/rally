@@ -1,4 +1,5 @@
 import base64
+import hashlib
 import io
 import json
 import os
@@ -21,6 +22,13 @@ class MediaIntentTests(unittest.TestCase):
         self.assertEqual(request["kind"], "image")
         self.assertIn("Picture of a beagle", request["prompt"])
 
+    def test_first_explicit_media_noun_controls_mixed_request(self):
+        image = media.detect_request("Create an album-cover image for a soulful song")
+        song = media.detect_request("Create a song with an accompanying cover image")
+
+        self.assertEqual(image["kind"], "image")
+        self.assertEqual(song["kind"], "song")
+
     def test_subject_only_hackathon_song_gets_requested_shoutouts(self):
         request = media.detect_request("All Things Agentic Hackathon Song")
 
@@ -29,6 +37,21 @@ class MediaIntentTests(unittest.TestCase):
         self.assertIn("Christina brought the glow", request["prompt"])
         self.assertIn("Shawni", request["prompt"])
         self.assertIn("Second Wind", request["prompt"])
+
+    def test_soulful_hip_hop_request_uses_verified_rally_preset(self):
+        request = media.detect_request(
+            "Create a smooth, soulful hip-hop version of the All Things Agentic "
+            "Hackathon Song"
+        )
+
+        self.assertEqual(request["kind"], "song")
+        self.assertEqual(request["prompt"], media.SOULFUL_HIP_HOP_PROMPT)
+        self.assertEqual(
+            hashlib.sha256(request["prompt"].encode("utf-8")).hexdigest(),
+            "314d83eac43e80c1063183f0f91f6199fd3694d2d8edf8860f1afbec57f76577",
+        )
+        self.assertNotIn("Tupac", request["prompt"])
+        self.assertNotIn("Common", request["prompt"])
 
     def test_analysis_request_does_not_mutate_into_generation(self):
         self.assertIsNone(media.detect_request("Analyze this image for accessibility"))
@@ -57,12 +80,12 @@ class VertexMediaTests(unittest.TestCase):
                 media.detect_request("Picture of a beagle"), self.temporary.name, {}
             )
 
-        self.assertEqual(receipt["model"], "gemini-2.5-flash-image")
+        self.assertEqual(receipt["model"], "gemini-3.1-flash-image")
         self.assertEqual(receipt["mime_type"], "image/png")
         with open(os.path.join(self.temporary.name, "deliverable-image.png"), "rb") as handle:
             self.assertEqual(handle.read(), image)
         request = open_url.call_args.args[0]
-        self.assertIn("gemini-2.5-flash-image:generateContent", request.full_url)
+        self.assertIn("gemini-3.1-flash-image:generateContent", request.full_url)
         payload = json.loads(request.data)
         self.assertEqual(payload["generationConfig"]["responseModalities"], ["TEXT", "IMAGE"])
 

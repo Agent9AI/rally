@@ -47,6 +47,7 @@ flowchart LR
 | Workspace teammate plane | Persist a business role, accountable owner, requested email identity, reachability, and activation state | Provision mail, mark an address live, or grant runtime sender authority without provider and mail proof |
 | Gemini / Claude / OpenAI workers | Scope, implement, test, reject, and repair work | Verify their own checklist items or share credentials across users |
 | Connector gateway | Discover approved remote MCP tools, enforce a frozen per-run allowlist, call read tools, write content-free receipts | Reveal OAuth tokens, widen authority, or execute gated writes |
+| Google media gateway | Use short-lived Google Cloud application credentials to invoke an allowlisted Vertex media model and place bounded output in the run workspace | Treat Google sign-in or Workspace OAuth as Vertex authority, expose provider tokens, or approve its own output |
 | WebMCP page | Search public runs, inspect bounded verification receipts, populate a visible job draft | Read private runs, transmit a draft, connect a provider, or grant authority |
 | Firestore | Atomically claim request keys, retain coordinator state, and hold workspace-scoped teammate setup records | Trigger unbounded retries or turn a pending address into authority |
 
@@ -106,6 +107,22 @@ The local bridge impersonates that identity with `gcloud`, binds the token's
 audience to the exact Cloud Run URL, and reads the application token from macOS
 Keychain. Neither credential is stored in config, Firestore, email, logs, or
 git.
+
+Creative media uses a separate, equally explicit Google boundary. The runner
+requests a short-lived Application Default Credentials access token and calls
+Vertex AI in the configured project; the default allowlist contains Lyria 3 Pro
+for music and Gemini 3.1 Flash Image (Nano Banana 2) for images. Google account
+sign-in authenticates the human to Rally, and Google Workspace OAuth delegates
+business-data access; neither is silently repurposed as Vertex billing or model
+authority. Hosted Rally can grant this capability through its own narrowly
+scoped runtime service identity, while a bring-your-own-cloud deployment can
+bind the same code to a customer project through workload identity. Raw access
+tokens never enter model context, run state, dashboard projections, or email.
+The committed [media receipt](evidence/media/generation-receipt.json) records
+the exact model ID, byte count, dimensions or duration, output digest, and a
+one-way prompt fingerprint for every successful proof call. Presentation-only
+derivatives, such as the H.264/AAC GitHub stream around the original Lyria MP3,
+are labeled separately and never represented as additional model generations.
 
 Customer administration uses a distinct boundary. Google Identity Services
 issues a browser ID token for Rally's registered web audience. The public

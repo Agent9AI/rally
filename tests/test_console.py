@@ -1,7 +1,9 @@
 import io
+import hashlib
 import json
 import os
 import sys
+import tempfile
 import unittest
 from unittest import mock
 
@@ -50,6 +52,32 @@ def config(enabled=False, public=False):
 
 
 class ConsoleSnapshotTests(unittest.TestCase):
+    def verified_media_state(self, workspace, content=b"ID3\x04\x00\x00song"):
+        with open(os.path.join(workspace, "deliverable-song.mp3"), "wb") as handle:
+            handle.write(content)
+        return state(
+            workdir=workspace,
+            halt={"reason": "complete"},
+            checklist=[{
+                "id": "c1",
+                "description": "Create and verify the requested song",
+                "state": "done",
+                "owner": "agy",
+                "verified_by": "claude",
+                "evidence": "Audio decoded and reviewed",
+                "rejections": 0,
+            }],
+            media_generations=[{
+                "kind": "song",
+                "status": "ready",
+                "model": "lyria-3-pro-preview",
+                "filename": "deliverable-song.mp3",
+                "mime_type": "audio/mpeg",
+                "bytes": len(content),
+                "sha256": hashlib.sha256(content).hexdigest(),
+            }],
+        )
+
     def test_snapshot_excludes_private_runner_fields(self):
         payload = rally_console.build_snapshot(state(
             report=(
@@ -160,6 +188,54 @@ class ConsoleSnapshotTests(unittest.TestCase):
         self.assertEqual(coordinated["coordination"]["framework"], "Google ADK")
         self.assertIn("Cloud Run", coordinated["coordination"]["services"])
 
+    def test_only_integrity_matched_independently_verified_media_is_projected(self):
+        with tempfile.TemporaryDirectory() as runs:
+            workspace = os.path.join(runs, state()["run_id"], "workspace")
+            os.makedirs(workspace)
+            ready = self.verified_media_state(workspace)
+            with mock.patch.object(rally_console.transport, "RUNS_ROOT", runs):
+                payload = rally_console.build_snapshot(ready, config())
+
+                self.assertEqual(payload["artifacts"], [{
+                    "filename": "deliverable-song.mp3",
+                    "label": "Generated song",
+                    "mime_type": "audio/mpeg",
+                    "size_bytes": 10,
+                    "sha256": hashlib.sha256(b"ID3\x04\x00\x00song").hexdigest(),
+                    "kind": "audio",
+                    "status": "staged",
+                }])
+
+                ready["media_generations"][0]["sha256"] = "0" * 64
+                self.assertEqual(
+                    rally_console.build_snapshot(ready, config())["artifacts"],
+                    [],
+                )
+
+    def test_media_is_not_projected_before_independent_completion(self):
+        with tempfile.TemporaryDirectory() as runs:
+            workspace = os.path.join(runs, state()["run_id"], "workspace")
+            os.makedirs(workspace)
+            pending = self.verified_media_state(workspace)
+            pending["halt"] = None
+            with mock.patch.object(rally_console.transport, "RUNS_ROOT", runs):
+                self.assertEqual(
+                    rally_console.build_snapshot(pending, config())["artifacts"],
+                    [],
+                )
+
+    def test_run_root_symlink_cannot_escape_artifact_boundary(self):
+        with tempfile.TemporaryDirectory() as runs, tempfile.TemporaryDirectory() as outside:
+            workspace = os.path.join(outside, "workspace")
+            os.makedirs(workspace)
+            ready = self.verified_media_state(workspace)
+            os.symlink(outside, os.path.join(runs, ready["run_id"]))
+            with mock.patch.object(rally_console.transport, "RUNS_ROOT", runs):
+                self.assertEqual(
+                    rally_console.build_snapshot(ready, config())["artifacts"],
+                    [],
+                )
+
     def test_private_workspace_publication_does_not_enable_public_visibility(self):
         response = io.BytesIO(b'{"ok":true}')
         with mock.patch.object(rally_console.transport, "get_key", return_value="secret"), \
@@ -195,6 +271,59 @@ class ConsoleSnapshotTests(unittest.TestCase):
         self.assertEqual(request.full_url, "https://worker.example/v1/console/runs/r-20260829-console")
         self.assertEqual(request.method, "PUT")
         self.assertEqual(request.headers["Authorization"], "Bearer secret")
+
+    def test_publication_uploads_verified_artifact_bytes_after_run_projection(self):
+        with tempfile.TemporaryDirectory() as runs:
+            workspace = os.path.join(runs, state()["run_id"], "workspace")
+            os.makedirs(workspace)
+            ready = self.verified_media_state(workspace)
+            responses = [
+                io.BytesIO(b'{"phase":"staged"}'),
+                io.BytesIO(b'{"ok":true}'),
+                io.BytesIO(b'{"phase":"ready"}'),
+            ]
+            with mock.patch.object(rally_console.transport, "RUNS_ROOT", runs), \
+                    mock.patch.object(rally_console.transport, "get_key", return_value="secret"), \
+                    mock.patch.object(
+                        rally_console.urllib.request,
+                        "urlopen",
+                        side_effect=responses,
+                    ) as urlopen:
+                result = rally_console.publish(ready, config(enabled=True))
+
+        self.assertEqual(result, {"phase": "ready"})
+        self.assertEqual(urlopen.call_count, 3)
+        projection, upload, ready_projection = [
+            call.args[0] for call in urlopen.call_args_list
+        ]
+        self.assertEqual(
+            projection.full_url,
+            "https://worker.example/v1/console/runs/r-20260829-console",
+        )
+        self.assertEqual(
+            upload.full_url,
+            "https://worker.example/v1/console/artifacts/"
+            "r-20260829-console/deliverable-song.mp3",
+        )
+        self.assertEqual(upload.method, "PUT")
+        self.assertEqual(upload.data, b"ID3\x04\x00\x00song")
+        self.assertEqual(upload.get_header("Authorization"), "Bearer secret")
+        self.assertEqual(upload.get_header("Content-type"), "audio/mpeg")
+        self.assertEqual(upload.get_header("Content-length"), "10")
+        self.assertEqual(upload.get_header("X-rally-artifact-kind"), "audio")
+        self.assertEqual(upload.get_header("X-rally-artifact-label"), "Generated song")
+        self.assertEqual(
+            upload.get_header("X-rally-artifact-sha256"),
+            hashlib.sha256(b"ID3\x04\x00\x00song").hexdigest(),
+        )
+        staged_payload = json.loads(projection.data)
+        ready_payload = json.loads(ready_projection.data)
+        self.assertEqual(staged_payload["artifacts"][0]["status"], "staged")
+        self.assertEqual(ready_payload["artifacts"][0]["status"], "ready")
+        self.assertEqual(
+            ready_projection.full_url,
+            "https://worker.example/v1/console/runs/r-20260829-console",
+        )
 
 
 if __name__ == "__main__":

@@ -14,7 +14,9 @@
  *   GET  /v1/console/runs/:id Public, sanitized run detail.
  *   GET  /v1/workspace/runs    Authenticated, workspace-scoped work queue.
  *   GET  /v1/workspace/runs/:id Authenticated, workspace-scoped run detail.
+ *   GET  /v1/workspace/artifacts/:id/:name Authenticated run deliverable.
  *   POST /v1/workspace/jobs    Authenticated manual commission into the inbox.
+ *   PUT  /v1/console/artifacts/:id/:name Runner publishes verified bytes.
  *   *    /api/control-plane/*  Allowlisted same-origin browser control-plane gateway.
  *   POST /admin/google/callback Exact, bounded Google redirect handoff.
  *   POST /admin/connect/start/:id Same-origin provider OAuth start and browser binding.
@@ -31,8 +33,12 @@ const MAX_CONNECTOR_CALLBACK_QUERY = 12 * 1024;
 const MAX_WORKSPACE_IDENTITY_RESPONSE = 16 * 1024;
 const MAX_MANUAL_JOB_BODY = 12 * 1024;
 const MAX_CONTROL_PLANE_BODY = 32 * 1024;
+const MAX_ARTIFACT_BODY = 8 * 1024 * 1024;
+const MAX_ARTIFACTS_PER_RUN = 24;
 const CONSOLE_ROOT = "/v1/console/runs";
+const CONSOLE_ARTIFACT_ROOT = "/v1/console/artifacts";
 const WORKSPACE_ROOT = "/v1/workspace/runs";
+const WORKSPACE_ARTIFACT_ROOT = "/v1/workspace/artifacts";
 const WORKSPACE_JOBS_ROOT = "/v1/workspace/jobs";
 const CONTROL_PLANE_PROXY_ROOT = "/api/control-plane";
 const SITE_ORIGIN = "https://agent9-rally.pages.dev";
@@ -44,6 +50,8 @@ const CONNECTOR_ID = /^[a-z0-9-]{1,64}$/;
 const OAUTH_SECRET = /^[A-Za-z0-9_-]{32,128}$/;
 const OAUTH_COOKIE_PREFIX = "__Secure-rally-oauth-";
 const RUN_ID = /^r-[0-9a-z-]{3,77}$/;
+const ARTIFACT_FILENAME = /^[A-Za-z0-9][A-Za-z0-9._-]{0,159}$/;
+const ARTIFACT_KIND = /^[a-z0-9][a-z0-9_-]{0,31}$/;
 const WORKSPACE_ID = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,95}$/;
 const USER_ID = /^[A-Za-z0-9._:-]{1,255}$/;
 const SIMPLE_EMAIL = /^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]{1,64}@[A-Za-z0-9.-]{1,253}$/;
@@ -52,6 +60,22 @@ const IDEMPOTENCY_KEY = /^[A-Za-z0-9][A-Za-z0-9._:-]{15,127}$/;
 const SHA256_HEX = /^[0-9a-f]{64}$/;
 const RUN_STATUSES = new Set(["running", "complete", "blocked", "halted"]);
 const TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/;
+const ARTIFACT_MIME_TYPES = new Set([
+  "application/pdf",
+  "audio/mpeg",
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "text/html",
+]);
+const ARTIFACT_EXTENSIONS = new Map([
+  ["application/pdf", new Set(["pdf"])],
+  ["audio/mpeg", new Set(["mp3"])],
+  ["image/jpeg", new Set(["jpg", "jpeg"])],
+  ["image/png", new Set(["png"])],
+  ["image/webp", new Set(["webp"])],
+  ["text/html", new Set(["html", "htm"])],
+]);
 
 const json = (obj, status = 200, extraHeaders = {}) =>
   new Response(JSON.stringify(obj), {
@@ -637,6 +661,110 @@ async function boundedText(request, maximum) {
   return new TextDecoder().decode(joined);
 }
 
+async function boundedBytes(request, maximum) {
+  const declared = request.headers.get("content-length") || "";
+  if (!/^\d{1,8}$/.test(declared)) return null;
+  const expected = Number(declared);
+  if (!Number.isSafeInteger(expected) || expected < 1 || expected > maximum || !request.body) {
+    return null;
+  }
+
+  const reader = request.body.getReader();
+  const chunks = [];
+  let length = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    length += value.byteLength;
+    if (length > maximum || length > expected) {
+      await reader.cancel("artifact exceeds Rally limit");
+      return null;
+    }
+    chunks.push(value);
+  }
+  if (length !== expected) return null;
+
+  const joined = new Uint8Array(length);
+  let offset = 0;
+  for (const chunk of chunks) {
+    joined.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return joined;
+}
+
+async function sha256HexBytes(value) {
+  const digest = await crypto.subtle.digest("SHA-256", value);
+  return [...new Uint8Array(digest)]
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function artifactRoute(path, root) {
+  if (!path.startsWith(`${root}/`)) return null;
+  const parts = path.slice(root.length + 1).split("/");
+  if (parts.length !== 2 || !RUN_ID.test(parts[0])) return null;
+  let filename;
+  try {
+    filename = decodeURIComponent(parts[1]);
+  } catch (_) {
+    return null;
+  }
+  if (
+    !ARTIFACT_FILENAME.test(filename) ||
+    filename.includes("..") ||
+    encodeURIComponent(filename) !== parts[1]
+  ) return null;
+  return { run_id: parts[0], filename };
+}
+
+function artifactForFilename(payload, filename, status = null) {
+  if (!payload || typeof payload !== "object" || !Array.isArray(payload.artifacts)) return null;
+  return payload.artifacts.find((artifact) =>
+    artifact?.filename === filename && (status === null || artifact.status === status)
+  ) || null;
+}
+
+function artifactObjectKey(workspaceKeyValue, runId, filename) {
+  return `${workspaceKeyValue}/${runId}/${filename}`;
+}
+
+function visibleRunProjection(payload) {
+  const artifacts = Array.isArray(payload?.artifacts)
+    ? payload.artifacts
+      .filter((artifact) => artifact?.status === "ready")
+      .map(({ status: _status, ...artifact }) => artifact)
+    : [];
+  return { ...payload, artifacts };
+}
+
+async function readyArtifactsAreStored(env, workspaceKeyValue, runId, artifacts) {
+  const ready = artifacts.filter((artifact) => artifact.status === "ready");
+  if (!ready.length) return true;
+  if (!env.ARTIFACTS || typeof env.ARTIFACTS.head !== "function") {
+    throw new Error("artifact storage unavailable");
+  }
+  for (const artifact of ready) {
+    const object = await env.ARTIFACTS.head(
+      artifactObjectKey(workspaceKeyValue, runId, artifact.filename)
+    );
+    const objectSha256 = object?.checksums?.sha256
+      ? hexBytes(object.checksums.sha256)
+      : "";
+    if (
+      !object ||
+      object.size !== artifact.size_bytes ||
+      object.httpMetadata?.contentType !== artifact.mime_type ||
+      object.customMetadata?.workspace_key !== workspaceKeyValue ||
+      object.customMetadata?.run_id !== runId ||
+      object.customMetadata?.filename !== artifact.filename ||
+      object.customMetadata?.sha256 !== artifact.sha256 ||
+      (objectSha256 && objectSha256 !== artifact.sha256)
+    ) return false;
+  }
+  return true;
+}
+
 function normalizeManualJob(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     throw new Error("body must be an object");
@@ -916,6 +1044,63 @@ const cleanChanges = (changes) => Array.isArray(changes) ? changes.slice(0, 50).
   evidence: text(item?.evidence, 800) || null,
 })) : [];
 
+function normalizeArtifacts(value) {
+  if (value == null) return [];
+  if (!Array.isArray(value) || value.length > MAX_ARTIFACTS_PER_RUN) {
+    throw new Error(`artifacts must contain at most ${MAX_ARTIFACTS_PER_RUN} items`);
+  }
+  const filenames = new Set();
+  return value.map((item) => {
+    if (!item || typeof item !== "object" || Array.isArray(item)) {
+      throw new Error("artifact metadata must be an object");
+    }
+    const filename = typeof item.filename === "string" ? item.filename.trim() : "";
+    const label = typeof item.label === "string" ? item.label.trim() : "";
+    const mimeType = typeof item.mime_type === "string"
+      ? item.mime_type.trim().toLowerCase()
+      : "";
+    const sha256 = typeof item.sha256 === "string" ? item.sha256.trim().toLowerCase() : "";
+    const kind = typeof item.kind === "string" ? item.kind.trim().toLowerCase() : "";
+    const status = item.status == null
+      ? "staged"
+      : (typeof item.status === "string" ? item.status.trim().toLowerCase() : "");
+    const sizeBytes = Number(item.size_bytes);
+    if (
+      !ARTIFACT_FILENAME.test(filename) ||
+      filename.includes("..") ||
+      filenames.has(filename)
+    ) throw new Error("artifact filename is invalid or duplicated");
+    if (!/^[\x20-\x7e]{1,140}$/.test(label)) {
+      throw new Error("artifact label must be printable text up to 140 characters");
+    }
+    if (!ARTIFACT_MIME_TYPES.has(mimeType)) {
+      throw new Error("artifact MIME type is not supported");
+    }
+    const extension = filename.includes(".") ? filename.split(".").pop().toLowerCase() : "";
+    if (!ARTIFACT_EXTENSIONS.get(mimeType)?.has(extension)) {
+      throw new Error("artifact filename extension does not match its MIME type");
+    }
+    if (!Number.isSafeInteger(sizeBytes) || sizeBytes < 1 || sizeBytes > MAX_ARTIFACT_BODY) {
+      throw new Error("artifact size is invalid");
+    }
+    if (!SHA256_HEX.test(sha256)) throw new Error("artifact sha256 is invalid");
+    if (!ARTIFACT_KIND.test(kind)) throw new Error("artifact kind is invalid");
+    if (status !== "staged" && status !== "ready") {
+      throw new Error("artifact status is invalid");
+    }
+    filenames.add(filename);
+    return {
+      filename,
+      label,
+      mime_type: mimeType,
+      size_bytes: sizeBytes,
+      sha256,
+      kind,
+      status,
+    };
+  });
+}
+
 function normalizeConsoleRun(value, expectedRunId) {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     throw new Error("body must be an object");
@@ -981,6 +1166,7 @@ function normalizeConsoleRun(value, expectedRunId) {
   const modelFamilies = new Set(
     agents.filter((agent) => agent.participated).map((agent) => agent.family).filter(Boolean)
   ).size;
+  const artifacts = normalizeArtifacts(value.artifacts);
   return {
     schema_version: 1,
     workspace_id: workspaceId,
@@ -1017,6 +1203,7 @@ function normalizeConsoleRun(value, expectedRunId) {
         : [],
     },
     agents,
+    artifacts,
     checklist,
     timeline,
     provenance: {
@@ -1069,6 +1256,218 @@ async function signedByResend(request, raw, secret) {
   return false;
 }
 
+function hexBytes(value) {
+  return [...new Uint8Array(value)]
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+async function publishConsoleArtifact(request, url, env, route) {
+  if (url.search) return json({ error: "artifact route does not accept a query" }, 400);
+  if (!(await safeEqual(bearer(request), env.POLL_TOKEN || ""))) {
+    return json({ error: "unauthorized" }, 401);
+  }
+  if (!env.ARTIFACTS || typeof env.ARTIFACTS.put !== "function") {
+    return json({ error: "artifact storage unavailable" }, 503);
+  }
+
+  let record;
+  try {
+    record = await env.INBOX.prepare(
+      "SELECT workspace_key, payload FROM console_runs WHERE run_id = ? LIMIT 1"
+    ).bind(route.run_id).first();
+  } catch (error) {
+    console.error(JSON.stringify({
+      event: "artifact_projection_lookup_failed",
+      run_id: route.run_id,
+      error: error instanceof Error ? error.message : String(error),
+    }));
+    return json({ error: "artifact publication unavailable" }, 503);
+  }
+  if (!record) return json({ error: "run projection not found" }, 404);
+
+  let projection;
+  try {
+    projection = JSON.parse(record.payload);
+  } catch (_) {
+    return json({ error: "run projection is invalid" }, 503);
+  }
+  const artifact = artifactForFilename(projection, route.filename);
+  if (!artifact) return json({ error: "artifact is not declared by this run" }, 404);
+  if (artifact.status !== "staged") {
+    return json({ error: "artifact is not staged for upload" }, 409);
+  }
+
+  const contentType = (request.headers.get("content-type") || "").trim().toLowerCase();
+  const declaredSha256 = (request.headers.get("x-rally-artifact-sha256") || "")
+    .trim().toLowerCase();
+  const declaredKind = (request.headers.get("x-rally-artifact-kind") || "").trim().toLowerCase();
+  const declaredLabel = (request.headers.get("x-rally-artifact-label") || "").trim();
+  const declaredLength = request.headers.get("content-length") || "";
+  if (
+    contentType !== artifact.mime_type ||
+    declaredSha256 !== artifact.sha256 ||
+    declaredKind !== artifact.kind ||
+    declaredLabel !== artifact.label ||
+    !/^\d{1,8}$/.test(declaredLength) ||
+    Number(declaredLength) !== artifact.size_bytes
+  ) {
+    return json({ error: "artifact metadata does not match the run projection" }, 409);
+  }
+  if (artifact.size_bytes > MAX_ARTIFACT_BODY) {
+    return json({ error: "artifact is too large" }, 413);
+  }
+
+  const bytes = await boundedBytes(request, MAX_ARTIFACT_BODY);
+  if (!bytes) return json({ error: "artifact body length is invalid" }, 400);
+  const actualSha256 = await sha256HexBytes(bytes);
+  if (actualSha256 !== artifact.sha256) {
+    return json({ error: "artifact checksum verification failed" }, 422);
+  }
+
+  const objectKey = artifactObjectKey(record.workspace_key, route.run_id, route.filename);
+  let stored;
+  try {
+    stored = await env.ARTIFACTS.put(objectKey, bytes, {
+      sha256: artifact.sha256,
+      httpMetadata: {
+        contentType: artifact.mime_type,
+        contentDisposition: `attachment; filename="${artifact.filename}"`,
+        cacheControl: "private, no-store, max-age=0",
+      },
+      customMetadata: {
+        workspace_key: record.workspace_key,
+        run_id: route.run_id,
+        filename: artifact.filename,
+        label: artifact.label,
+        kind: artifact.kind,
+        sha256: artifact.sha256,
+      },
+    });
+  } catch (error) {
+    console.error(JSON.stringify({
+      event: "artifact_write_failed",
+      run_id: route.run_id,
+      filename: route.filename,
+      error: error instanceof Error ? error.message : String(error),
+    }));
+    return json({ error: "artifact storage unavailable" }, 503);
+  }
+  const storedSha256 = stored?.checksums?.sha256
+    ? hexBytes(stored.checksums.sha256)
+    : "";
+  if (
+    !stored ||
+    stored.size !== artifact.size_bytes ||
+    (storedSha256 && storedSha256 !== artifact.sha256)
+  ) {
+    try {
+      await env.ARTIFACTS.delete(objectKey);
+    } catch (_) {
+      // The object remains unreachable unless both D1 authority and its
+      // checksum receipt match. Cleanup failure is logged by the platform.
+    }
+    return json({ error: "artifact storage verification failed" }, 503);
+  }
+  console.log(JSON.stringify({
+    event: "artifact_published",
+    run_id: route.run_id,
+    filename: route.filename,
+    size_bytes: artifact.size_bytes,
+    sha256: artifact.sha256,
+  }));
+  return json(
+    {
+      ok: true,
+      run_id: route.run_id,
+      artifact,
+    },
+    201,
+    { location: `${WORKSPACE_ARTIFACT_ROOT}/${route.run_id}/${encodeURIComponent(route.filename)}` },
+  );
+}
+
+async function serveWorkspaceArtifact(request, url, env, route) {
+  if (url.search) return json({ detail: "artifact route does not accept a query" }, 400);
+  const workspace = await authenticatedWorkspace(request, env);
+  if (workspace.response) return workspace.response;
+  if (!env.ARTIFACTS || typeof env.ARTIFACTS.get !== "function") {
+    return json({ detail: "artifact storage is temporarily unavailable" }, 503);
+  }
+
+  let record;
+  try {
+    record = await env.INBOX.prepare(
+      "SELECT payload FROM console_runs WHERE run_id = ? AND workspace_key = ? LIMIT 1"
+    ).bind(route.run_id, workspace.key).first();
+  } catch (error) {
+    console.error(JSON.stringify({
+      event: "workspace_artifact_projection_failed",
+      run_id: route.run_id,
+      error: error instanceof Error ? error.message : String(error),
+    }));
+    return json({ detail: "artifact is temporarily unavailable" }, 503);
+  }
+  if (!record) return json({ detail: "artifact not found" }, 404);
+
+  let projection;
+  try {
+    projection = JSON.parse(record.payload);
+  } catch (_) {
+    return json({ detail: "artifact is temporarily unavailable" }, 503);
+  }
+  const artifact = artifactForFilename(projection, route.filename, "ready");
+  if (!artifact) return json({ detail: "artifact not found" }, 404);
+
+  const objectKey = artifactObjectKey(workspace.key, route.run_id, route.filename);
+  let object;
+  try {
+    object = await env.ARTIFACTS.get(objectKey);
+  } catch (error) {
+    console.error(JSON.stringify({
+      event: "workspace_artifact_read_failed",
+      run_id: route.run_id,
+      filename: route.filename,
+      error: error instanceof Error ? error.message : String(error),
+    }));
+    return json({ detail: "artifact is temporarily unavailable" }, 503);
+  }
+  if (!object) return json({ detail: "artifact is temporarily unavailable" }, 503);
+
+  const objectSha256 = object.checksums?.sha256 ? hexBytes(object.checksums.sha256) : "";
+  if (
+    object.size !== artifact.size_bytes ||
+    object.httpMetadata?.contentType !== artifact.mime_type ||
+    object.customMetadata?.workspace_key !== workspace.key ||
+    object.customMetadata?.run_id !== route.run_id ||
+    object.customMetadata?.filename !== artifact.filename ||
+    object.customMetadata?.sha256 !== artifact.sha256 ||
+    (objectSha256 && objectSha256 !== artifact.sha256)
+  ) {
+    console.error(JSON.stringify({
+      event: "workspace_artifact_receipt_mismatch",
+      run_id: route.run_id,
+      filename: route.filename,
+    }));
+    return json({ detail: "artifact is temporarily unavailable" }, 503);
+  }
+
+  return new Response(object.body, {
+    status: 200,
+    headers: {
+      "cache-control": "private, no-store, max-age=0",
+      "content-disposition": `attachment; filename="${artifact.filename}"`,
+      "content-length": String(artifact.size_bytes),
+      "content-security-policy": "default-src 'none'; sandbox",
+      "content-type": artifact.mime_type,
+      "cross-origin-resource-policy": "same-origin",
+      "etag": object.httpEtag,
+      "x-content-type-options": "nosniff",
+      "x-rally-artifact-sha256": artifact.sha256,
+    },
+  });
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -1082,7 +1481,33 @@ export default {
       return proxyControlPlane(request, url, path);
     }
 
+    const consoleArtifact = artifactRoute(path, CONSOLE_ARTIFACT_ROOT);
+    if (
+      consoleArtifact ||
+      path === CONSOLE_ARTIFACT_ROOT ||
+      path.startsWith(`${CONSOLE_ARTIFACT_ROOT}/`)
+    ) {
+      if (!consoleArtifact) return json({ error: "artifact not found" }, 404);
+      if (request.method !== "PUT") {
+        return json({ error: "method not allowed" }, 405, { allow: "PUT" });
+      }
+      return publishConsoleArtifact(request, url, env, consoleArtifact);
+    }
+
     // --- authenticated workspace ---------------------------------------
+    const workspaceArtifact = artifactRoute(path, WORKSPACE_ARTIFACT_ROOT);
+    if (
+      workspaceArtifact ||
+      path === WORKSPACE_ARTIFACT_ROOT ||
+      path.startsWith(`${WORKSPACE_ARTIFACT_ROOT}/`)
+    ) {
+      if (!workspaceArtifact) return json({ detail: "artifact not found" }, 404);
+      if (request.method !== "GET") {
+        return json({ detail: "method not allowed" }, 405, { allow: "GET" });
+      }
+      return serveWorkspaceArtifact(request, url, env, workspaceArtifact);
+    }
+
     if (request.method === "POST" && path === WORKSPACE_JOBS_ROOT) {
       const workspace = await authenticatedWorkspace(request, env);
       if (workspace.response) return workspace.response;
@@ -1142,7 +1567,7 @@ export default {
         const record = await env.INBOX.prepare(
           "SELECT payload FROM console_runs WHERE run_id = ? AND workspace_key = ? LIMIT 1"
         ).bind(runId, workspace.key).first();
-        if (record) return json(JSON.parse(record.payload));
+        if (record) return json(visibleRunProjection(JSON.parse(record.payload)));
         const queued = await env.INBOX.prepare(
           `SELECT run_id, title, created_at, updated_at, source_run_id
              FROM workspace_jobs
@@ -1210,7 +1635,7 @@ export default {
             "SELECT payload FROM console_runs WHERE run_id = ? AND public = 1 LIMIT 1"
           ).bind(runId).first();
           if (!record) return publicJson({ error: "not found" }, 404);
-          return publicJson(JSON.parse(record.payload));
+          return publicJson(visibleRunProjection(JSON.parse(record.payload)));
         } catch (error) {
           console.error(JSON.stringify({
             event: "console_read_failed",
@@ -1238,6 +1663,18 @@ export default {
           env.WORKSPACE_KEY_SECRET || "",
         );
         if (!key) return json({ error: "workspace projection is unavailable" }, 503);
+        try {
+          if (!(await readyArtifactsAreStored(env, key, runId, normalized.artifacts))) {
+            return json({ error: "ready artifact is not present in verified storage" }, 409);
+          }
+        } catch (error) {
+          console.error(JSON.stringify({
+            event: "artifact_readiness_check_failed",
+            run_id: runId,
+            error: error instanceof Error ? error.message : String(error),
+          }));
+          return json({ error: "artifact readiness check unavailable" }, 503);
+        }
         const { workspace_id: _workspaceId, ...browserRecord } = normalized;
         const payload = JSON.stringify(browserRecord);
         let result;

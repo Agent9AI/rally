@@ -123,6 +123,7 @@
   let workspaceRefreshTimer = 0;
   let workspaceRefreshInFlight = false;
   let workspaceRefreshController = null;
+  const artifactObjectUrls = new Map();
 
   const configuredApi = /^https:\/\//.test(config.apiBase || "");
   const configuredGoogle = configuredApi &&
@@ -253,6 +254,37 @@
     return response.status === 204 ? {} : response.json();
   }
 
+  function clearArtifactObjectUrls() {
+    artifactObjectUrls.forEach((entry) => URL.revokeObjectURL(entry.url));
+    artifactObjectUrls.clear();
+  }
+
+  async function workspaceArtifactBlob(runId, artifact) {
+    if (!idToken && !sessionToken) throw new Error("Sign in again to continue");
+    const key = `${runId}:${artifact.sha256}`;
+    if (artifactObjectUrls.has(key)) return artifactObjectUrls.get(key).url;
+    const headers = new Headers();
+    if (idToken) headers.set("X-Rally-ID-Token", idToken);
+    if (sessionToken) headers.set("X-Rally-Session", sessionToken);
+    const response = await fetch(
+      `/v1/workspace/artifacts/${encodeURIComponent(runId)}/${encodeURIComponent(artifact.filename)}`,
+      { headers, credentials: "same-origin" },
+    );
+    if (response.status === 401) {
+      resetSession("Your secure session expired. Sign in again.");
+      throw new Error("Your secure session expired. Sign in again.");
+    }
+    if (!response.ok) throw new Error("This deliverable is temporarily unavailable");
+    const blob = await response.blob();
+    const expectedSize = Math.max(0, Number(artifact.size_bytes) || 0);
+    if (!expectedSize || blob.size !== expectedSize) {
+      throw new Error("Rally withheld a deliverable that failed its integrity check");
+    }
+    const url = URL.createObjectURL(blob);
+    artifactObjectUrls.set(key, { url });
+    return url;
+  }
+
   async function startOAuthApi(connectorId, body) {
     if (!idToken && !sessionToken) throw new Error("Sign in again to continue");
     const headers = new Headers({ "Content-Type": "application/json" });
@@ -293,6 +325,7 @@
     stopWorkspacePolling();
     idToken = "";
     sessionToken = "";
+    clearArtifactObjectUrls();
     if (dialog.open) dialog.close();
     clearDialog();
     dialogReturnFocus = null;
@@ -952,6 +985,170 @@
     return metric;
   }
 
+  function artifactSize(value) {
+    const bytes = Math.max(0, Number(value) || 0);
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  function artifactGlyph(kind) {
+    return kind === "audio" ? "♫" : kind === "image" ? "▧" : "↧";
+  }
+
+  async function downloadArtifact(runId, artifact, button, status) {
+    const original = button.textContent;
+    button.disabled = true;
+    button.textContent = "Preparing…";
+    status.textContent = "Opening the authenticated deliverable…";
+    try {
+      const url = await workspaceArtifactBlob(runId, artifact);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = artifact.filename;
+      document.body.append(link);
+      link.click();
+      link.remove();
+      status.textContent = "Download ready.";
+    } catch (error) {
+      status.textContent = error.message;
+    } finally {
+      button.disabled = false;
+      button.textContent = original;
+    }
+  }
+
+  function waitForAudioCanPlay(player) {
+    return new Promise((resolve, reject) => {
+      if (player.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) {
+        resolve();
+        return;
+      }
+      const cleanup = () => {
+        player.removeEventListener("canplay", handleCanPlay);
+        player.removeEventListener("error", handleError);
+      };
+      const handleCanPlay = () => {
+        cleanup();
+        resolve();
+      };
+      const handleError = () => {
+        cleanup();
+        reject(new Error("Rally could not open this verified audio file"));
+      };
+      player.addEventListener("canplay", handleCanPlay, { once: true });
+      player.addEventListener("error", handleError, { once: true });
+      player.load();
+    });
+  }
+
+  async function showArtifactPreview(runId, artifact, preview, button, status, autoplay = false) {
+    const retryLabel = artifact.kind === "audio" ? "Load & play" : "Load preview";
+    button.disabled = true;
+    button.textContent = "Loading…";
+    status.textContent = "Opening the authenticated deliverable…";
+    try {
+      const url = await workspaceArtifactBlob(runId, artifact);
+      if (artifact.kind === "audio") {
+        let player = preview.querySelector("audio");
+        if (!player) {
+          player = document.createElement("audio");
+          player.controls = true;
+          player.preload = "metadata";
+          player.src = url;
+          player.setAttribute("aria-label", artifact.label || "Rally audio deliverable");
+          await waitForAudioCanPlay(player);
+          preview.replaceChildren(player);
+        }
+        button.textContent = "Play";
+        button.disabled = false;
+        status.textContent = "Verified audio loaded securely.";
+        if (autoplay) await player.play().catch(() => {});
+        return;
+      }
+      if (artifact.kind === "image") {
+        const image = document.createElement("img");
+        image.src = url;
+        image.alt = artifact.label || "Image created by Rally";
+        await image.decode();
+        preview.replaceChildren(image);
+        button.textContent = "Preview loaded";
+        status.textContent = "Verified image loaded securely.";
+        return;
+      }
+    } catch (error) {
+      button.disabled = false;
+      button.textContent = retryLabel;
+      status.textContent = error.message;
+    }
+  }
+
+  function renderDeliverables(record) {
+    const artifacts = Array.isArray(record.artifacts) ? record.artifacts : [];
+    if (!artifacts.length) return null;
+    const section = element("section", "deliverables-section");
+    section.setAttribute("aria-label", "Verified deliverables");
+    const heading = element("div", "deliverables-heading");
+    const headingCopy = element("div");
+    headingCopy.append(
+      element("p", "detail-label", "Deliverables"),
+      element("h3", "", artifacts.length === 1 ? "Your finished work" : "Your finished work, together"),
+      element("p", "", "Files appear only after independent verification and an integrity-matched upload."),
+    );
+    heading.append(headingCopy, element("span", "deliverables-count", `${artifacts.length} verified`));
+    const grid = element("div", "deliverables-grid");
+    artifacts.forEach((artifact) => {
+      const card = element("article", `deliverable-card is-${artifact.kind || "file"}`);
+      const glyph = element("span", "deliverable-glyph", artifactGlyph(artifact.kind));
+      glyph.setAttribute("aria-hidden", "true");
+      const body = element("div", "deliverable-copy");
+      const type = artifact.kind === "audio" ? "Audio" : artifact.kind === "image" ? "Image" : "File";
+      body.append(
+        element("span", "deliverable-type", `${type} · ${artifactSize(artifact.size_bytes)}`),
+        element("h4", "", artifact.label || "Rally deliverable"),
+        element("p", "deliverable-filename", artifact.filename),
+        element("small", "deliverable-proof", `Verified output · SHA-256 ${String(artifact.sha256 || "").slice(0, 10)}`),
+      );
+      const preview = element("div", "deliverable-preview");
+      const actions = element("div", "deliverable-actions");
+      const status = element("span", "deliverable-status");
+      status.setAttribute("role", "status");
+      status.setAttribute("aria-live", "polite");
+      if (artifact.kind === "audio" || artifact.kind === "image") {
+        const previewButton = element(
+          "button",
+          "deliverable-action is-primary",
+          artifact.kind === "audio" ? "Load & play" : "Load preview",
+        );
+        previewButton.type = "button";
+        previewButton.addEventListener("click", () => {
+          void showArtifactPreview(
+            record.run_id,
+            artifact,
+            preview,
+            previewButton,
+            status,
+            artifact.kind === "audio",
+          );
+        });
+        actions.append(previewButton);
+        if (artifact.kind === "image") {
+          void showArtifactPreview(record.run_id, artifact, preview, previewButton, status);
+        }
+      }
+      const download = element("button", "deliverable-action", "Download");
+      download.type = "button";
+      download.addEventListener("click", () => {
+        void downloadArtifact(record.run_id, artifact, download, status);
+      });
+      actions.append(download, status);
+      card.append(glyph, body, preview, actions);
+      grid.append(card);
+    });
+    section.append(heading, grid);
+    return section;
+  }
+
   function renderRunDetail(record) {
     runDetail.replaceChildren();
     const header = element("header", "run-detail-header");
@@ -1012,7 +1209,10 @@
     if (!activity.children.length) activity.append(element("p", "detail-empty-line", "No activity has been recorded yet."));
     activitySection.append(activity);
 
-    runDetail.append(header, receipts, checklistSection, activitySection);
+    const deliverables = renderDeliverables(record);
+    runDetail.append(header, receipts);
+    if (deliverables) runDetail.append(deliverables);
+    runDetail.append(checklistSection, activitySection);
   }
 
   function renderQueuedRun(runId, title) {

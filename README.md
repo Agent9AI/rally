@@ -220,8 +220,10 @@ Rally can now turn an explicit email or dashboard request into a real file—not
 just prose. Live Vertex calls produced a [69.96-second All Things Agentic song
 with Lyria 3 Pro](docs/evidence/media/all-things-agentic-lyria-3-pro.mp3), a
 [▶ 73.33-second soulful hip-hop variant in a GitHub-native player](docs/evidence/media/all-things-agentic-soulful-hip-hop-lyria-3-pro.mp4),
-and a [1024×1024 beagle image](docs/evidence/media/beagle-gemini-image.png) with
-Gemini 2.5 Flash Image. The repository preserves their hashes and non-secret
+and two live image outputs: a [1024×1024 beagle](docs/evidence/media/beagle-gemini-image.png)
+from Gemini 2.5 Flash Image plus [accountable-AI cover art](docs/evidence/media/rally-accountable-ai-nano-banana-2.png)
+from Gemini 3.1 Flash Image (**Nano Banana 2**). The repository preserves their
+hashes, dimensions, model IDs, and non-secret
 [generation receipt](docs/evidence/media/generation-receipt.json). The exact
 [provider-facing prompt for the hip-hop version](docs/evidence/media/all-things-agentic-soulful-hip-hop-prompt.md)
 is preserved verbatim and independently hash-matched to that receipt.
@@ -232,6 +234,23 @@ checklist, and a different model family must verify it. Only then does the
 executive email attach the song or image; images also use Resend CID for an
 inline preview. Replying in the thread creates a new revision item, so “make the
 chorus funnier” or “use a warmer background” resumes the same accountable job.
+
+The [Devpost featured image](docs/assets/rally-devpost-featured-google-style.png)
+is separate presentation artwork: a deterministic Rally brand composition in
+a clean Google-style visual language, not a Nano Banana generation. The
+accountable-AI cover linked above remains the live image-model proof.
+
+The connection is explicit: Rally calls **Vertex AI** in the configured Google
+Cloud project with short-lived Application Default Credentials. Lyria 3 Pro and
+Gemini image generation are workspace capabilities behind Rally's policy gate;
+they are not unlocked by a consumer Gemini subscription, Google sign-in, or the
+Google Workspace connector. A hosted deployment grants the runtime service
+identity only the required Vertex permission and meters the capability for its
+workspaces; a bring-your-own-cloud deployment points the same boundary at the
+customer's project without collecting a long-lived key. The runtime default is
+now `gemini-3.1-flash-image` (**Nano Banana 2**). Both image records retain the
+model actually used: the newer cover proves the current route, while the beagle
+receipt honestly preserves the older model used for that earlier call.
 
 ### Deployment receipt
 

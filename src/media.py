@@ -44,8 +44,42 @@ REVISION_TERMS = re.compile(
     r"more|less|lighter|darker|funnier|shorter|longer|chorus|verse|tempo|color)\b",
     re.IGNORECASE,
 )
+SOULFUL_HIP_HOP_TERMS = re.compile(
+    r"\b(?:hip[ -]?hop|soulful|human-feeling|conscious[ -]?rap)\b",
+    re.IGNORECASE,
+)
 MAX_MEDIA_BYTES = 6 * 1024 * 1024
 USER_AGENT = "rally/1.0 (+https://github.com/Agent9AI/rally)"
+
+SOULFUL_HIP_HOP_PROMPT = """Create one fully original 60 to 75 second smooth, soulful hip-hop song at about 86 BPM. Use a warm, grounded male baritone lead with conversational storytelling, natural breaths, slight behind-the-beat phrasing, and small human timing imperfections. The performance should feel intimate and lived-in, not glossy, robotic, theatrical, or synthetic. Production: gently swung dusty drums, warm Rhodes chords, rounded melodic bass, a little muted guitar, subtle vinyl texture, sparse soul accents, and a relaxed late-1990s conscious-hip-hop / West-Coast-inspired pocket. Keep the arrangement uncluttered and the hook restrained and singable. No imitation of any person, no named artist reference, no vocal clone, no vocoder, no crowd chant, and no dense list of technology terms. Make the following words feel natural; minor phrasing changes, repetitions, and ad-libs are welcome for musicality. Friendly first-name shout-outs are purely creative acknowledgements, not factual claims about anyone’s role.
+
+[Spoken intro, quiet]
+Everybody can buy the tools now.
+That was never the hard part.
+
+[Verse]
+Everybody bought the future, still the day gets lost,
+Good people carry context, paying every hidden cost.
+When a job falls down, somebody starts it up again,
+When an answer sounds too certain, who will check it at the end?
+Rally takes one real request and follows all the way,
+Keeps the promise with the progress, keeps the proof beside the claim.
+No new empire, no rip-and-replace,
+Just the work you already trust moving with some grace.
+
+[Hook, soulful and understated]
+Let the work rally, let the pieces move as one,
+From a word to a promise, from a promise into done.
+Keep the proof with the progress, keep a name on every call,
+We do not need another model—we need the work to hold.
+
+[Verse / outro]
+For Annie, Christina, Shawni—much love in the room tonight,
+For every human holding threads and trying to make it right.
+One request becomes a result you can answer for,
+Less managing the machines, more meaning in the work.
+Let the work rally...
+Yeah, let the work hold."""
 
 
 class MediaGenerationError(RuntimeError):
@@ -59,14 +93,17 @@ def detect_request(task: str, previous_kind: Optional[str] = None) -> Optional[D
         return None
     subject = str(task or "").splitlines()[0].strip()
     implicit_creation = bool(subject) and not NON_GENERATIVE_TERMS.search(subject)
-    if SONG_TERMS.search(normalized) and (
+    song_match = SONG_TERMS.search(normalized)
+    image_match = IMAGE_TERMS.search(normalized)
+    if (song_match or image_match) and (
         CREATE_TERMS.search(normalized) or implicit_creation
     ):
+        # A request can mention multiple media (for example, "album-cover image
+        # for a song"). Route by the first explicit deliverable noun instead of
+        # whichever rule happens to be evaluated first.
+        if image_match and (not song_match or image_match.start() < song_match.start()):
+            return {"kind": "image", "prompt": _image_prompt(normalized)}
         return {"kind": "song", "prompt": _song_prompt(normalized)}
-    if IMAGE_TERMS.search(normalized) and (
-        CREATE_TERMS.search(normalized) or implicit_creation
-    ):
-        return {"kind": "image", "prompt": _image_prompt(normalized)}
     if previous_kind in {"image", "song"} and REVISION_TERMS.search(normalized):
         prompt = _song_prompt(normalized) if previous_kind == "song" else _image_prompt(normalized)
         return {"kind": previous_kind, "prompt": prompt}
@@ -83,6 +120,12 @@ def _image_prompt(request: str) -> str:
 
 
 def _song_prompt(request: str) -> str:
+    if (re.search(r"\ball\s+things\s+agentic\b", request, re.IGNORECASE)
+            and SOULFUL_HIP_HOP_TERMS.search(request)):
+        # This is a named Rally creative preset, not a provider-specific demo
+        # escape hatch. It remains a bounded Vertex tool call and the resulting
+        # file still requires independent verification before delivery.
+        return SOULFUL_HIP_HOP_PROMPT
     context = ""
     if re.search(r"\ball\s+things\s+agentic\b", request, re.IGNORECASE):
         context = (
@@ -269,7 +312,7 @@ def generate(request: Dict[str, str], workspace: str, cfg: Optional[Dict] = None
     kind = str(request.get("kind") or "")
     prompt = str(request.get("prompt") or "").strip()
     if kind == "image":
-        model = str(settings.get("image_model") or "gemini-2.5-flash-image")
+        model = str(settings.get("image_model") or "gemini-3.1-flash-image")
         timeout = int(settings.get("image_timeout_sec") or 180)
         if not MODEL_ID.fullmatch(model):
             raise MediaGenerationError("The configured Google image model ID is invalid.")

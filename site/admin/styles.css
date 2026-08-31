@@ -338,6 +338,32 @@ main { max-width: 1520px; margin: 0 auto; padding: 44px 28px 100px; }
 .receipt-metrics b, .receipt-metrics span { display: block; }
 .receipt-metrics b { color: var(--blue); font-size: 1.12rem; }
 .receipt-metrics span { margin-top: 4px; color: var(--quiet); font-size: .78rem; line-height: 1.35; }
+.deliverables-section { margin: 22px 0 28px; padding: 20px; border: 1px solid #c9d9f1; border-radius: 20px; background: linear-gradient(145deg,#f7faff 0%,#f3f8f6 100%); box-shadow: 0 10px 28px rgba(16,43,77,.055); }
+.deliverables-heading { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 15px; }
+.deliverables-heading .detail-label { margin-bottom: 5px; color: var(--blue); }
+.deliverables-heading h3 { margin: 0; font-size: 1.22rem; letter-spacing: -.025em; }
+.deliverables-heading p:last-child { margin: 5px 0 0; color: #607089; font-size: .88rem; line-height: 1.5; }
+.deliverables-count { flex: none; padding: 8px 11px; color: #236646; border: 1px solid #b9dec9; border-radius: 999px; background: #e9f7ef; font-size: .8rem; font-weight: 800; }
+.deliverables-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+.deliverable-card { min-width: 0; display: grid; grid-template-columns: 48px minmax(0,1fr); align-items: center; gap: 12px; padding: 16px; border: 1px solid #d8e3f0; border-radius: 16px; background: rgba(255,255,255,.96); box-shadow: 0 6px 18px rgba(16,43,77,.045); }
+.deliverable-card.is-audio { grid-column: 1/-1; }
+.deliverable-glyph { width: 46px; height: 46px; display: grid; place-items: center; color: #174ea6; border-radius: 14px; background: var(--blue-soft); font-size: 1.22rem; font-weight: 800; }
+.deliverable-card.is-audio .deliverable-glyph { color: #236646; background: #e6f5ed; }
+.deliverable-type { display: block; color: #667991; font-size: .8rem; font-weight: 800; letter-spacing: .055em; text-transform: uppercase; }
+.deliverable-copy h4 { overflow: hidden; margin: 5px 0 3px; font-size: 1.05rem; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
+.deliverable-filename { overflow: hidden; margin: 0; color: #4d6078; font: .82rem/1.5 ui-monospace,SFMono-Regular,Menlo,monospace; text-overflow: ellipsis; white-space: nowrap; }
+.deliverable-proof { display: block; margin-top: 7px; color: #4f7d69; font-size: .8rem; font-weight: 700; }
+.deliverable-preview { grid-column: 1/-1; overflow: hidden; border-radius: 12px; }
+.deliverable-preview:empty { display: none; }
+.deliverable-preview audio { width: 100%; display: block; }
+.deliverable-preview img { width: 100%; max-height: 320px; display: block; border: 1px solid var(--line-soft); border-radius: 12px; background: #f5f7fa; object-fit: contain; }
+.deliverable-actions { grid-column: 1/-1; display: flex; align-items: center; gap: 8px; padding-top: 2px; }
+.deliverable-action { min-height: 44px; padding: 0 15px; cursor: pointer; color: #29405f; border: 1px solid #cad6e6; border-radius: 10px; background: #fff; font-size: .82rem; font-weight: 800; }
+.deliverable-action:hover { border-color: #9db8e3; background: #f5f8fd; }
+.deliverable-action.is-primary { color: #fff; border-color: var(--blue); background: var(--blue); }
+.deliverable-action.is-primary:hover { background: #1554d8; }
+.deliverable-action:disabled { cursor: wait; opacity: .65; }
+.deliverable-status { min-width: 0; margin-left: auto; color: #62758d; font-size: .8rem; line-height: 1.4; text-align: right; }
 .detail-section { margin-top: 24px; }
 .detail-label { margin: 0 0 11px; color: #53647b; font-size: .8rem; font-weight: 800; letter-spacing: .055em; text-transform: uppercase; }
 .detail-checklist { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
@@ -569,6 +595,12 @@ main { max-width: 1520px; margin: 0 auto; padding: 44px 28px 100px; }
   .run-detail { padding: 22px 17px; }
   .run-detail-header { grid-template-columns: 1fr; }
   .run-score { display: none; }
+  .deliverables-section { padding: 17px 14px; }
+  .deliverables-heading { align-items: flex-start; flex-direction: column; gap: 10px; }
+  .deliverables-grid { grid-template-columns: 1fr; }
+  .deliverable-card.is-audio { grid-column: auto; }
+  .deliverable-actions { align-items: stretch; flex-wrap: wrap; }
+  .deliverable-status { width: 100%; margin-left: 0; text-align: left; }
   .workforce-grid, .policy-grid { grid-template-columns: 1fr; }
   .workforce-callout { grid-template-columns: 1fr; }
   .signin-copy h1, .dashboard-heading h1, .redirect-copy h1 { font-size: 2.7rem; }

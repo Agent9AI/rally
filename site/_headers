@@ -1,6 +1,6 @@
 /*
   Cache-Control: public, max-age=0, must-revalidate, no-transform
-  Content-Security-Policy: default-src 'self'; base-uri 'self'; connect-src 'self' https://rally.agent9.dev https://accounts.google.com/gsi/; font-src 'self'; form-action 'self'; frame-ancestors 'none'; frame-src https://accounts.google.com/gsi/; img-src 'self' data: https://lh3.googleusercontent.com; object-src 'none'; script-src 'self' https://accounts.google.com/gsi/client; style-src 'self' https://accounts.google.com/gsi/style; style-src-attr 'unsafe-inline'; style-src-elem 'self' https://accounts.google.com/gsi/style 'unsafe-inline'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; connect-src 'self' https://rally.agent9.dev https://accounts.google.com/gsi/; font-src 'self'; form-action 'self'; frame-ancestors 'none'; frame-src https://accounts.google.com/gsi/; img-src 'self' blob: data: https://lh3.googleusercontent.com; media-src 'self' blob:; object-src 'none'; script-src 'self' https://accounts.google.com/gsi/client; style-src 'self' https://accounts.google.com/gsi/style; style-src-attr 'unsafe-inline'; style-src-elem 'self' https://accounts.google.com/gsi/style 'unsafe-inline'; upgrade-insecure-requests
   Cross-Origin-Opener-Policy: same-origin-allow-popups
   Cross-Origin-Resource-Policy: same-origin
   Permissions-Policy: camera=(), geolocation=(), microphone=(), payment=(), tools=(self), usb=()
