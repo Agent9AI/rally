@@ -26,7 +26,7 @@ commission that work from a phone without becoming an AI platform engineer.
 | 1:24 | Are agents doing and rejecting real work? | Owner work → `awaiting-verification` → other-family verdict | Primary outcome history `r-20260831-48141a` |
 | 2:24 | Is checklist authority enforceable? | Sanitized receipt, audit, and committed artifact | `r-20260831-48141a`: 13 turns, 6/6; 882-word checkpoint with 22/22 audited claims; delivery receipt |
 | 2:56 | Does recovery preserve authority? | Two recovery log lines under a separate-run label | `r-20260830-447f2f`: successful Second Wind recovery for c6 |
-| 3:16 | Is it production-minded? | ADK eval, 369-test receipt, metadata-only trace | 6/6 at 1.00/1.00; prompt capture disabled |
+| 3:16 | Is it production-minded? | ADK eval, 376-test receipt, metadata-only trace | 6/6 at 1.00/1.00; prompt capture disabled |
 | 3:43 | What does the user receive? | Final brief and delivery receipt | Primary run only; no console archaeology |
 
 The entry itself should contain a genuine continuous live execution. The safest
@@ -109,7 +109,7 @@ stale owner from overwriting the new attempt.
 
 ## Judge-visible numbers
 
-- 369 automated deterministic tests: 183 product tests + 186 Cloud/A2A/connector tests
+- 376 automated deterministic tests: 190 product tests + 186 Cloud/A2A/connector tests
 - 6 live ADK evaluation cases
 - 1.00 tool trajectory score
 - 1.00 response-quality score

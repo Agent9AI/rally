@@ -55,7 +55,7 @@ with inspectable evidence for every claim.
 |---|---|---|
 | **Innovation & operational utility — 40%** | A nontechnical owner commissions a complex outcome by email or dashboard; specialized models research, draft, challenge, repair, and verify without human dispatch | [Real run](https://rally.agent9.dev/#demo) · [13-turn receipt](#one-email-thirteen-governed-turns-one-result) |
 | **Architectural discipline & tech stack — 30%** | Strict agent authority, failure-tolerant Second Wind routing, durable state, replay protection, and a load-bearing Gemini + ADK + Google Cloud path | [Architecture](#architecture-cloud-coordination-licensed-execution-deterministic-authority) · [security](docs/SECURITY.md) |
-| **Demo & production readiness — 30%** | A 13-turn email workflow with a committed audited checkpoint and disclosed closure gap, 369 deterministic tests, a 6/6 live ADK evaluation, digest-pinned deployment, and reproducible setup | [Evidence](#evidence-before-adjectives) · [run it](#reproduce-rally) · [judge packet](docs/JUDGE-PACKET.md) |
+| **Demo & production readiness — 30%** | A 13-turn email workflow with a committed audited checkpoint and disclosed closure gap, 376 deterministic tests, a 6/6 live ADK evaluation, digest-pinned deployment, and reproducible setup | [Evidence](#evidence-before-adjectives) · [run it](#reproduce-rally) · [judge packet](docs/JUDGE-PACKET.md) |
 
 Devpost's manager [confirmed](https://allthingsagentichackathon.devpost.com/forum_topics/44900-rules-track-names-multi-agent-nexus-etc-vs-official-categories-which-applies-to-fleet)
 that Fortified Enterprise Fleet uses the “Multi-Agent Nexus” architecture test:
@@ -311,13 +311,13 @@ Gemini Enterprise Agent Platform runtime, or a production Memory Bank.
 
 ## Evidence before adjectives
 
-The release candidate contains **369 deterministic automated tests**:
+The release candidate contains **376 deterministic automated tests**:
 
 | Suite | Count | What it protects |
 |---|---:|---|
-| Local product and integration | 183 | Runner, envelope, ingress, signatures, email, media delivery, threaded revisions, console, recovery, connectors, site contracts |
+| Local product and integration | 190 | Runner, envelope, ingress, signatures, email, media delivery, threaded revisions, console, recovery, connectors, site contracts |
 | Google Cloud and protocol | 186 | ADK service, Firestore, identity, KMS vault, A2A, OAuth, presets, approvals, hosted gateway |
-| **Total** | **369** | Plus the separate 6/6 live ADK evaluation |
+| **Total** | **376** | Plus the separate 6/6 live ADK evaluation |
 
 The [public evidence index](docs/evidence/) carries sanitized, reviewable run
 receipts; private runtime state remains gitignored by design.
