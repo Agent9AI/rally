@@ -1,151 +1,184 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
-  <title id="title">Rally governed multi-agent architecture</title>
-  <desc id="desc">A human commissions work by email. A signed durable ingress and deterministic Rally runner pass an authenticated, idempotent handoff to a Gemini 3.7 Google ADK coordinator on Cloud Run. Firestore, an agent catalog, and metadata-only telemetry govern the fleet. Gemini, Claude, and OpenAI workers implement and independently verify work before an executive report returns.</desc>
+  <title id="title">Rally production architecture</title>
+  <desc id="desc">Email and Google-authenticated dashboard requests enter a Cloudflare Worker and D1 durable intake. A deterministic Rally runner sends an IAM-authenticated, idempotent request to a Gemini 3.7 Flash Google ADK coordinator on Cloud Run. Firestore provides atomic state and leases, Secret Manager and Cloud KMS protect credentials, and Cloud Trace with OpenTelemetry records metadata-only traces. Claude, Gemini, and OpenAI Codex workers can participate, while deterministic policy requires a different verifier than owner. Final evidence returns by email and a private workspace dashboard.</desc>
+
   <defs>
-    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
-      <stop offset="0" stop-color="#06100d"/>
-      <stop offset="0.58" stop-color="#0a1813"/>
-      <stop offset="1" stop-color="#07110e"/>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#07120f"/>
+      <stop offset="0.58" stop-color="#0a1713"/>
+      <stop offset="1" stop-color="#08110f"/>
     </linearGradient>
-    <linearGradient id="google" x1="0" x2="1">
-      <stop offset="0" stop-color="#10253a"/>
-      <stop offset="1" stop-color="#0c211c"/>
+    <linearGradient id="googleBoundary" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0e2234"/>
+      <stop offset="1" stop-color="#0c1d1a"/>
     </linearGradient>
-    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
-      <feDropShadow dx="0" dy="16" stdDeviation="18" flood-color="#000000" flood-opacity="0.34"/>
+    <linearGradient id="runnerCard" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#143528"/>
+      <stop offset="1" stop-color="#10251e"/>
+    </linearGradient>
+    <filter id="shadow" x="-25%" y="-25%" width="150%" height="160%">
+      <feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="#000000" flood-opacity="0.32"/>
     </filter>
-    <marker id="arrowMint" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
-      <path d="M1 1 11 6 1 11Z" fill="#7cf7bd"/>
+    <marker id="arrowMint" markerWidth="11" markerHeight="11" refX="9" refY="5.5" orient="auto" markerUnits="strokeWidth">
+      <path d="M1 1 10 5.5 1 10Z" fill="#70efb5"/>
     </marker>
-    <marker id="arrowBlue" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
-      <path d="M1 1 11 6 1 11Z" fill="#72a8ff"/>
+    <marker id="arrowBlue" markerWidth="11" markerHeight="11" refX="9" refY="5.5" orient="auto" markerUnits="strokeWidth">
+      <path d="M1 1 10 5.5 1 10Z" fill="#6ea8ff"/>
     </marker>
     <style>
-      .sans{font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+      .sans{font-family:Inter,Arial,Helvetica,sans-serif}
       .mono{font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace}
-      .eyebrow{font-size:15px;font-weight:800;letter-spacing:2.8px;fill:#7cf7bd}
-      .title{font-size:48px;font-weight:780;letter-spacing:-1.8px;fill:#eff8f4}
-      .subtitle{font-size:20px;font-weight:450;fill:#96aca3}
-      .lane{font-size:13px;font-weight:850;letter-spacing:2.2px;fill:#71877e}
-      .nodeTitle{font-size:21px;font-weight:760;fill:#edf6f2}
-      .nodeText{font-size:15px;font-weight:470;fill:#9db0a8}
-      .nodeMeta{font-size:12px;font-weight:700;letter-spacing:1px;fill:#7cf7bd}
-      .label{font-size:12px;font-weight:760;letter-spacing:1.1px;fill:#91a69d}
-      .small{font-size:12px;font-weight:520;fill:#71877e}
+      .eyebrow{font-size:14px;font-weight:800;letter-spacing:2.8px;fill:#70efb5}
+      .headline{font-size:44px;font-weight:760;letter-spacing:-1.5px;fill:#f3faf7}
+      .subtitle{font-size:18px;font-weight:460;fill:#9aafa6}
+      .lane{font-size:12px;font-weight:850;letter-spacing:2.2px;fill:#738a80}
+      .meta{font-size:11px;font-weight:820;letter-spacing:1.25px;fill:#70efb5}
+      .title{font-size:19px;font-weight:760;fill:#eef7f3}
+      .body{font-size:14px;font-weight:480;fill:#9fb2aa}
+      .tiny{font-size:11px;font-weight:650;letter-spacing:.45px;fill:#789087}
+      .chip{font-size:11px;font-weight:800;letter-spacing:1px;fill:#b9d1ff}
     </style>
   </defs>
 
-  <rect width="1600" height="900" fill="url(#bg)"/>
-  <circle cx="1350" cy="40" r="360" fill="#72a8ff" opacity="0.035"/>
-  <circle cx="170" cy="850" r="320" fill="#7cf7bd" opacity="0.03"/>
+  <rect width="1600" height="900" fill="url(#background)"/>
+  <circle cx="1430" cy="35" r="330" fill="#6ea8ff" opacity="0.035"/>
+  <circle cx="110" cy="880" r="280" fill="#70efb5" opacity="0.025"/>
 
   <g class="sans">
-    <text class="eyebrow" x="80" y="72">RALLY / FORTIFIED ENTERPRISE FLEET</text>
-    <text class="title" x="80" y="126">One request. Three model families. Zero self-approval.</text>
-    <text class="subtitle" x="80" y="162">Durable Google governance, deterministic authority, and visible cross-family professional work.</text>
+    <text class="eyebrow" x="70" y="66">RALLY / PRODUCTION ARCHITECTURE</text>
+    <text class="headline" x="70" y="121">One durable intake. Google-native coordination. Zero self-approval.</text>
+    <text class="subtitle" x="70" y="158">Cloudflare holds intake and evidence; Google Cloud anchors identity, coordination, secrets, and traces.</text>
+    <line x1="70" y1="194" x2="1530" y2="194" stroke="#22382f"/>
 
-    <line x1="80" y1="202" x2="1520" y2="202" stroke="#233a31"/>
+    <text class="lane" x="70" y="225">DURABLE INTAKE</text>
 
-    <text class="lane" x="80" y="253">COMMISSION</text>
-    <text class="lane" x="80" y="432">GOOGLE GOVERNANCE PLANE</text>
-    <text class="lane" x="80" y="682">LICENSED EXECUTION PLANE</text>
-
-    <!-- commission lane -->
+    <!-- Entry channels -->
     <g filter="url(#shadow)">
-      <rect x="80" y="278" width="250" height="112" rx="16" fill="#102019" stroke="#2a4138"/>
-      <rect x="370" y="278" width="300" height="112" rx="16" fill="#102019" stroke="#2a4138"/>
-      <rect x="710" y="278" width="330" height="112" rx="16" fill="#11211b" stroke="#3a5d4e"/>
+      <rect x="70" y="252" width="225" height="96" rx="15" fill="#10231b" stroke="#2b4b3d"/>
+      <rect x="70" y="372" width="225" height="96" rx="15" fill="#111f2d" stroke="#35547a"/>
     </g>
-    <text class="nodeMeta mono" x="105" y="308">UNLIKELY HERO</text>
-    <text class="nodeTitle" x="105" y="341">Human commissioner</text>
-    <text class="nodeText" x="105" y="367">Email from any device</text>
+    <text class="meta mono" x="92" y="280">SIGNED CHANNEL</text>
+    <text class="title" x="92" y="311">Email commission</text>
+    <text class="body" x="92" y="334">Resend signed inbound</text>
 
-    <text class="nodeMeta mono" x="395" y="308">DURABLE EDGE</text>
-    <text class="nodeTitle" x="395" y="341">Signed ingress + D1</text>
-    <text class="nodeText" x="395" y="367">Resend · dedupe · retry-safe ack</text>
+    <text class="meta mono" x="92" y="400" fill="#a8c8ff">GOOGLE SIGN-IN</text>
+    <text class="title" x="92" y="431">Private dashboard</text>
+    <text class="body" x="92" y="454">Authenticated · workspace-scoped</text>
 
-    <text class="nodeMeta mono" x="735" y="308">POLICY AUTHORITY</text>
-    <text class="nodeTitle" x="735" y="341">Deterministic Rally runner</text>
-    <text class="nodeText" x="735" y="367">Identity · budgets · state machine</text>
-
-    <line x1="330" y1="334" x2="356" y2="334" stroke="#7cf7bd" stroke-width="2.5" marker-end="url(#arrowMint)"/>
-    <line x1="670" y1="334" x2="696" y2="334" stroke="#7cf7bd" stroke-width="2.5" marker-end="url(#arrowMint)"/>
-    <text class="small mono" x="1100" y="372">stable request key · resumable coordination</text>
-
-    <!-- Google trust boundary -->
-    <rect x="70" y="452" width="1460" height="186" rx="22" fill="url(#google)" stroke="#72a8ff" stroke-width="1.5" stroke-dasharray="9 8" opacity="0.98"/>
-    <rect x="91" y="470" width="210" height="25" rx="12.5" fill="#72a8ff" opacity="0.14"/>
-    <text class="label" x="110" y="488" fill="#9dc0ff">IAM + SERVICE TOKEN</text>
-
+    <!-- Cloudflare durable edge -->
     <g filter="url(#shadow)">
-      <rect x="110" y="514" width="340" height="94" rx="14" fill="#102336" stroke="#3e6695"/>
-      <rect x="490" y="514" width="260" height="94" rx="14" fill="#10231e" stroke="#335b4a"/>
-      <rect x="790" y="514" width="260" height="94" rx="14" fill="#10231e" stroke="#335b4a"/>
-      <rect x="1090" y="514" width="330" height="94" rx="14" fill="#10231e" stroke="#335b4a"/>
+      <rect x="340" y="306" width="310" height="134" rx="17" fill="#251a12" stroke="#86522f"/>
     </g>
+    <text class="meta mono" x="366" y="338" fill="#ffbe86">CLOUDFLARE EDGE</text>
+    <text class="title" x="366" y="373">Worker + D1 durable intake</text>
+    <text class="body" x="366" y="400">Queue · dedupe · idempotent receipts</text>
+    <rect x="366" y="414" width="175" height="5" rx="2.5" fill="#f29f58" opacity="0.8"/>
 
-    <text class="nodeMeta mono" x="134" y="541" fill="#9dc0ff">CLOUD RUN / VERTEX AI</text>
-    <text class="nodeTitle" x="134" y="570">Gemini 3.7 + Google ADK</text>
-    <text class="nodeText" x="134" y="592">Verbatim, bounded handoff</text>
+    <path d="M295 300 H320 Q329 300 329 309 V353 Q329 362 340 362" fill="none" stroke="#70efb5" stroke-width="2.3" marker-end="url(#arrowMint)"/>
+    <path d="M295 420 H320 Q329 420 329 411 V391 Q329 382 340 382" fill="none" stroke="#6ea8ff" stroke-width="2.3" marker-end="url(#arrowBlue)"/>
 
-    <text class="nodeMeta mono" x="514" y="541">MEMORY</text>
-    <text class="nodeTitle" x="514" y="570">Firestore</text>
-    <text class="nodeText" x="514" y="592">Atomic claim · lease · fencing</text>
-
-    <text class="nodeMeta mono" x="814" y="541">DISCOVERY</text>
-    <text class="nodeTitle" x="814" y="570">Fleet catalog</text>
-    <text class="nodeText" x="814" y="592">Capability · authority · lifecycle</text>
-
-    <text class="nodeMeta mono" x="1114" y="541">TELEMETRY</text>
-    <text class="nodeTitle" x="1114" y="570">Cloud Trace + Logging</text>
-    <text class="nodeText" x="1114" y="592">Metadata only · prompt content off</text>
-
-    <line x1="1040" y1="334" x2="1068" y2="334" stroke="#72a8ff" stroke-width="2.5"/>
-    <path d="M1068 334 H1447 V500 H450" fill="none" stroke="#72a8ff" stroke-width="2.5" marker-end="url(#arrowBlue)"/>
-    <text class="label" x="1100" y="309">AUTHENTICATED + IDEMPOTENT HANDOFF</text>
-
-    <line x1="450" y1="561" x2="476" y2="561" stroke="#72a8ff" stroke-width="2.3" marker-end="url(#arrowBlue)"/>
-    <line x1="750" y1="561" x2="776" y2="561" stroke="#72a8ff" stroke-width="2.3" marker-end="url(#arrowBlue)"/>
-    <line x1="1050" y1="561" x2="1076" y2="561" stroke="#72a8ff" stroke-width="2.3" marker-end="url(#arrowBlue)"/>
-
-    <!-- execution plane -->
+    <!-- Deterministic authority -->
     <g filter="url(#shadow)">
-      <rect x="90" y="710" width="300" height="116" rx="16" fill="#231817" stroke="#7f4d45"/>
-      <rect x="430" y="710" width="300" height="116" rx="16" fill="#121e32" stroke="#3e6695"/>
-      <rect x="770" y="710" width="300" height="116" rx="16" fill="#17191b" stroke="#5f6368"/>
-      <rect x="1150" y="710" width="340" height="116" rx="16" fill="#102019" stroke="#3a5d4e"/>
+      <rect x="700" y="306" width="310" height="134" rx="17" fill="url(#runnerCard)" stroke="#3e7c61"/>
+    </g>
+    <text class="meta mono" x="726" y="338">POLICY, NOT MODEL OUTPUT</text>
+    <text class="title" x="726" y="373">Deterministic Rally authority</text>
+    <text class="body" x="726" y="399">Local JSON · budgets · rotation</text>
+    <text class="tiny mono" x="726" y="421">AUTHORITATIVE CHECKLIST + DONE GATE</text>
+
+    <line x1="650" y1="373" x2="686" y2="373" stroke="#70efb5" stroke-width="2.5" marker-end="url(#arrowMint)"/>
+    <text class="tiny mono" x="668" y="359" text-anchor="middle">POLL + ACK</text>
+
+    <!-- Google Cloud boundary -->
+    <rect x="1045" y="220" width="485" height="394" rx="22" fill="url(#googleBoundary)" stroke="#6ea8ff" stroke-width="1.5" stroke-dasharray="8 7"/>
+    <rect x="1068" y="235" width="247" height="25" rx="12.5" fill="#6ea8ff" opacity="0.14"/>
+    <text class="chip" x="1086" y="252">GOOGLE CLOUD COORDINATION + CONTROL</text>
+
+    <g filter="url(#shadow)">
+      <rect x="1070" y="274" width="435" height="108" rx="15" fill="#102a40" stroke="#4c7eb8"/>
+    </g>
+    <text class="meta mono" x="1094" y="303" fill="#b9d1ff">IAM-PROTECTED CLOUD RUN / VERTEX AI</text>
+    <text class="title" x="1094" y="335">Gemini 3.7 Flash + Google ADK</text>
+    <text class="body" x="1094" y="360">Required intake gate · bounded handoff</text>
+
+    <path d="M1010 349 H1027 Q1034 349 1034 342 V328 Q1034 323 1045 323 H1056" fill="none" stroke="#6ea8ff" stroke-width="2.5" marker-end="url(#arrowBlue)"/>
+    <text class="tiny mono" x="1028" y="301" text-anchor="middle" transform="rotate(-90 1028 301)">IAM + SERVICE TOKEN</text>
+
+    <g>
+      <rect x="1070" y="405" width="205" height="80" rx="13" fill="#10231e" stroke="#315b49"/>
+      <rect x="1300" y="405" width="205" height="80" rx="13" fill="#10231e" stroke="#315b49"/>
+      <rect x="1070" y="508" width="205" height="80" rx="13" fill="#10231e" stroke="#315b49"/>
+      <rect x="1300" y="508" width="205" height="80" rx="13" fill="#10231e" stroke="#315b49"/>
     </g>
 
-    <text class="nodeMeta mono" x="115" y="741" fill="#ffb4a8">ANTHROPIC FAMILY</text>
-    <text class="nodeTitle" x="115" y="775">Claude worker</text>
-    <text class="nodeText" x="115" y="800">Scope · implement · test · review</text>
+    <text class="meta mono" x="1090" y="430">COMMISSION STATE</text>
+    <text class="title" x="1090" y="456">Firestore</text>
+    <text class="body" x="1090" y="477">Atomic claims · leases · fencing</text>
 
-    <text class="nodeMeta mono" x="455" y="741" fill="#9dc0ff">GEMINI FAMILY</text>
-    <text class="nodeTitle" x="455" y="775">Antigravity worker</text>
-    <text class="nodeText" x="455" y="800">Scope · implement · test · review</text>
+    <text class="meta mono" x="1320" y="430">CUSTOMER IDENTITY</text>
+    <text class="title" x="1320" y="456">Cloud Run control plane</text>
+    <text class="body" x="1320" y="477">Google account · sessions</text>
 
-    <text class="nodeMeta mono" x="795" y="741" fill="#d7d9dd">OPENAI FAMILY</text>
-    <text class="nodeTitle" x="795" y="775">Codex worker</text>
-    <text class="nodeText" x="795" y="800">Scope · implement · test · review</text>
+    <text class="meta mono" x="1090" y="533">METADATA-ONLY</text>
+    <text class="title" x="1090" y="559">Cloud Trace + OTel</text>
+    <text class="body" x="1090" y="580">Content capture off</text>
 
-    <text class="nodeMeta mono" x="1175" y="741">AUDIT SURFACE</text>
-    <text class="nodeTitle" x="1175" y="775">Executive thread</text>
-    <text class="nodeText" x="1175" y="800">Every turn + final evidence</text>
+    <text class="meta mono" x="1320" y="533">CREDENTIAL CONTROLS</text>
+    <text class="title" x="1320" y="559">Secret Manager + KMS</text>
+    <text class="body" x="1320" y="580">Service token · connector vault</text>
 
-    <line x1="390" y1="755" x2="416" y2="755" stroke="#7cf7bd" stroke-width="2.5" marker-end="url(#arrowMint)"/>
-    <line x1="430" y1="792" x2="404" y2="792" stroke="#7cf7bd" stroke-width="2.5" marker-end="url(#arrowMint)"/>
-    <line x1="730" y1="755" x2="756" y2="755" stroke="#7cf7bd" stroke-width="2.5" marker-end="url(#arrowMint)"/>
-    <line x1="770" y1="792" x2="744" y2="792" stroke="#7cf7bd" stroke-width="2.5" marker-end="url(#arrowMint)"/>
+    <path d="M1172 382 V397" fill="none" stroke="#6ea8ff" stroke-width="1.7" opacity="0.78"/>
+    <!-- Participating-capable execution plane -->
+    <text class="lane" x="70" y="647">LICENSED EXECUTION PLANE · THREE PARTICIPATING-CAPABLE MODEL FAMILIES</text>
+    <rect x="65" y="663" width="1060" height="164" rx="20" fill="#0c1814" stroke="#243d33"/>
+    <rect x="806" y="674" width="294" height="24" rx="12" fill="#173b2d" stroke="#32634e"/>
+    <text class="meta mono" x="953" y="691" text-anchor="middle">DONE GATE · OWNER ≠ VERIFIER</text>
 
-    <path d="M710 390 V674 H240 V696" fill="none" stroke="#7cf7bd" stroke-width="2.5" marker-end="url(#arrowMint)"/>
-    <path d="M830 390 V674 H580 V696" fill="none" stroke="#7cf7bd" stroke-width="2.5" marker-end="url(#arrowMint)"/>
-    <path d="M950 390 V674 H920 V696" fill="none" stroke="#7cf7bd" stroke-width="2.5" marker-end="url(#arrowMint)"/>
-    <line x1="1070" y1="768" x2="1136" y2="768" stroke="#7cf7bd" stroke-width="2.5" marker-end="url(#arrowMint)"/>
-    <path d="M90 768 H52 V334 H66" fill="none" stroke="#7cf7bd" stroke-width="2.5" marker-end="url(#arrowMint)"/>
-    <text class="label" x="1080" y="751">REPORT</text>
+    <path d="M855 440 V652 Q855 656 850 656 H242 V682" fill="none" stroke="#70efb5" stroke-width="2.2" marker-end="url(#arrowMint)"/>
+    <path d="M855 656 H577 V682" fill="none" stroke="#70efb5" stroke-width="2.2" marker-end="url(#arrowMint)"/>
+    <path d="M855 656 H912 V682" fill="none" stroke="#70efb5" stroke-width="2.2" marker-end="url(#arrowMint)"/>
+    <text class="tiny mono" x="872" y="640">BOUNDED TURNS</text>
 
-    <line x1="80" y1="858" x2="1520" y2="858" stroke="#233a31"/>
-    <text class="small mono" x="80" y="883">LOAD-BEARING INVARIANT  ·  DONE REQUIRES owner ≠ verified_by  ·  ENFORCED OUTSIDE EVERY MODEL</text>
-    <text class="small mono" x="1520" y="883" text-anchor="end">RALLY BY AGENT9</text>
+    <g filter="url(#shadow)">
+      <rect x="85" y="695" width="315" height="106" rx="15" fill="#281817" stroke="#835047"/>
+      <rect x="420" y="695" width="315" height="106" rx="15" fill="#13213a" stroke="#436ca9"/>
+      <rect x="755" y="695" width="315" height="106" rx="15" fill="#191b1e" stroke="#626971"/>
+    </g>
+
+    <text class="meta mono" x="108" y="724" fill="#ffb6aa">ANTHROPIC FAMILY</text>
+    <text class="title" x="108" y="756">Claude worker</text>
+    <text class="body" x="108" y="781">Claude CLI · implement · verify</text>
+
+    <text class="meta mono" x="443" y="724" fill="#adcaff">GOOGLE FAMILY</text>
+    <text class="title" x="443" y="756">Gemini worker</text>
+    <text class="body" x="443" y="781">Antigravity CLI · implement · verify</text>
+
+    <text class="meta mono" x="778" y="724" fill="#d5d8dc">OPENAI FAMILY</text>
+    <text class="title" x="778" y="756">OpenAI Codex worker</text>
+    <text class="body" x="778" y="781">Codex CLI · implement · verify</text>
+
+    <!-- Evidence returns -->
+    <text class="lane" x="1160" y="647">EVIDENCE RETURNS</text>
+    <g filter="url(#shadow)">
+      <rect x="1160" y="663" width="370" height="164" rx="20" fill="#10231b" stroke="#3d7058"/>
+    </g>
+    <text class="meta mono" x="1184" y="692">AFTER THE DETERMINISTIC GATE</text>
+    <text class="title" x="1184" y="719">Verified result</text>
+
+    <rect x="1182" y="736" width="326" height="34" rx="10" fill="#142d23" stroke="#315b49"/>
+    <circle cx="1202" cy="753" r="5" fill="#70efb5"/>
+    <text class="body" x="1217" y="758">Email report</text>
+    <text class="tiny mono" x="1489" y="757" text-anchor="end">RESEND</text>
+
+    <rect x="1182" y="778" width="326" height="34" rx="10" fill="#142d23" stroke="#315b49"/>
+    <circle cx="1202" cy="795" r="5" fill="#6ea8ff"/>
+    <text class="body" x="1217" y="800">Private dashboard evidence</text>
+    <text class="tiny mono" x="1489" y="799" text-anchor="end">D1</text>
+
+    <line x1="1125" y1="745" x2="1146" y2="745" stroke="#70efb5" stroke-width="2.5" marker-end="url(#arrowMint)"/>
+
+    <line x1="70" y1="853" x2="1530" y2="853" stroke="#22382f"/>
+    <text class="tiny mono" x="70" y="879">LOAD-BEARING INVARIANT  ·  done requires owner ≠ verified_by  ·  enforced by deterministic Rally code</text>
+    <text class="tiny mono" x="1530" y="879" text-anchor="end">RALLY BY AGENT9</text>
   </g>
 </svg>

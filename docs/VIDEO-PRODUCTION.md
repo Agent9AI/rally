@@ -1,66 +1,82 @@
-# Video production package
+# Rally demo recording sheet
 
-## Deliverables
+## Fastest safe production method
 
-Produce two distinct artifacts:
+Record one continuous **1920×1080, 30 fps** master while reading
+`docs/DEMO-SCRIPT.md`. That is the safest interpretation of “unedited, live
+execution.” The filenames below are chapter markers and emergency pickups—not
+permission to manufacture a run. If you assemble a cut, keep
+`04-email-live.mov` continuous and label it **LIVE · UNEDITED**.
 
-1. `rally-entry-4m.mp4` — narrated, captioned, four minutes or shorter.
-2. `rally-golden-run-unedited.mp4` — complete proof from before Send through the
-   final report, with secrets and unrelated notifications excluded at capture.
+Final filename: **`rally-all-things-agentic-0355.mp4`**<br>
+Untouched master: **`rally-live-master-1x.mp4`**
 
-The unedited run makes the agent labor falsifiable. The short film makes it
-understandable.
+## Files and voiceover pickups
 
-## Capture layout
+| Screen file | Voice file | Target |
+|---|---|---:|
+| `01-homepage.mov` | `vo-01.wav` | 0:22 |
+| `02-magic-link.mov` | `vo-02.wav` | 0:21 |
+| `03-dashboard-job.mov` | `vo-03.wav` | 0:25 |
+| `04-email-live.mov` | `vo-04.wav` | 0:26 |
+| `05-multi-agent-proof.mov` | `vo-05.wav` | 0:25 |
+| `06-media-proof.mov` | `vo-06.wav` | 0:18 |
+| `07-second-wind.mov` | `vo-07.wav` | 0:25 |
+| `08-google-cloud.mov` | `vo-08.wav` | 0:30 |
+| `09-architecture-repo.mov` | `vo-09.wav` | 0:27 |
+| `10-close.mov` | `vo-10.wav` | 0:16 |
 
-Use 1920×1080 at 30 fps. Keep browser zoom at 110–125% and terminal text at
-least 18 px. Use a neutral desktop, disable notifications, and keep the mouse
-stationary unless it is pointing at a receipt.
+## One-page recording checklist
 
-Prepare four scenes:
+### Fifteen minutes before
 
-| Scene | Left | Right | Purpose |
-|---|---|---|---|
-| Commission | Inbox compose | Architecture diagram | User value and mental model |
-| Work | Presentation + source ledger | `make serve` + validation output | Visible agent research and creation |
-| Verify | Email turn/checklist | Run state evidence | Different-family verdict |
-| Cloud proof | Cloud Run/Firestore | Trace/eval summary | Google path and readiness |
+- [ ] Set browser zoom to **110–125%**; confirm every critical label is readable
+  in a 1080p preview.
+- [ ] Turn on Do Not Disturb. Hide bookmarks, extensions, unrelated tabs,
+  notifications, raw email headers, account menus, and all secrets.
+- [ ] Put tabs in script order: homepage, sign-in email, dashboard, preserved
+  primary run, Second Wind run, media receipt/files, Cloud Run, Firestore,
+  trace/health, repository.
+- [ ] Request the one-time sign-in email 2–5 minutes before recording.
+- [ ] Prepare the dashboard and email text, but leave the final sentence unsent.
+- [ ] Open project `rally-agent9-2026` and verify the currently ready Cloud Run
+  revision before filming; narrate the visible revision, not a memorized value.
+- [ ] Confirm `r-20260831-48141a` and `r-20260830-447f2f` load without private
+  data or debug overlays.
+- [ ] Confirm the Lyria MP3 plays and its provider/model receipt is readable.
+  Claim Rally email delivery only if the actual message is visible.
 
-Do not record Secret Manager payloads, raw webhook URLs, bearer tokens, thought
-signatures, personal inbox content, browser account menus, or terminal history.
+### During the take
 
-## Capture order
+- [ ] Start with the homepage already loaded; move the pointer deliberately.
+- [ ] Hold each new run ID for two seconds.
+- [ ] Never wait for a fresh run to finish. A real state transition plus the
+  preserved completed evidence is stronger and predictable.
+- [ ] Keep the 1:08–1:34 email-to-queue sequence uninterrupted.
+- [ ] Show exactly one active state change, then move to preserved proof.
+- [ ] Show only sanitized Cloud fields: service, ready revision, run ID, status,
+  attempts, and `handoff.source`.
+- [ ] Stop at **3:55**, even if a live request is still running.
 
-1. Record the full golden run first. If it fails, preserve it as diagnostic
-   evidence and start a new run ID; never edit the failed run into a success.
-2. Export the unedited proof master.
-3. Record clean architecture, eval, test, and Cloud evidence pickups.
-4. Record narration against the locked `docs/DEMO-SCRIPT.md` timing.
-5. Assemble the short entry with explicit `elapsed time` cards at every jump.
-6. Caption, normalize speech, inspect every frame around account transitions,
-   and export.
+### If something fails
 
-## Acceptance checks
+- [ ] Magic link fails: begin already authenticated and show the clean sign-in
+  email as proof; do not troubleshoot on camera.
+- [ ] Email polling is slow: show the ingress receipt/run ID and say “accepted,”
+  not “completed.”
+- [ ] Media email is not confirmed: show the direct Vertex receipt and generated
+  MP3/image only. Do not describe them as delivered through Rally email.
+- [ ] Cloud Console stalls: use pre-opened sanitized screenshots plus the public
+  repository implementation.
 
-- The email Send, intake, first scoped turn, and one owner-to-verifier sequence
-  are continuous in the short film.
-- One worker visibly researches primary sources, builds the presentation, and runs its checks.
-- The checklist visibly enters `awaiting-verification`.
-- A different model family visibly accepts or rejects the evidence.
-- Gemini 3.7, Google ADK, Cloud Run, and Firestore are readable on screen.
-- The final state shows `owner != verified_by` and concrete evidence.
-- All elapsed-time compression is labeled.
-- Captions remain inside safe margins and match the narration.
-- Both videos play in a signed-out browser and their links are public.
+### Before upload
 
-## Suggested chapter cards
+- [ ] Duration is **3:55 or less**; speech is intelligible at 1×.
+- [ ] The live segment contains no cuts, hidden errors, or substituted data.
+- [ ] Video visibly proves Gemini 3.7+, Google ADK, Cloud Run, and Firestore.
+- [ ] Upload public YouTube/Vimeo, verify while signed out, then paste the URL
+  into Devpost before polishing anything else.
 
-- `00:00  THE TRUST GAP`
-- `00:25  EMAIL IS THE INTERFACE`
-- `00:55  GOOGLE GOVERNS THE HANDOFF`
-- `01:30  WATCH THE AGENTS WORK`
-- `02:25  EVIDENCE, NOT CONFIDENCE`
-- `03:05  EVALUATED AND OBSERVABLE`
-- `03:35  THE SECOND OPINION ARRIVES`
-
-End card: **ONE REQUEST · THREE MODEL FAMILIES · ZERO SELF-APPROVAL**
+Official references: [rules](https://allthingsagentichackathon.devpost.com/rules),
+[FAQ](https://allthingsagentichackathon.devpost.com/details/faqs), and
+[final submission checklist](https://allthingsagentichackathon.devpost.com/updates/45670-final-call-for-submissions).

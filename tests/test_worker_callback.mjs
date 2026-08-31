@@ -98,7 +98,7 @@ assert.equal(upstreamCalls, 2);
 const capturedRequest = capturedRequests[1];
 assert.equal(
   capturedRequest.input,
-  "https://rally-control-plane-u5xngrbzna-ue.a.run.app/auth/connector/callback",
+  "https://rally-control-plane-1000134647783.us-east1.run.app/auth/connector/callback",
 );
 assert.deepEqual(JSON.parse(capturedRequest.init.body), {
   state: providerState,

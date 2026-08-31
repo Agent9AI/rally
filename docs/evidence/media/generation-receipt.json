@@ -1,0 +1,31 @@
+{
+  "project": "rally-agent9-2026",
+  "generated_at": "2026-08-31T22:14:12Z",
+  "outputs": [
+    {
+      "kind": "song",
+      "request": "Create the All Things Agentic Hackathon Song",
+      "model": "lyria-3-pro-preview",
+      "filename": "all-things-agentic-lyria-3-pro.mp3",
+      "mime_type": "audio/mpeg",
+      "duration_seconds": 69.955875,
+      "sample_rate_hz": 44100,
+      "bit_rate": 192876,
+      "bytes": 1686609,
+      "sha256": "bfd411fd939e9677d3abe143c6d2dbbde7f29c6c057f4d5cf803b12f54ea2f95",
+      "prompt_fingerprint": "31b2c12d88520c9b2b49922abde59fef97ee700bd8a88e51d3966107e04787a1"
+    },
+    {
+      "kind": "image",
+      "request": "Picture of a happy beagle in a sunlit office",
+      "model": "gemini-2.5-flash-image",
+      "filename": "beagle-gemini-image.png",
+      "mime_type": "image/png",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1302162,
+      "sha256": "5066a8d52d1fd81d772b0f52b726c3206f5c2ca11be3a0c8b16150f373bf87e5",
+      "prompt_fingerprint": "a003164b8839a864182af54dcfb93a3e0bddaa2166e186ed8ff2816e5d08d871"
+    }
+  ]
+}

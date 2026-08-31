@@ -31,5 +31,6 @@ secrets/
 .pytest_cache/
 .ruff_cache/
 .wrangler/
+.runtime/
 demo-run/
 config/connectors.local.json

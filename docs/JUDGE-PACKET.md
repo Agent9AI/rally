@@ -11,28 +11,36 @@ Primary category: **Fortified Enterprise Fleet**.
 
 The category fit is not “we used several agents.” Rally gives people a stable
 role while making isolated models behave like one accountable company team,
-then provides discovery,
-runtime and memory, security and governance, and telemetry for agents that can
-modify production repositories. The unlikely hero is a nontechnical product or
-operations leader commissioning that work from a phone.
+then provides discovery, durable execution state, security and governance, and
+telemetry for agents that can modify production repositories. The unlikely hero
+is Terry, the owner-operator of a five-person professional-services firm who can
+commission that work from a phone without becoming an AI platform engineer.
 
 ## The four-minute proof order
 
-| Time | Judge question | Live proof | Receipt |
+| Time | Judge question | Evidence surface | Run or receipt |
 |---|---|---|---|
-| 0:00 | Is this useful? | Email a role-based Rally teammate one finished outcome | One familiar address; no new employee app or key |
-| 0:25 | Is it really an agent system? | First scoped checklist email | Distinct run ID and model-family watermark |
-| 0:55 | Is Google load-bearing? | Cloud Run revision → Firestore record | Gemini 3.7 + ADK handoff, atomic request key, attempt metadata |
-| 1:30 | Are agents actually working? | Split view: repository edit, test run, `awaiting-verification`, other-family verdict | Continuous owner-to-verifier sequence |
-| 2:25 | Is completion enforceable? | Final state and evidence command | Every `done` item has `owner != verified_by` |
-| 3:05 | Is it production-minded? | ADK eval gate and metadata-only trace | 6/6 at 1.00/1.00; prompt capture disabled |
-| 3:35 | What does the user receive? | Final executive email | Outcome, evidence, residual risk, and no console archaeology |
+| 0:00 | Is this useful for the unlikely hero? | Terry emails one finished outcome for his five-person firm | Live capture run ID visible |
+| 0:22 | Is it really running? | Send → durable queue → state change, continuously | Actual live capture run; never borrow another run's numbers |
+| 0:52 | Is Google load-bearing? | Cloud Run revision → Firestore or Trace record | Gemini 3.7 Flash + ADK handoff and atomic request key |
+| 1:24 | Are agents doing and rejecting real work? | Owner work → `awaiting-verification` → other-family verdict | Primary outcome history `r-20260831-48141a` |
+| 2:24 | Is checklist authority enforceable? | Sanitized receipt, audit, and committed artifact | `r-20260831-48141a`: 13 turns, 6/6; 882-word checkpoint with 22/22 audited claims; delivery receipt |
+| 2:56 | Does recovery preserve authority? | Two recovery log lines under a separate-run label | `r-20260830-447f2f`: successful Second Wind recovery for c6 |
+| 3:16 | Is it production-minded? | ADK eval, 369-test receipt, metadata-only trace | 6/6 at 1.00/1.00; prompt capture disabled |
+| 3:43 | What does the user receive? | Final brief and delivery receipt | Primary run only; no console archaeology |
 
-The polished entry may use clearly labeled elapsed-time cuts. Publish the full,
-unedited golden run beside it. Keep the send, intake, first scope, and one
-owner-to-verifier transition continuous in the four-minute cut.
+The entry itself should contain a genuine continuous live execution. The safest
+organizer-confirmed treatment is a single take with no cuts or splices; if time
+compression is necessary, accelerate the entire take uniformly and keep the
+factor visible on screen. Publish the complete 1× capture beside the entry. If
+`r-20260831-48141a` was not captured continuously, use a new run for the live
+sequence and identify its actual ID rather than calling a replay “live.”
 
 ## Claim-to-receipt index
+
+The committed [public evidence index](evidence/) contains the sanitized primary
+checkpoint and the separate Second Wind receipt. Runtime `runs/` state remains
+gitignored because it can contain commissioner and provider metadata.
 
 | Claim | Primary implementation | Automated proof | Visual proof |
 |---|---|---|---|
@@ -42,7 +50,7 @@ owner-to-verifier transition continuous in the four-minute cut.
 | Private work dashboard | `src/worker/index.js`, D1 workspace index, `/admin/` | workspace-isolation contract | Signed-in Work queue and run receipt; Connections are a separate view |
 | Durable email intake | `src/worker/index.js`, D1 schema | runner reliability tests | Queued D1 row before acknowledgement |
 | Retry-safe coordination | `cloud/store.py`, `cloud/service.py` | store/service recovery and fencing tests | Failed record resumes with incremented attempt |
-| Cross-model recovery | `src/runner.py`, `src/envelope.py` | Second Wind runner and custody-transfer tests | Backup repairs a blocker but cannot self-approve |
+| Cross-model recovery | `src/runner.py`, `src/envelope.py` | Second Wind runner and custody-transfer tests | Separate run `r-20260830-447f2f`: Claude → Gemini recovery for c6; backup cannot self-approve |
 | Governed discovery | `cloud/agent_catalog.json`, `cloud/catalog.py` | catalog schema and auth tests | Authenticated `/v1/agents` response |
 | Gemini is load-bearing | `cloud/rally_adk/agent.py` | live ADK eval set | Cloud trace from request through Gemini span |
 | Cloud is not decorative | Cloud Run, Firestore, Secret Manager, Trace Terraform | `make infra-check` | Revision, record, IAM policy, and trace waterfall |
@@ -51,14 +59,16 @@ owner-to-verifier transition continuous in the four-minute cut.
 
 ## What to say about model choice
 
-Gemini 3.7 Flash through Vertex AI and Google ADK is the intake coordinator. It
-preserves the commission verbatim, makes the single bounded handoff, and creates
-the governance record before workspace execution starts. Claude,
-Antigravity/Gemini, and OpenAI Codex are licensed CLI workers using the
-operator's own provider sign-ins. They have symmetric build and review abilities,
-but the runner assigns incompatible authority so the owner of
-an item cannot verify it. The standard profile keeps a deliberative worker pin;
-the filmed profile uses Gemini 3.7 Flash for predictable latency.
+Gemini 3.7 Flash through Vertex AI and Google ADK is the model-mediated intake
+gate. The agent is instructed and evaluated to call the one bounded handoff tool
+with the complete commission. Deterministic service code normalizes and persists
+the handoff and governance record before workspace execution starts, and marks
+the record ready only after the coordinator returns.
+Claude, Antigravity/Gemini, and OpenAI Codex are licensed CLI workers using the
+operator's own provider sign-ins. They have symmetric build and review
+abilities, but the runner assigns incompatible authority so the owner of an item
+cannot verify it. The standard profile keeps a deliberative worker pin; the
+filmed profile uses Gemini 3.7 Flash for predictable latency.
 
 That is a deliberate allocation by workload, not a compatibility workaround.
 The required Gemini 3.5+ path is substantive and visible.
@@ -82,7 +92,7 @@ from a different model family and retaining evidence.
 
 **“Why is repository execution local?”**  The current Claude, Antigravity, and
 Codex workers are licensed CLIs. Rally honestly keeps execution on the
-controlled licensed host while placing identity, durable coordination, memory,
+controlled licensed host while placing identity, durable coordination, state,
 catalog discovery, and telemetry on Google Cloud.
 
 **“Why not Gemini Enterprise Agent Platform?”**  It is recommended, not
@@ -99,7 +109,7 @@ stale owner from overwriting the new attempt.
 
 ## Judge-visible numbers
 
-- 263 automated deterministic tests: 92 product tests + 171 Cloud/A2A/connector tests
+- 369 automated deterministic tests: 183 product tests + 186 Cloud/A2A/connector tests
 - 6 live ADK evaluation cases
 - 1.00 tool trajectory score
 - 1.00 response-quality score
@@ -114,6 +124,32 @@ The post-deploy evidence checklist passed again on August 31, 2026. Tie every li
 claim to the private Cloud Run revision, Firestore record, IAM policy, or
 content-free Trace shown in the demo; never substitute a diagram for that proof.
 
+Run `r-20260831-48141a` completed in 13 turns with 6/6 checklist items
+independently verified across three model families. Its committed 882-word
+checkpoint has 22/22 audited claims supported, and the final report was
+delivered. During Gemini turn 7, concurrent
+operator edits to three submission documents triggered Rally's advisory
+repo-containment fingerprint. The edits were not made by the agent; retain the
+event as honest evidence that the monitor detected an external tree change.
+
+After that audit was verified, Claude added one pricing claim and asked to open
+c7 because it could not self-approve the change. Rally rejected the late scope
+addition but did not invalidate the earlier artifact verification; the
+workspace therefore ended at 897 words without that new claim entering the
+22-claim audit. Use the committed
+[`docs/evidence/r-20260831-48141a/`](evidence/r-20260831-48141a/) snapshot for
+the audit claim and disclose the late mutation. The delivered report retained
+an even earlier 834-word checkpoint. That run's one Second Wind attempt ended
+unresolved and required an authenticated human resume. The successful recovery
+receipt is the separate run `r-20260830-447f2f`, where Claude handed c6 to
+Gemini and the runner recorded `SECOND WIND RECOVERED`. Never combine those
+histories.
+
+Do not claim Memory Bank, Agent Runtime, Gemini Enterprise Agent Platform, or a
+Gemma/Veo/Lyria bonus integration. Rally uses its own durable state and a
+controlled licensed-worker host, with Gemini 3.7 Flash via Vertex AI, Google
+ADK, Cloud Run, and Firestore as the mandatory load-bearing Google stack.
+
 Do not say email delivers every model turn. The first email starts the real run,
 the authoritative runner dispatches subsequent turns, and email mirrors each
 turn plus the final report.
@@ -127,27 +163,32 @@ request keys, account menus, and raw prompt fields off screen.
 
 | Surface | Live anchor |
 |---|---|
-| Public product + professional proof run | <https://rally.agent9.dev/#demo> — `r-20260830-447f2f` |
+| Public product + separate recovery proof | <https://rally.agent9.dev/#demo> — `r-20260830-447f2f`; 11 turns, 6/6, 36-claim presentation, successful Second Wind for c6 |
+| Primary email run | [`docs/evidence/r-20260831-48141a/`](evidence/r-20260831-48141a/) — 13 turns, 6/6; 882-word checkpoint with 22/22 audited claims; report delivered; later mutation disclosed |
 | Cloud project | `rally-agent9-2026` |
-| Cloud Run | `rally-google-coordinator-00006-v7q` in `us-east1` |
-| Coordinator digest | `sha256:b4c8a20343aaeec64a602b108bfdcb73fa723525af1498cba0fa15c0fe64d769` |
-| Hosted control plane | `rally-control-plane-00007-lft`; `sha256:a13e4bd39b14f5d292d40a957f036a77b71dc46a98b1864c04f02ae94dd52cf0` |
-| Release Cloud Build | `c89b0e68-1af8-4be2-8391-501a6894a8b9` (`SUCCESS`) |
+| Private ADK coordinator | `rally-google-coordinator-00007-xpq` |
+| Hosted control plane | `rally-control-plane-00011-pg6` |
+| Both Cloud Run images | `sha256:b1836e2224518a8bed51da7e02ef256aeba1aeeae858808f470a0d02d33fa6e2` |
+| Release Cloud Build | `58a580b6-c6d2-45d6-945b-8fc1bb643cd5` (`SUCCESS`) |
 | Firestore proof record | `r-cloud-redaction-20260829` in `(default)` |
 | Content-free Cloud Trace | `05b54fcc39e0f869fcb486ed62d5350f` — eight linked spans, all ADK payload attributes `{}` |
-| Cloudflare Worker | `rally-ingress` version `a71d349d-a151-4e16-a786-118ab47d71ec` |
-| Pages production release | `87877d3e-3d49-4fe8-9ad6-268c065afd1b` from source `8832f05`; <https://rally.agent9.dev/> |
-| Submission source | <https://github.com/Agent9AI/rally> — release commit `8832f05`; repository remains private during final hardening |
+| Cloudflare Worker | `rally-ingress` version `757237b2-8c72-4429-913a-f854d014cf2a` |
+| Hosted product | <https://rally.agent9.dev/> — Pages deployment <https://f2d67f82.agent9-rally.pages.dev/> |
+| Submission source | <https://github.com/Agent9AI/rally> — repository remains private during final hardening; pin the final release commit after the submission freeze |
 
 Prepare these in order before recording:
 
-1. Inbox compose window with the golden commission.
+1. Inbox compose window with the executive-brief commission.
 2. Narrow `make serve` terminal with secrets absent.
-3. Sanitized repository diff/test split view.
+3. Sanitized primary-run brief, source ledger, audit, and checklist view.
 4. [`rally-architecture.png`](assets/rally-architecture.png).
 5. Cloud Run revision, Firestore record, agent catalog, and Cloud Trace tabs.
 6. Sanitized ADK eval result.
-7. Final email thread.
+7. Final email thread for `r-20260831-48141a`.
+8. Two-line recovery receipt for `r-20260830-447f2f`, visibly labeled as a
+   separate run.
 
-The official source of truth is the
-[All Things Agentic rules](https://allthingsagentichackathon.devpost.com/rules).
+The official sources of truth are the
+[All Things Agentic rules](https://allthingsagentichackathon.devpost.com/rules)
+and the Devpost manager's
+[continuous uniform-speed guidance](https://allthingsagentichackathon.devpost.com/forum_topics/44809-demo-video-is-speeding-up-the-whole-recording-allowed-under-unedited).

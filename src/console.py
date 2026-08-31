@@ -33,6 +33,14 @@ class ConsoleError(RuntimeError):
     pass
 
 
+def validate_workspace_id(value) -> str:
+    """Return one workspace identifier after applying the console boundary."""
+    candidate = value.strip() if isinstance(value, str) else ""
+    if not WORKSPACE_ID_RE.fullmatch(candidate):
+        raise ConsoleError("console workspace_id is not configured")
+    return candidate
+
+
 def _now() -> str:
     return dt.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
 
@@ -134,9 +142,14 @@ def build_snapshot(state: Dict, cfg: Dict, published_at: Optional[str] = None) -
     """Return the only shape the runner is allowed to publish."""
     stamp = published_at or _now()
     settings = cfg.get("console") or {}
-    workspace_id = str(settings.get("workspace_id") or "").strip()
-    if not WORKSPACE_ID_RE.fullmatch(workspace_id):
-        raise ConsoleError("console workspace_id is not configured")
+    # Dashboard commissions carry an authenticated workspace all the way into
+    # authoritative run state. Only legacy email and direct CLI runs (which do
+    # not have the field at all) may fall back to the configured workspace.
+    workspace_id = validate_workspace_id(
+        state["workspace_id"]
+        if "workspace_id" in state
+        else settings.get("workspace_id")
+    )
     redactions = _redactions(state)
     checklist = _checklist(state.get("checklist") or [], redactions)
     done = sum(1 for item in checklist if item["state"] == "done")

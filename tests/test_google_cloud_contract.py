@@ -89,12 +89,59 @@ class TestGoogleCloudContract(unittest.TestCase):
             terraform,
         )
         self.assertIn("connector_oauth.py", dockerfile)
+        self.assertIn("teammate_store.py", dockerfile)
+        self.assertIn('name  = "RALLY_TEAMMATE_BACKEND"', terraform)
+        self.assertIn('name  = "RALLY_TRIAL_EMAIL_DOMAIN"', terraform)
+        self.assertIn('name  = "RALLY_PILOT_EMAIL_ADDRESS"', terraform)
         self.assertIn("hashlib.sha256", auth_sessions)
         self.assertIn("async_transactional", auth_sessions)
         self.assertIn("auth_sessions.py", dockerfile)
         self.assertIn("verify_oauth2_token", identity)
         self.assertIn("AESGCM", vault)
         self.assertIn("wrapped_dek", vault)
+
+    def test_demo_identities_share_one_workspace_and_pilot_address(self):
+        terraform = (ROOT / "cloud" / "infra" / "main.tf").read_text()
+        variables = (ROOT / "cloud" / "infra" / "variables.tf").read_text()
+
+        allowed_match = re.search(
+            r'variable "control_plane_allowed_user_emails".*?default\s*=\s*(\[[^]]*\])',
+            variables,
+            re.DOTALL,
+        )
+        self.assertIsNotNone(allowed_match)
+        self.assertEqual(
+            re.findall(r'"([^"]+)"', allowed_match.group(1)),
+            ["imterryim@gmail.com", "terry@agent9.dev"],
+        )
+
+        expected_string_defaults = {
+            "workspace_id": "agent9-rally",
+            "trial_email_domain": "updates.agent9.dev",
+            "pilot_email_address": "rally@updates.agent9.dev",
+        }
+        for name, expected in expected_string_defaults.items():
+            match = re.search(
+                rf'variable "{name}".*?default\s*=\s*"([^"]+)"',
+                variables,
+                re.DOTALL,
+            )
+            self.assertIsNotNone(match, name)
+            self.assertEqual(match.group(1), expected, name)
+
+        self.assertIn(
+            'for email in var.control_plane_allowed_user_emails : lower(trimspace(email))',
+            terraform,
+        )
+        for name, variable in (
+            ("RALLY_WORKSPACE_ID", "workspace_id"),
+            ("RALLY_TRIAL_EMAIL_DOMAIN", "trial_email_domain"),
+            ("RALLY_PILOT_EMAIL_ADDRESS", "pilot_email_address"),
+        ):
+            self.assertRegex(
+                terraform,
+                rf'name\s*=\s*"{name}"\s+value\s*=\s*var\.{variable}',
+            )
 
 
 if __name__ == "__main__":

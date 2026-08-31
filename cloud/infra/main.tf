@@ -19,6 +19,7 @@ locals {
     "calendar-json.googleapis.com",
     "chat.googleapis.com",
     "people.googleapis.com",
+    "pubsub.googleapis.com",
     "gmailmcp.googleapis.com",
     "drivemcp.googleapis.com",
     "docsmcp.googleapis.com",
@@ -79,6 +80,10 @@ resource "google_service_account" "control_plane" {
   depends_on = [google_project_service.required]
 }
 
+data "google_project" "current" {
+  project_id = var.project_id
+}
+
 resource "google_service_account_iam_member" "operator_token_creator" {
   service_account_id = google_service_account.local_invoker.name
   role               = "roles/iam.serviceAccountTokenCreator"
@@ -130,6 +135,24 @@ resource "google_firestore_field" "auth_session_ttl" {
   project    = var.project_id
   database   = google_firestore_database.rally.name
   collection = "rally_auth_sessions"
+  field      = "expires_at"
+
+  ttl_config {}
+}
+
+resource "google_firestore_field" "magic_link_ttl" {
+  project    = var.project_id
+  database   = google_firestore_database.rally.name
+  collection = "rally_magic_links"
+  field      = "expires_at"
+
+  ttl_config {}
+}
+
+resource "google_firestore_field" "magic_link_rate_limit_ttl" {
+  project    = var.project_id
+  database   = google_firestore_database.rally.name
+  collection = "rally_magic_link_rate_limits"
   field      = "expires_at"
 
   ttl_config {}
@@ -229,6 +252,67 @@ resource "google_secret_manager_secret_iam_member" "workspace_oauth_control_plan
   secret_id = google_secret_manager_secret.workspace_oauth_client_secret.secret_id
   role      = "roles/secretmanager.secretAccessor"
   member    = "serviceAccount:${google_service_account.control_plane.email}"
+}
+
+# Provision these values out of band so neither credential enters Terraform
+# state. The control-plane service account receives secretAccessor separately.
+data "google_secret_manager_secret" "resend_api_key" {
+  count = var.deploy_control_plane ? 1 : 0
+
+  project   = var.project_id
+  secret_id = "rally-resend-api-key"
+}
+
+data "google_secret_manager_secret" "magic_link_signing_key" {
+  count = var.deploy_control_plane ? 1 : 0
+
+  project   = var.project_id
+  secret_id = "rally-magic-link-signing-key"
+}
+
+resource "google_secret_manager_secret_iam_member" "resend_control_plane" {
+  count = var.deploy_control_plane ? 1 : 0
+
+  project   = var.project_id
+  secret_id = data.google_secret_manager_secret.resend_api_key[0].secret_id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.control_plane.email}"
+}
+
+resource "google_secret_manager_secret_iam_member" "magic_link_control_plane" {
+  count = var.deploy_control_plane ? 1 : 0
+
+  project   = var.project_id
+  secret_id = data.google_secret_manager_secret.magic_link_signing_key[0].secret_id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.control_plane.email}"
+}
+
+resource "google_pubsub_topic" "magic_link_delivery" {
+  count = var.deploy_control_plane ? 1 : 0
+
+  project                    = var.project_id
+  name                       = "rally-magic-link-delivery"
+  message_retention_duration = "600s"
+
+  depends_on = [google_project_service.required]
+}
+
+resource "google_pubsub_topic_iam_member" "control_plane_magic_link_publisher" {
+  count = var.deploy_control_plane ? 1 : 0
+
+  project = var.project_id
+  topic   = google_pubsub_topic.magic_link_delivery[0].name
+  role    = "roles/pubsub.publisher"
+  member  = "serviceAccount:${google_service_account.control_plane.email}"
+}
+
+resource "google_service_account_iam_member" "pubsub_push_token_creator" {
+  count = var.deploy_control_plane ? 1 : 0
+
+  service_account_id = google_service_account.control_plane.name
+  role               = "roles/iam.serviceAccountTokenCreator"
+  member             = "serviceAccount:service-${data.google_project.current.number}@gcp-sa-pubsub.iam.gserviceaccount.com"
 }
 
 resource "google_cloud_run_v2_service" "coordinator" {
@@ -448,8 +532,10 @@ resource "google_cloud_run_v2_service" "control_plane" {
         value = join(",", var.control_plane_allowed_origins)
       }
       env {
-        name  = "RALLY_ALLOWED_USER_EMAILS"
-        value = join(",", var.control_plane_allowed_user_emails)
+        name = "RALLY_ALLOWED_USER_EMAILS"
+        value = join(",", sort([
+          for email in var.control_plane_allowed_user_emails : lower(trimspace(email))
+        ]))
       }
       env {
         name  = "RALLY_WORKSPACE_ID"
@@ -458,6 +544,60 @@ resource "google_cloud_run_v2_service" "control_plane" {
       env {
         name  = "RALLY_AUTH_BACKEND"
         value = "firestore"
+      }
+      env {
+        name  = "RALLY_MAGIC_LINK_BACKEND"
+        value = "firestore"
+      }
+      env {
+        name  = "RALLY_MAGIC_LINK_QUEUE_BACKEND"
+        value = "pubsub"
+      }
+      env {
+        name  = "RALLY_MAGIC_LINK_TOPIC_ID"
+        value = google_pubsub_topic.magic_link_delivery[0].name
+      }
+      env {
+        name  = "RALLY_PUBSUB_PUSH_AUDIENCE"
+        value = "https://rally.agent9.dev/_internal/magic-link-delivery"
+      }
+      env {
+        name  = "RALLY_PUBSUB_PUSH_SERVICE_ACCOUNT"
+        value = google_service_account.control_plane.email
+      }
+      env {
+        name  = "RALLY_MAGIC_LINK_FROM"
+        value = "Rally <rally@updates.agent9.dev>"
+      }
+      env {
+        name = "RESEND_API_KEY"
+        value_source {
+          secret_key_ref {
+            secret  = data.google_secret_manager_secret.resend_api_key[0].secret_id
+            version = "latest"
+          }
+        }
+      }
+      env {
+        name = "RALLY_MAGIC_LINK_SIGNING_KEY"
+        value_source {
+          secret_key_ref {
+            secret  = data.google_secret_manager_secret.magic_link_signing_key[0].secret_id
+            version = "latest"
+          }
+        }
+      }
+      env {
+        name  = "RALLY_TEAMMATE_BACKEND"
+        value = "firestore"
+      }
+      env {
+        name  = "RALLY_TRIAL_EMAIL_DOMAIN"
+        value = var.trial_email_domain
+      }
+      env {
+        name  = "RALLY_PILOT_EMAIL_ADDRESS"
+        value = var.pilot_email_address
       }
       env {
         name  = "RALLY_OAUTH_BACKEND"
@@ -490,10 +630,15 @@ resource "google_cloud_run_v2_service" "control_plane" {
     google_firestore_database.rally,
     google_firestore_field.auth_code_ttl,
     google_firestore_field.auth_session_ttl,
+    google_firestore_field.magic_link_ttl,
+    google_firestore_field.magic_link_rate_limit_ttl,
     google_firestore_field.connector_oauth_flow_ttl,
     google_firestore_field.connector_execution_receipt_ttl,
     google_kms_crypto_key_iam_member.control_plane,
     google_secret_manager_secret_iam_member.workspace_oauth_control_plane,
+    google_secret_manager_secret_iam_member.resend_control_plane,
+    google_secret_manager_secret_iam_member.magic_link_control_plane,
+    google_pubsub_topic_iam_member.control_plane_magic_link_publisher,
     google_project_iam_member.control_plane,
   ]
 }
@@ -506,4 +651,35 @@ resource "google_cloud_run_v2_service_iam_member" "control_plane_public" {
   name     = google_cloud_run_v2_service.control_plane[0].name
   role     = "roles/run.invoker"
   member   = "allUsers"
+}
+
+resource "google_pubsub_subscription" "magic_link_delivery" {
+  count = var.deploy_control_plane ? 1 : 0
+
+  project                    = var.project_id
+  name                       = "rally-magic-link-delivery"
+  topic                      = google_pubsub_topic.magic_link_delivery[0].id
+  ack_deadline_seconds       = 30
+  message_retention_duration = "600s"
+
+  retry_policy {
+    minimum_backoff = "10s"
+    maximum_backoff = "60s"
+  }
+
+  push_config {
+    # The stable regional URL survives service revisions. The provider's
+    # opaque `uri` hostname has returned a Google Frontend 404 for this
+    # project, so it must not be used as an asynchronous delivery target.
+    push_endpoint = "https://${var.control_plane_service_name}-${data.google_project.current.number}.${var.region}.run.app/v1/internal/magic-link/deliver"
+    oidc_token {
+      service_account_email = google_service_account.control_plane.email
+      audience              = "https://rally.agent9.dev/_internal/magic-link-delivery"
+    }
+  }
+
+  depends_on = [
+    google_cloud_run_v2_service_iam_member.control_plane_public,
+    google_service_account_iam_member.pubsub_push_token_creator,
+  ]
 }

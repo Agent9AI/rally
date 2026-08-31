@@ -48,7 +48,7 @@ engineering leader can audit.
 |---|---|---|
 | Innovation & operational utility (40%) | Email-native access plus cross-family verification converts agents from personal copilots into a shared, accountable team service | Send one email; show provider-native worker turns and final evidence |
 | Technical architecture (30%) | ADK + Gemini on IAM-protected Cloud Run, atomic Firestore idempotency, Secret Manager, Cloud Trace, signed edge webhook, deterministic state machine | Architecture diagram, Terraform, trace/log, verification state |
-| Demo & production readiness (30%) | Deployed path, live eval gate, bounded costs, polished emails, human stop/steer, reproducible repo | 6/6 eval, 263 tests, live Cloud Run health, complete email thread |
+| Demo & production readiness (30%) | Deployed coordination path, live eval gate, bounded costs, polished emails, human stop/steer, reproducible repo | 6/6 eval, 369 tests, live Cloud Run health, complete email thread |
 
 ## Model assignment rationale
 
@@ -134,7 +134,7 @@ lowering a threshold.
 - Authenticated fleet catalog for cross-department discovery and governance
 - Dual-auth Cloud Run boundary and least-privilege runtime identity
 - Metadata-only GenAI observability
-- 263 automated tests plus six live ADK eval cases at 1.00/1.00
+- 369 automated tests (183 local + 186 Cloud) plus six live ADK eval cases at 1.00/1.00
 - Validated Terraform and a demo-ready operator workflow
 
 ### What we learned
@@ -164,13 +164,17 @@ unchanged.
 
 ## Final evidence checklist
 
-- [x] Public source repository with founding documents and implementation
+- [ ] Reviewable source repository with founding documents and implementation;
+      it remains private during final hardening
 - [x] Gemini 3.7 + ADK source and repeatable eval set
 - [x] Cloud infrastructure defined and validated in Terraform
 - [x] Security, architecture, runbook, and honest-boundary documentation
 - [x] Versioned agent catalog and recovery/fencing tests
 - [x] Cloud Run revision live with Firestore and Trace evidence
-- [x] Golden governed run through the Cloud coordinator with every turn mirrored by email
+- [x] Primary governed run `r-20260831-48141a` completed in 13 turns with 6/6
+      independently verified checklist items across three model families and its
+      report delivered; the later artifact-mutation boundary is disclosed in
+      `docs/evidence/`
 - [ ] Four-minute video uploaded and linked
 - [ ] Devpost fields, screenshots, and repository link entered
 

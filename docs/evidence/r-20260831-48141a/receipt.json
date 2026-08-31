@@ -1,0 +1,65 @@
+{
+  "evidence_kind": "sanitized_repository_snapshot",
+  "signed_attestation": false,
+  "run_id": "r-20260831-48141a",
+  "status": "complete",
+  "governed_turns": 13,
+  "model_families": [
+    {"worker": "agy", "family": "google", "model": "gemini-3.1-pro-high"},
+    {"worker": "claude", "family": "anthropic", "model": "opus"},
+    {"worker": "codex", "family": "openai", "model": "gpt-5.4"}
+  ],
+  "checklist": [
+    {"id": "c1", "state": "done", "owner": "agy", "verified_by": "codex", "rejections": 0},
+    {"id": "c2", "state": "done", "owner": "agy", "verified_by": "codex", "rejections": 0},
+    {"id": "c3", "state": "done", "owner": "claude", "verified_by": "agy", "rejections": 0},
+    {"id": "c4", "state": "done", "owner": "claude", "verified_by": "agy", "rejections": 2},
+    {"id": "c5", "state": "done", "owner": "codex", "verified_by": "claude", "rejections": 0},
+    {"id": "c6", "state": "done", "owner": "claude", "verified_by": "agy", "rejections": 0}
+  ],
+  "audited_checkpoint": {
+    "workspace_commit": "2fa5f26ba4364b8b5d1a0579663fd47c81928423",
+    "workspace_tree": "477d37769423f8ef3c95c22a329c946728b617a7",
+    "briefing_words": 882,
+    "official_google_sources": 13,
+    "claims_audited": 22,
+    "claims_supported": 22,
+    "audit_owner": "codex",
+    "audit_verified_by": "claude",
+    "sha256": {
+      "briefing-audited.md": "3f97258b6b6e233821ed1451a275da04829206446da99e0a6987dd4ed45d45d5",
+      "sources-audited.md": "07ed9d3ba12c9fae3defd3ab63f7a56471d41ef0df3287eab7c25525669a6a73",
+      "audit.md": "6fe4ded48c31e62924d5e0e8ef5415fc18dc0accd01db7df727d852d7d4c353e"
+    }
+  },
+  "workspace_at_report_delivery": {
+    "workspace_commit": "854703939ca3a454c3f9a5318a0f460f6ae73ff6",
+    "workspace_tree": "5cf9e4a3ab10f2938aae933077d6179a5aa6de7f",
+    "briefing_words": 897,
+    "post_audit_change": true,
+    "boundary": "The 897-word workspace file contains a pricing-promotion sentence added after the 22-claim audit. It is not represented as covered by that audit or as the email payload.",
+    "email_report": {
+      "status": "delivered",
+      "accepted_at": "2026-08-31T19:30:44Z",
+      "reported_checkpoint_words": 834
+    }
+  },
+  "known_issues": [
+    "The immutable audit snapshot's item 14 has a malformed ?hl=en-4 locale query; the source ledger contains the correct ?hl=en URL."
+  ],
+  "second_wind": {
+    "from_worker": "codex",
+    "to_worker": "claude",
+    "item": "c5",
+    "status": "unresolved",
+    "outcome": "The backup confirmed that the audit prerequisite was still missing; an authenticated human later resumed only c5."
+  },
+  "privacy_redactions": [
+    "commissioner identity and contact details",
+    "email and provider message identifiers",
+    "cloud request and idempotency keys",
+    "local filesystem paths",
+    "raw model payloads",
+    "private report body"
+  ]
+}

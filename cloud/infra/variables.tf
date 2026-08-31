@@ -62,6 +62,48 @@ variable "workspace_id" {
   }
 }
 
+variable "trial_email_domain" {
+  description = "Rally-owned domain shown only for temporary evaluation identities."
+  type        = string
+  default     = "updates.agent9.dev"
+
+  validation {
+    condition = (
+      length(var.trial_email_domain) <= 253 &&
+      length(split(".", var.trial_email_domain)) >= 2 &&
+      alltrue([
+        for label in split(".", var.trial_email_domain) :
+        can(regex("^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?$", label))
+      ])
+    )
+    error_message = "trial_email_domain must be a valid fully qualified domain name."
+  }
+}
+
+variable "pilot_email_address" {
+  description = "Existing live pilot address assigned to this configured workspace; empty disables the shortcut."
+  type        = string
+  default     = "rally@updates.agent9.dev"
+
+  validation {
+    condition = (
+      var.pilot_email_address == "" ||
+      try(
+        length(split("@", var.pilot_email_address)) == 2 &&
+        can(regex("^[A-Za-z0-9]([A-Za-z0-9._-]{0,62}[A-Za-z0-9])?$", split("@", var.pilot_email_address)[0])) &&
+        length(split("@", var.pilot_email_address)[1]) <= 253 &&
+        length(split(".", split("@", var.pilot_email_address)[1])) >= 2 &&
+        alltrue([
+          for label in split(".", split("@", var.pilot_email_address)[1]) :
+          can(regex("^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?$", label))
+        ]),
+        false
+      )
+    )
+    error_message = "pilot_email_address must be empty or a valid email address."
+  }
+}
+
 variable "google_web_client_id" {
   description = "Public Google Identity Services web client ID accepted by Rally."
   type        = string
@@ -99,7 +141,10 @@ variable "control_plane_allowed_origins" {
 variable "control_plane_allowed_user_emails" {
   description = "Initial account allowlist; explicitly pass an empty list only for a deliberate public launch."
   type        = list(string)
-  default     = ["imterryim@gmail.com"]
+  default = [
+    "imterryim@gmail.com",
+    "terry@agent9.dev",
+  ]
 }
 
 variable "operator_member" {

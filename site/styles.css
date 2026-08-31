@@ -326,7 +326,7 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px soli
 .search-box kbd { padding: 4px 7px; color: var(--quiet); border: 1px solid var(--line); border-radius: 5px; background: #fff; font: .7rem Arial, sans-serif; }
 .app-actions { display: flex; align-items: center; justify-content: flex-end; gap: 3px; }
 .app-actions .icon-button:first-child { font-weight: 600; }
-.app-avatar { width: 34px; height: 34px; display: inline-grid; margin-left: 6px; place-items: center; color: #fff; border-radius: 50%; background: #7e57c2; font-size: .82rem; font-weight: 700; }
+.app-avatar { width: 34px; height: 34px; display: inline-grid; margin-left: 6px; place-items: center; color: #fff; border-radius: 50%; background: #315b91; font-size: .82rem; font-weight: 700; }
 .console-live { display: inline-flex; align-items: center; gap: 6px; padding: 6px 9px; color: #6f7478; border-radius: 999px; background: #f1f3f4; font-size: .62rem; font-weight: 600; white-space: nowrap; }
 .console-live i { width: 7px; height: 7px; border-radius: 50%; background: #9aa0a6; }
 .console-live.is-live { color: #137333; background: var(--green-soft); }
@@ -357,7 +357,7 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px soli
 .run-row.selected { background: var(--blue-pale); box-shadow: inset 3px 0 var(--blue); }
 .run-avatar, .message-avatar { display: inline-grid; place-items: center; color: #fff; border-radius: 50%; font-size: .78rem; font-weight: 700; }
 .run-avatar { width: 36px; height: 36px; }
-.human { background: #7e57c2; }
+.human { background: #315b91; }
 .gemini, .coordinator { background: #4285f4; }
 .claude { background: #d96c5f; }
 .openai { background: #202124; }
@@ -458,7 +458,7 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px soli
 .agent-dot.google { background: #4285f4; }
 .agent-dot.anthropic { background: #d96c5f; }
 .agent-dot.openai { background: #202124; }
-.agent-dot.other { background: #7e57c2; }
+.agent-dot.other { background: #246bfd; }
 .agent-row b, .agent-row small { display: block; }
 .agent-row b { color: #3c4043; font-size: .65rem; }
 .agent-row small, .agent-row > span:last-child { color: var(--quiet); font-size: .55rem; }

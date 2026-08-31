@@ -29,38 +29,56 @@ def classify(halt: str) -> tuple:
 
 
 def mechanical_summary(state: Dict, halt: str) -> str:
-    """Deterministic fallback. Always correct, never eloquent."""
+    """Deterministic executive fallback: correct, calm, and actionable."""
     status, meaning = classify(halt)
     items: List[Dict] = state.get("checklist", [])
     done = [i for i in items if i["state"] == "done"]
     stuck = [i for i in items if i["state"] in ("blocked", "disputed")]
     open_ = [i for i in items if i["state"] not in ("done", "blocked", "disputed")]
 
-    lines = [
-        "%s: %d of %d items verified" % (status, len(done), len(items)),
-        "",
-        meaning,
-        "",
-        "COMMISSIONED",
-        state.get("task", "")[:600],
-        "",
-        "VERIFIED (each checked by the agent that did not do it)",
-    ]
-    lines += ["  %s  %s\n      owner %s, verified by %s\n      evidence: %s"
-              % (i["id"], i["description"][:90], i.get("owner"), i.get("verified_by"),
+    headline = ("Completed — %d of %d outcomes independently verified."
+                if status == "COMPLETE" else
+                "Action needed — %d of %d outcomes independently verified.")
+    lines = [headline % (len(done), len(items)), "", "Outcome", meaning]
+    if state.get("task"):
+        lines += ["", "Your request", state.get("task", "")[:600]]
+    lines += ["", "Independent proof"]
+    lines += ["- %s — %s\n  Verified by %s; evidence: %s"
+              % (i["id"], i["description"][:90], i.get("verified_by") or "not recorded",
                  (i.get("evidence") or "none recorded")[:160])
-              for i in done] or ["  none"]
+              for i in done] or ["- No item reached independent verification."]
     if stuck:
-        lines += ["", "NEEDS YOU"]
-        lines += ["  %s  %s (%s)\n      %s"
+        lines += ["", "What Rally needs from you"]
+        lines += ["- %s — %s (%s)\n  %s"
                   % (i["id"], i["description"][:90], i["state"],
                      (i.get("evidence") or "")[:200]) for i in stuck]
     if open_:
-        lines += ["", "NOT REACHED"]
-        lines += ["  %s  %s (%s)" % (i["id"], i["description"][:90], i["state"]) for i in open_]
-    lines += ["", "RUN", "  %s   %d turns   workdir %s"
-              % (state.get("run_id"), state.get("turn", 0), state.get("workdir"))]
+        lines += ["", "Still open"]
+        lines += ["- %s — %s (%s)"
+                  % (i["id"], i["description"][:90], i["state"])
+                  for i in open_]
+    lines += ["", "Next step"]
+    if status == "COMPLETE":
+        lines += ["No action is required. Reply in this thread if you want Rally "
+                  "to extend or revise the result."]
+    else:
+        lines += ["Reply in this thread with the missing decision, access, or "
+                  "material. Rally will resume this same run without treating "
+                  "your reply as approval of its own work."]
     return "\n".join(lines)
+
+
+def _latest_evidence(value: object, limit: int = 600) -> str:
+    """Give the report writer the current evidence, not an obsolete prefix.
+
+    Agents often append a re-check after repairing an item. Taking the first
+    characters made the executive report repeat superseded measurements from
+    an earlier checkpoint even though the authoritative checklist was correct.
+    """
+    text = str(value or "none").strip()
+    if len(text) <= limit:
+        return text
+    return "[latest evidence tail] " + text[-limit:]
 
 
 def build_report_prompt(state: Dict, halt: str) -> str:
@@ -85,6 +103,14 @@ Write it as an executive brief:
   since the cross-check is the point of the system.
 - What to look at first.
 - What is still open, and what you would do next.
+- Use the headings Outcome, What changed, Independent proof, and Next step when
+  they apply. Make the next action understandable to a non-technical operator.
+- Translate implementation detail into business meaning. Do not expose local
+  paths, raw identifiers, JSON, model/tool traces, prompt text, stack traces, or
+  internal orchestration jargon in the executive body. The delivery layer adds
+  a separate audit receipt.
+- Evidence may contain re-checks after repairs. Treat the evidence shown here
+  as current and never repeat an older measurement or rejected claim.
 - Use decisive language, short sections, and only material detail. Avoid
   greetings, sign-offs, internal process commentary, and tool-by-tool narration.
 
@@ -94,5 +120,5 @@ itself, with no preamble.""" % (
         status, meaning, state.get("task", ""),
         "\n".join("  %s [%s] %s | owner=%s verified_by=%s | evidence: %s"
                   % (i["id"], i["state"], i["description"][:100], i.get("owner"),
-                     i.get("verified_by"), (i.get("evidence") or "none")[:150])
+                     i.get("verified_by"), _latest_evidence(i.get("evidence")))
                   for i in state.get("checklist", [])))

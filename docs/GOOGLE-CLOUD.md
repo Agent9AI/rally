@@ -46,8 +46,8 @@ Terraform creates:
 - a generated application token in Secret Manager
 - an IAM-protected Cloud Run service with scale-to-zero
 - a dedicated least-privilege Cloud Run invoker identity
-- permission for `imterryim@gmail.com` to mint only short-lived tokens as that
-  invoker identity
+- permission for an explicitly authorized operator to mint only short-lived
+  tokens as that invoker identity
 - a separate least-privilege customer control-plane identity
 - a rotating Cloud KMS key that wraps a unique AES-256-GCM data key for each
   user's connector credential
@@ -97,7 +97,7 @@ terraform -chdir=cloud/infra plan -out=/tmp/rally-production.tfplan \
   -var='google_web_client_id=<public-client-id>' \
   -var='google_workspace_client_id=""' \
   -var='control_plane_allowed_origins=["https://rally.agent9.dev"]' \
-  -var='control_plane_allowed_user_emails=["imterryim@gmail.com"]'
+  -var='control_plane_allowed_user_emails=["operator@example.com"]'
 
 terraform -chdir=cloud/infra apply /tmp/rally-production.tfplan
 ```

@@ -153,9 +153,10 @@ Health failing means the Worker; empty pending with mail sent means Resend's
 route is not pointing at the ingest URL.
 
 **"Google coordinator: UNREACHABLE" in preflight.** Confirm that the active
-`gcloud` identity is `imterryim@gmail.com`, the Cloud Run URL is current, and
-the `rally-cloud-token` keychain entry exists. Rally deliberately refuses to
-start agent work when Cloud coordination is enabled and required but unavailable.
+`gcloud` identity is the authorized operator account, the Cloud Run URL is
+current, and the `rally-cloud-token` keychain entry exists. Rally deliberately
+refuses to start agent work when Cloud coordination is enabled and required but
+unavailable.
 
 ## Limits, and why they are not optional
 

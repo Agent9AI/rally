@@ -12,11 +12,12 @@ and response bodies are excluded from telemetry.
 
 The optional `rally-control-plane` service is public only at the network edge.
 Every customer route verifies either a Google Identity Services ID token or a
-hashed, short-lived Rally browser session, derives tenant ownership from
-Google's immutable `sub` claim, and never receives permission to invoke the
-private coordinator. Redirect sign-in uses an exact same-origin callback,
-double-submit CSRF validation, a two-minute one-use exchange code, and a
-30-minute session; Firestore stores hashes rather than the raw values and TTL
+hashed, short-lived Rally browser session and never receives permission to
+invoke the private coordinator. Google redirect sign-in uses an exact
+same-origin callback, double-submit CSRF validation, and a two-minute one-use
+exchange code. Allowlisted company-email sign-in uses a signed, ten-minute,
+one-use link delivered by Resend. Both paths issue the same 30-minute session;
+Firestore stores hashes rather than raw link, code, or session values and TTL
 cleans expired records. Connector credentials are encrypted with a new
 AES-256-GCM data key per connection; Cloud KMS wraps each data key, while
 Firestore stores only ciphertext and metadata.
@@ -37,6 +38,26 @@ evaluations pass:
    integration, and run `./bin/rally --check --smoke`.
 
 ## Customer control plane activation
+
+Company-email sign-in requires pre-created Secret Manager secrets named
+`rally-resend-api-key` and `rally-magic-link-signing-key`. The latter must be a
+cryptographically random value of at least 32 bytes. Grant only the
+`rally-control-plane` service account `roles/secretmanager.secretAccessor` on
+those two secrets. Terraform manages those narrow IAM memberships, reads the
+existing secret metadata, and mounts `latest`; it does not create a secret or
+place a payload in state. The sender
+defaults to `Rally <rally@updates.agent9.dev>` and must be verified in Resend.
+Keep each approved company address in `control_plane_allowed_user_emails`.
+
+Terraform also creates the ten-minute-retention `rally-magic-link-delivery`
+Pub/Sub topic and push subscription. The control plane may publish; Pub/Sub may
+mint an OIDC token as that service account; and the internal delivery route
+requires the exact configured service-account email and audience. The request
+path queues approved and unknown addresses alike to avoid an allowlist timing
+oracle. Unknown deliveries are acknowledged without sending. The queued message
+contains no usable login token: the authenticated delivery worker derives one,
+keeps it pending until Resend accepts the message, then activates it in
+Firestore.
 
 Google requires Web OAuth client registration in Cloud Console. Create a Web
 application client named `Rally Web` and authorize the JavaScript origin
@@ -74,7 +95,7 @@ terraform -chdir=cloud/infra plan -out=/tmp/rally-production.tfplan \
   -var='google_web_client_id=<public-client-id>' \
   -var='google_workspace_client_id=""' \
   -var='control_plane_allowed_origins=["https://rally.agent9.dev"]' \
-  -var='control_plane_allowed_user_emails=["imterryim@gmail.com"]'
+  -var='control_plane_allowed_user_emails=["imterryim@gmail.com","terry@agent9.dev"]'
 
 terraform -chdir=cloud/infra apply /tmp/rally-production.tfplan
 ```

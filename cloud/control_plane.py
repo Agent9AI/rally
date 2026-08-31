@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import hmac
 import json
 import os
@@ -16,6 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict, Field, SecretStr, ValidationError, model_validator
 from starlette.requests import Request
 from starlette.responses import JSONResponse, RedirectResponse
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from auth_sessions import (
     AuthSessionError,
@@ -58,6 +60,23 @@ from hosted_connectors import (
 from hosted_connectors import (
     connector as hosted_connector,
 )
+from magic_links import (
+    MagicLinkDeliveryQueue,
+    MagicLinkError,
+    MagicLinkStore,
+    ResendMagicLinkMailer,
+    decode_magic_link_delivery,
+    make_magic_link_delivery_queue,
+    make_magic_link_mailer,
+    make_magic_link_store,
+)
+from teammate_store import (
+    TeammateConflict,
+    TeammateStore,
+    TeammateStoreError,
+    make_teammate_store,
+    public_teammate,
+)
 from user_auth import UserIdentity, verify_google_id_token
 
 SUPPORTED_CONNECTORS = frozenset(
@@ -74,7 +93,71 @@ SUPPORTED_CONNECTORS = frozenset(
     }
 )
 
+_MAX_AUTH_BODY_BYTES = 4 * 1024
+_BOUNDED_AUTH_PATHS = frozenset(
+    {
+        "/v1/auth/magic-link/request",
+        "/v1/auth/magic-link/consume",
+        "/v1/internal/magic-link/deliver",
+    }
+)
+
+
+class _AuthBodyTooLarge(Exception):
+    pass
+
+
+class BoundedAuthBodyMiddleware:
+    """Enforce the auth payload ceiling while ASGI chunks are still arriving."""
+
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if (
+            scope["type"] != "http"
+            or scope.get("method") != "POST"
+            or scope.get("path") not in _BOUNDED_AUTH_PATHS
+        ):
+            await self.app(scope, receive, send)
+            return
+
+        headers = dict(scope.get("headers", []))
+        declared = headers.get(b"content-length", b"")
+        transfer_encoding = headers.get(b"transfer-encoding", b"").lower()
+        if not declared or b"chunked" in transfer_encoding:
+            response = JSONResponse({"detail": "bounded content length is required"}, status_code=413)
+            await response(scope, receive, send)
+            return
+        try:
+            if declared and int(declared) > _MAX_AUTH_BODY_BYTES:
+                response = JSONResponse({"detail": "request body is too large"}, status_code=413)
+                await response(scope, receive, send)
+                return
+        except ValueError:
+            response = JSONResponse({"detail": "request body is too large"}, status_code=413)
+            await response(scope, receive, send)
+            return
+
+        received = 0
+
+        async def receive_bounded() -> Message:
+            nonlocal received
+            message = await receive()
+            if message["type"] == "http.request":
+                received += len(message.get("body", b""))
+                if received > _MAX_AUTH_BODY_BYTES:
+                    raise _AuthBodyTooLarge
+            return message
+
+        try:
+            await self.app(scope, receive_bounded, send)
+        except _AuthBodyTooLarge:
+            response = JSONResponse({"detail": "request body is too large"}, status_code=413)
+            await response(scope, receive, send)
+
 app = FastAPI(title="Rally Control Plane", version="0.1")
+app.add_middleware(BoundedAuthBodyMiddleware)
 allowed_origins = tuple(
     origin.strip() for origin in os.getenv("RALLY_ALLOWED_ORIGINS", "").split(",") if origin.strip()
 )
@@ -98,9 +181,127 @@ _oauth_broker: ConnectorOAuthBroker | None = None
 _connection_verifier: McpConnectionVerifier | None = None
 _execution_receipt_store: ExecutionReceiptStore | None = None
 _hosted_tool_caller: HostedMcpCaller | None = None
+_teammate_store: TeammateStore | None = None
+_magic_link_store: MagicLinkStore | None = None
+_magic_link_mailer: ResendMagicLinkMailer | None = None
+_magic_link_queue: MagicLinkDeliveryQueue | None = None
 _MAX_BROWSER_FORM_BYTES = 32 * 1024
 _MAX_CALLBACK_BODY_BYTES = 16 * 1024
 _MAX_INVOCATION_BODY_BYTES = 72 * 1024
+_EMAIL_LOCAL_PART = re.compile(r"^[a-z0-9](?:[a-z0-9._-]{0,62}[a-z0-9])?$")
+_EMAIL_DOMAIN_LABEL = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$")
+_SIMPLE_EMAIL = re.compile(
+    r"^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]{1,64}@[A-Za-z0-9.-]{1,253}$"
+)
+
+EMAIL_PROVIDER_OPTIONS = (
+    {
+        "id": "google_workspace",
+        "group": "company",
+        "name": "Google Workspace",
+        "description": "Use a company mailbox or send-as identity governed by Google Workspace.",
+        "connection_methods": ["oauth"],
+        "default_method": "oauth",
+        "resulting_status": "authorization_required",
+        "setup_available": True,
+        "activation_available": False,
+        "activation_note": "Rally's mailbox-specific Google OAuth registration is not deployed yet.",
+    },
+    {
+        "id": "microsoft_365",
+        "group": "company",
+        "name": "Microsoft 365",
+        "description": "Use an Outlook or Exchange Online mailbox through Microsoft Graph.",
+        "connection_methods": ["oauth"],
+        "default_method": "oauth",
+        "resulting_status": "authorization_required",
+        "setup_available": True,
+        "activation_available": False,
+        "activation_note": "Rally's Microsoft Entra application registration is not deployed yet.",
+    },
+    {
+        "id": "company_subdomain",
+        "group": "company",
+        "recommended": True,
+        "name": "Company subdomain",
+        "description": "Reserve an identity such as research@ai.company.com without changing root mail.",
+        "connection_methods": ["dns"],
+        "default_method": "dns",
+        "resulting_status": "dns_required",
+        "setup_available": True,
+        "activation_available": False,
+        "activation_note": "Save the identity now; DNS verification remains required before mail is live.",
+    },
+    {
+        "id": "resend",
+        "group": "infrastructure",
+        "name": "Resend",
+        "description": "Connect a customer-owned Resend account and verified domain.",
+        "connection_methods": ["oauth", "api_key"],
+        "default_method": "oauth",
+        "resulting_status": "authorization_required",
+        "setup_available": True,
+        "activation_available": False,
+        "activation_note": "OAuth is supported by Resend; Rally's tenant webhook lifecycle is not deployed yet.",
+    },
+    {
+        "id": "cloudflare_email",
+        "group": "infrastructure",
+        "name": "Cloudflare Email",
+        "description": "Route company mail to Rally and send replies from a Cloudflare DNS domain.",
+        "connection_methods": ["api_key"],
+        "default_method": "api_key",
+        "resulting_status": "configuration_required",
+        "setup_available": True,
+        "activation_available": False,
+        "activation_note": "Cloudflare's Email Sending REST API currently documents API-token authentication; Rally has not certified an Email Sending OAuth scope.",
+    },
+    {
+        "id": "existing_address",
+        "group": "company",
+        "name": "Existing address",
+        "description": "Associate an address that already routes to Rally, then verify both directions.",
+        "connection_methods": ["existing"],
+        "default_method": "existing",
+        "resulting_status": "verification_required",
+        "setup_available": True,
+        "activation_available": False,
+        "activation_note": "A signed inbound and outbound threading test is required before activation.",
+    },
+    {
+        "id": "advanced_provider",
+        "group": "infrastructure",
+        "name": "Advanced provider",
+        "description": "Record a customer-managed SMTP or email API integration plan.",
+        "connection_methods": ["api_key"],
+        "default_method": "api_key",
+        "resulting_status": "configuration_required",
+        "setup_available": True,
+        "activation_available": False,
+        "activation_note": "Provider configuration and a live send/receive test remain required.",
+    },
+    {
+        "id": "rally_trial",
+        "group": "trial",
+        "name": "Temporary Rally trial",
+        "description": "Use a temporary Rally-domain identity only while evaluating the product.",
+        "connection_methods": ["trial"],
+        "default_method": "trial",
+        "resulting_status": "trial_activation_required",
+        "setup_available": True,
+        "activation_available": False,
+        "activation_note": "Temporary evaluation identity; move to a company-owned address before launch.",
+    },
+)
+
+_PROVIDER_METHODS = {
+    option["id"]: frozenset(option["connection_methods"])
+    for option in EMAIL_PROVIDER_OPTIONS
+}
+_PROVIDER_STATUSES = {
+    option["id"]: option["resulting_status"]
+    for option in EMAIL_PROVIDER_OPTIONS
+}
 
 
 @app.exception_handler(RequestValidationError)
@@ -166,6 +367,37 @@ def get_hosted_tool_caller() -> HostedMcpCaller:
     return _hosted_tool_caller
 
 
+def get_teammate_store() -> TeammateStore:
+    global _teammate_store
+    if _teammate_store is None:
+        try:
+            _teammate_store = make_teammate_store()
+        except TeammateStoreError as exc:
+            raise HTTPException(status_code=503, detail="teammate onboarding is unavailable") from exc
+    return _teammate_store
+
+
+def get_magic_link_store() -> MagicLinkStore:
+    global _magic_link_store
+    if _magic_link_store is None:
+        _magic_link_store = make_magic_link_store()
+    return _magic_link_store
+
+
+def get_magic_link_mailer() -> ResendMagicLinkMailer:
+    global _magic_link_mailer
+    if _magic_link_mailer is None:
+        _magic_link_mailer = make_magic_link_mailer(admin_return_url())
+    return _magic_link_mailer
+
+
+def get_magic_link_queue() -> MagicLinkDeliveryQueue:
+    global _magic_link_queue
+    if _magic_link_queue is None:
+        _magic_link_queue = make_magic_link_delivery_queue()
+    return _magic_link_queue
+
+
 def _unauthorized(detail: str = "authentication required") -> HTTPException:
     return HTTPException(
         status_code=401,
@@ -192,6 +424,8 @@ async def require_user(
         ) from exc
     if identity is None:
         raise _unauthorized("login session is invalid or expired")
+    if not _session_identity_is_allowed(identity):
+        raise HTTPException(status_code=403, detail="this account is no longer approved for Rally")
     return identity
 
 
@@ -247,6 +481,26 @@ class LoginCodeInput(BaseModel):
     code: SecretStr = Field(min_length=32, max_length=128)
 
 
+class MagicLinkRequestInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    email: str = Field(min_length=1, max_length=320)
+
+
+class MagicLinkConsumeInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    token: SecretStr = Field(min_length=32, max_length=256)
+
+
+class PubSubPushMessage(BaseModel):
+    data: str = Field(min_length=4, max_length=4096)
+
+
+class PubSubPushInput(BaseModel):
+    message: PubSubPushMessage
+
+
 class HostedToolCallInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -254,12 +508,123 @@ class HostedToolCallInput(BaseModel):
     arguments: dict[str, Any] = Field(default_factory=dict)
 
 
-def public_user(user: UserIdentity) -> dict[str, str | None]:
+class TeammateCreateInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str = Field(min_length=2, max_length=80)
+    role: Literal[
+        "general",
+        "research",
+        "security",
+        "operations",
+        "finance",
+        "customer_success",
+        "custom",
+    ]
+    custom_role: str | None = Field(default=None, min_length=2, max_length=120)
+    human_owner_email: str = Field(min_length=3, max_length=320)
+    email_local_part: str = Field(min_length=1, max_length=64)
+    email_domain: str | None = Field(default=None, min_length=1, max_length=253)
+    email_provider: Literal[
+        "google_workspace",
+        "microsoft_365",
+        "company_subdomain",
+        "resend",
+        "cloudflare_email",
+        "existing_address",
+        "advanced_provider",
+        "rally_trial",
+    ]
+    connection_method: Literal["oauth", "api_key", "dns", "existing", "trial"]
+    reachability: Literal[
+        "selected_senders",
+        "entire_company",
+        "approved_domains",
+        "public_intake",
+    ] = "selected_senders"
+    allowed_senders: list[str] = Field(default_factory=list, max_length=50)
+
+    @model_validator(mode="after")
+    def valid_identity(self) -> TeammateCreateInput:
+        normalized_name = self.name.strip()
+        if len(normalized_name) < 2 or any(
+            ord(character) < 32 for character in self.name
+        ):
+            raise ValueError("invalid teammate name")
+        if self.role == "custom":
+            normalized_role = (self.custom_role or "").strip()
+            if len(normalized_role) < 2 or any(
+                ord(character) < 32 for character in self.custom_role or ""
+            ):
+                raise ValueError("custom role is required")
+        if self.role != "custom" and self.custom_role is not None:
+            raise ValueError("custom role is not allowed")
+        if not _valid_email(self.human_owner_email):
+            raise ValueError("invalid human owner")
+        local_part = self.email_local_part.strip().casefold()
+        if not _EMAIL_LOCAL_PART.fullmatch(local_part) or ".." in local_part:
+            raise ValueError("invalid email local part")
+        methods = _PROVIDER_METHODS.get(self.email_provider, frozenset())
+        if self.connection_method not in methods:
+            raise ValueError("connection method is not available for this provider")
+        if self.email_provider != "rally_trial" and not _valid_domain(self.email_domain or ""):
+            raise ValueError("valid company email domain is required")
+        for sender in self.allowed_senders:
+            normalized = sender.strip().casefold()
+            if normalized.startswith("@"):
+                if not _valid_domain(normalized[1:]):
+                    raise ValueError("invalid allowed sender domain")
+            elif not _valid_email(normalized):
+                raise ValueError("invalid allowed sender")
+        return self
+
+
+def _valid_domain(value: str) -> bool:
+    normalized = value.strip().rstrip(".").casefold()
+    if not normalized or len(normalized) > 253 or "." not in normalized:
+        return False
+    labels = normalized.split(".")
+    return all(_EMAIL_DOMAIN_LABEL.fullmatch(label) for label in labels)
+
+
+def _valid_email(value: str) -> bool:
+    normalized = value.strip().casefold()
+    if not _SIMPLE_EMAIL.fullmatch(normalized):
+        return False
+    local_part, domain = normalized.rsplit("@", 1)
+    return bool(local_part) and not (
+        local_part.startswith(".")
+        or local_part.endswith(".")
+        or ".." in local_part
+    ) and _valid_domain(domain)
+
+
+def configured_pilot_address() -> str | None:
+    value = os.getenv("RALLY_PILOT_EMAIL_ADDRESS", "").strip().casefold()
+    if not value:
+        return None
+    if not _valid_email(value):
+        raise HTTPException(status_code=503, detail="pilot email identity is not configured")
+    return value
+
+
+def configured_trial_domain() -> str:
+    value = os.getenv("RALLY_TRIAL_EMAIL_DOMAIN", "updates.agent9.dev").strip().casefold()
+    if not _valid_domain(value):
+        raise HTTPException(status_code=503, detail="trial email identity is not configured")
+    return value
+
+
+def workspace_id_for(user: UserIdentity) -> str:
     configured_workspace = os.getenv("RALLY_WORKSPACE_ID", "").strip()
     if configured_workspace and not re.fullmatch(
         r"[A-Za-z0-9][A-Za-z0-9._:-]{0,95}", configured_workspace
     ):
         raise HTTPException(status_code=503, detail="workspace identity is not configured")
+    return configured_workspace or f"user:{user.uid}"
+
+
+def public_user(user: UserIdentity) -> dict[str, str | None]:
     return {
         "uid": user.uid,
         "email": user.email,
@@ -271,8 +636,91 @@ def public_user(user: UserIdentity) -> dict[str, str | None]:
         # company authorize multiple administrators without merging vaults.
         # The subject-scoped fallback is safe for local tests and fails closed
         # against production projections when the deployment variable is absent.
-        "workspace_id": configured_workspace or f"user:{user.uid}",
+        "workspace_id": workspace_id_for(user),
     }
+
+
+def _magic_link_workspace_id() -> str:
+    workspace_id = os.getenv("RALLY_WORKSPACE_ID", "").strip()
+    if not workspace_id or not re.fullmatch(
+        r"[A-Za-z0-9][A-Za-z0-9._:-]{0,95}", workspace_id
+    ):
+        raise MagicLinkError("magic-link workspace is not configured")
+    return workspace_id
+
+
+def _magic_link_identity(email: str) -> UserIdentity:
+    local, domain = email.split("@", 1)
+    readable_name = re.sub(r"[._-]+", " ", local).strip().title() or None
+    return UserIdentity(
+        uid=f"email:{hashlib.sha256(email.encode('utf-8')).hexdigest()}",
+        email=email,
+        name=readable_name,
+        hosted_domain=domain,
+    )
+
+
+def _approved_magic_link_email(value: str) -> str | None:
+    normalized = value.strip().casefold()
+    if not _valid_email(normalized):
+        return None
+    allowed = {
+        item.strip().casefold()
+        for item in os.getenv("RALLY_ALLOWED_USER_EMAILS", "").split(",")
+        if item.strip()
+    }
+    return normalized if normalized in allowed else None
+
+
+def _session_identity_is_allowed(identity: UserIdentity) -> bool:
+    if identity.uid.startswith("email:"):
+        return _approved_magic_link_email(identity.email) is not None
+    allowed_emails = {
+        item.strip().casefold()
+        for item in os.getenv("RALLY_ALLOWED_USER_EMAILS", "").split(",")
+        if item.strip()
+    }
+    if allowed_emails and identity.email.casefold() not in allowed_emails:
+        return False
+    allowed_domains = {
+        item.strip().casefold()
+        for item in os.getenv("RALLY_ALLOWED_GOOGLE_DOMAINS", "").split(",")
+        if item.strip()
+    }
+    return not allowed_domains or (
+        isinstance(identity.hosted_domain, str)
+        and identity.hosted_domain.casefold() in allowed_domains
+    )
+
+
+def _verify_pubsub_push(authorization: str | None) -> None:
+    expected_audience = os.getenv("RALLY_PUBSUB_PUSH_AUDIENCE", "")
+    expected_email = os.getenv("RALLY_PUBSUB_PUSH_SERVICE_ACCOUNT", "").casefold()
+    if (
+        not expected_audience
+        or not expected_email
+        or not authorization
+        or not authorization.startswith("Bearer ")
+        or len(authorization) > 16 * 1024
+    ):
+        raise _unauthorized("delivery authentication required")
+    try:
+        from google.auth.transport import requests as google_requests
+        from google.oauth2 import id_token as google_id_token
+
+        claims = google_id_token.verify_oauth2_token(
+            authorization.removeprefix("Bearer "),
+            google_requests.Request(),
+            audience=expected_audience,
+        )
+    except (ValueError, TypeError, OSError):
+        raise _unauthorized("invalid delivery identity") from None
+    if (
+        claims.get("iss") not in {"accounts.google.com", "https://accounts.google.com"}
+        or str(claims.get("email", "")).casefold() != expected_email
+        or claims.get("email_verified") is not True
+    ):
+        raise _unauthorized("invalid delivery identity")
 
 
 def admin_return_url() -> str:
@@ -444,6 +892,80 @@ def me(user: Annotated[UserIdentity, Depends(require_user)]) -> dict[str, str | 
     return public_user(user)
 
 
+@app.get("/v1/email-provider-options")
+def email_provider_options(
+    _: Annotated[UserIdentity, Depends(require_user)],
+) -> dict[str, object]:
+    """Expose product readiness without turning a design into an activation claim."""
+
+    return {
+        "providers": [dict(option) for option in EMAIL_PROVIDER_OPTIONS],
+        "trial_domain": configured_trial_domain(),
+        "pilot_address": configured_pilot_address(),
+    }
+
+
+@app.get("/v1/teammates")
+async def list_teammates(
+    user: Annotated[UserIdentity, Depends(require_user)],
+    store: Annotated[TeammateStore, Depends(get_teammate_store)],
+) -> dict[str, object]:
+    try:
+        records = await store.list(workspace_id_for(user))
+    except TeammateStoreError as exc:
+        raise HTTPException(status_code=503, detail="could not read teammates") from exc
+    return {"teammates": [public_teammate(record) for record in records]}
+
+
+@app.post("/v1/teammates", status_code=201)
+async def create_teammate(
+    body: TeammateCreateInput,
+    user: Annotated[UserIdentity, Depends(require_user)],
+    store: Annotated[TeammateStore, Depends(get_teammate_store)],
+) -> dict[str, object]:
+    provider = body.email_provider
+    trial_domain = configured_trial_domain()
+    domain = (
+        trial_domain
+        if provider == "rally_trial"
+        else (body.email_domain or "").strip().rstrip(".").casefold()
+    )
+    if not _valid_domain(domain):
+        raise HTTPException(status_code=503, detail="trial email identity is not configured")
+    if provider != "rally_trial" and (
+        domain == trial_domain or domain.endswith(f".{trial_domain}")
+    ):
+        raise HTTPException(status_code=422, detail="email domain is reserved for Rally trials")
+    owner = body.human_owner_email.strip().casefold()
+    allowed = {
+        value.strip().casefold()
+        for value in body.allowed_senders
+        if value.strip()
+    }
+    allowed.add(owner)
+    try:
+        record = await store.create(
+            workspace_id=workspace_id_for(user),
+            created_by_uid=user.uid,
+            name=body.name.strip(),
+            role=body.role,
+            custom_role=(body.custom_role.strip() if body.custom_role else None),
+            human_owner_email=owner,
+            email_local_part=body.email_local_part.strip().casefold(),
+            email_domain=domain,
+            email_provider=provider,
+            connection_method=body.connection_method,
+            email_status=str(_PROVIDER_STATUSES[provider]),
+            reachability=body.reachability,
+            allowed_senders=tuple(sorted(allowed)),
+        )
+    except TeammateConflict as exc:
+        raise HTTPException(status_code=409, detail="email address is already assigned") from exc
+    except TeammateStoreError as exc:
+        raise HTTPException(status_code=503, detail="could not create teammate") from exc
+    return public_teammate(record)
+
+
 @app.get("/v1/connectors")
 def connector_catalog(
     _: Annotated[UserIdentity, Depends(require_user)],
@@ -499,6 +1021,105 @@ async def exchange_login_code(
         "expires_in": 1800,
         "account": public_user(user),
     }
+
+
+_MAGIC_LINK_ACCEPTED = {
+    "accepted": True,
+    "detail": "If this address is approved, a secure sign-in link is on its way.",
+}
+
+
+@app.post("/v1/auth/magic-link/request", status_code=202)
+async def request_magic_link(
+    body: MagicLinkRequestInput,
+) -> dict[str, object]:
+    """Deliver an allowlisted link without exposing account membership."""
+
+    candidate = body.email.strip().casefold()
+    approved = _approved_magic_link_email(candidate)
+    # Rate keys are opaque HMAC document IDs. Before the global circuit opens,
+    # approved and unknown addresses both take the same durable Pub/Sub path;
+    # no email-provider latency can disclose membership in the allowlist.
+    rate_subject = approved or f"unapproved:{hashlib.sha256(candidate.encode()).hexdigest()}"
+    try:
+        permitted = await get_magic_link_store().reserve_request(rate_subject)
+        if permitted:
+            await get_magic_link_queue().publish(approved, _magic_link_workspace_id())
+            print(json.dumps({"event": "magic_link_queued"}))
+    except MagicLinkError as exc:
+        print(json.dumps({"event": "magic_link_request_failed", "reason": str(exc)}))
+    return dict(_MAGIC_LINK_ACCEPTED)
+
+
+@app.post("/v1/auth/magic-link/consume")
+async def consume_magic_link(
+    body: MagicLinkConsumeInput,
+    auth_store: Annotated[AuthSessionStore, Depends(get_auth_store)],
+) -> dict[str, str]:
+    """Consume one email proof and mint the existing one-use browser login code."""
+
+    try:
+        identity = await get_magic_link_store().consume(
+            body.token.get_secret_value(),
+            _magic_link_workspace_id(),
+        )
+    except MagicLinkError as exc:
+        raise HTTPException(
+            status_code=503, detail="secure email sign-in is temporarily unavailable"
+        ) from exc
+    if identity is None or _approved_magic_link_email(identity.email) is None:
+        raise _unauthorized("magic link is invalid or expired")
+    try:
+        code = await auth_store.issue_code(identity)
+    except AuthSessionError as exc:
+        raise HTTPException(
+            status_code=503, detail="browser authentication is unavailable"
+        ) from exc
+    return {"login_code": code}
+
+
+@app.post("/v1/internal/magic-link/deliver")
+async def deliver_magic_link(
+    body: PubSubPushInput,
+    authorization: str | None = Header(default=None, alias="Authorization"),
+) -> dict[str, bool]:
+    """Process one authenticated Pub/Sub delivery without logging its contents."""
+
+    _verify_pubsub_push(authorization)
+    try:
+        delivery = decode_magic_link_delivery(body.message.data)
+    except MagicLinkError:
+        # A poison message cannot become valid on retry. Acknowledge it without
+        # reflecting its contents into a response or log.
+        return {"delivered": False}
+    if delivery.workspace_id != _magic_link_workspace_id() or not delivery.email:
+        return {"delivered": False}
+    approved = _approved_magic_link_email(delivery.email)
+    if approved is None:
+        return {"delivered": False}
+
+    store = get_magic_link_store()
+    token = ""
+    try:
+        token = await store.issue(
+            _magic_link_identity(approved),
+            delivery.workspace_id,
+            delivery_id=delivery.delivery_id,
+            expires_at=delivery.expires_at,
+        )
+        await get_magic_link_mailer().send(approved, token)
+        await store.activate(token)
+    except MagicLinkError as exc:
+        if token:
+            try:
+                await store.invalidate(token)
+            except MagicLinkError:
+                pass
+        raise HTTPException(
+            status_code=503, detail="sign-in delivery is temporarily unavailable"
+        ) from exc
+    print(json.dumps({"event": "magic_link_delivered"}))
+    return {"delivered": True}
 
 
 @app.post("/v1/auth/logout")

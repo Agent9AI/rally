@@ -11,7 +11,11 @@ delivery repeats, and autonomous loops eventually behave unexpectedly.
 | Public Cloud Run invocation | IAM allows one Google principal | `cloud/infra/main.tf` |
 | Stolen or omitted app credential | Secret Manager-backed token; constant-time check; fail closed | `cloud/service.py` |
 | Cross-tenant credential access | Verified Google `sub` ownership, tenant-derived document IDs, and owner-hash checks | `cloud/user_auth.py`; `cloud/credential_vault.py` |
+| Cross-workspace teammate access | Verified workspace identity on every list/create route; browser responses omit workspace ID and creator subject | `cloud/control_plane.py`; `cloud/teammate_store.py`; teammate tests |
+| Unverified tenant squats another company's address | Pending customer-domain claims are workspace-scoped; only Rally-owned trial names are globally reserved; activation still requires domain/provider proof | `cloud/teammate_store.py`; teammate tests |
+| Setup record mistaken for a live mailbox | Every provider currently produces an explicit activation-required state; no create path can return `ready`; Work links switch only to a genuinely ready teammate | `cloud/control_plane.py`; `site/admin/app.js`; teammate tests |
 | Redirect login replay or CSRF | Exact callback route, Google's double-submit CSRF check, atomic one-use code, hashed short-lived session, Firestore TTL | `src/worker/index.js`; `cloud/auth_sessions.py`; control-plane tests |
+| Company-email link theft, replay, enumeration, or delivery abuse | Uniform Pub/Sub request path, current allowlist checks, per-email plus high emergency circuit limits, signed email/workspace binding, pending-to-active delivery, ten-minute expiry, no plaintext token at rest, and atomic one-use consumption | `cloud/magic_links.py`; magic-link tests |
 | Connector OAuth replay, login CSRF, mix-up, or SSRF | Hashed one-use PKCE state, per-flow same-browser `HttpOnly` binding, production-only Worker callback, provider-pinned HTTPS metadata/token hosts, redirect refusal, encrypted ten-minute flow, atomic consume, and same-card return | `src/worker/index.js`; `cloud/connector_oauth.py`; OAuth tests |
 | Connector credential disclosure | Unique AES-256-GCM data key per connection, wrapped by Cloud KMS; ciphertext-only Firestore records | `cloud/credential_vault.py`; KMS tests |
 | Stored credential mistaken for working authority | Ready requires live authentication, bounded discovery matched to a committed safe allowlist, and one predetermined harmless read; the proof stores only canary/schema metadata | `cloud/hosted_connectors.py`; `cloud/credential_vault.py`; certification tests |
@@ -60,6 +64,10 @@ token, application token, Resend key, ingest-token URL, or raw eval histories.
   separate public control plane accepts verified Google accounts but has no
   permission to invoke the coordinator; an optional email or Workspace-domain
   allowlist can close initial access while role groups are added.
+- Teammate reachability and approved-sender fields are persisted setup policy,
+  not active ingress authority. The current live pilot still uses the runner's
+  configured owner allowlist. Activation must connect those records to signed
+  inbound identity checks before a new teammate address can receive work.
 
 ## Customer identity and credential vault
 
@@ -72,8 +80,24 @@ session. The
 Google path verifies audience, issuer, expiry, verified email, and optional
 account/domain allowlists. Redirect sign-in additionally verifies Google's
 double-submit CSRF token and atomically consumes a two-minute exchange code.
-Rally keys tenancy only by the Google `sub` claim; email is display data and may
-change.
+The company-email path accepts only normalized allowlisted addresses and always
+returns the same request response. Approved and unknown requests take the same
+Google Pub/Sub publish path; the message contains no usable sign-in token. An
+OIDC-authenticated delivery endpoint generates a signed, high-entropy ten-minute
+link, binds it to the email and configured workspace, and marks it active only
+after Resend accepts delivery. Firestore indexes only the token hash; Resend
+sees the destination and one-time message. Durable keyed email and
+keyed per-email buckets plus a high emergency circuit limit constrain abuse
+without trusting spoofable proxy headers or storing raw rate keys in document
+IDs. Both paths then issue the
+same Rally session, whose access is rechecked against the current allowlist.
+Google identities use the
+immutable `sub`; company-email identities use a stable hash of the normalized
+address and remain scoped to the configured workspace. The pilot deliberately
+does not merge those principals: signing in through a different method can show
+a distinct per-operator connector vault even when both principals share the
+workspace dashboard. Account linking requires an explicit verified migration,
+not an email-equality guess.
 
 The admin keeps the short-lived ID token or 30-minute Rally session and a pasted
 credential only in page memory. It does not write those raw values to cookies,

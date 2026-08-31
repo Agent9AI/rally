@@ -14,6 +14,8 @@
  *   GET  /v1/console/runs/:id Public, sanitized run detail.
  *   GET  /v1/workspace/runs    Authenticated, workspace-scoped work queue.
  *   GET  /v1/workspace/runs/:id Authenticated, workspace-scoped run detail.
+ *   POST /v1/workspace/jobs    Authenticated manual commission into the inbox.
+ *   *    /api/control-plane/*  Allowlisted same-origin browser control-plane gateway.
  *   POST /admin/google/callback Exact, bounded Google redirect handoff.
  *   POST /admin/connect/start/:id Same-origin provider OAuth start and browser binding.
  *   GET  /admin/connect/callback Exact, bounded provider OAuth handoff.
@@ -27,10 +29,14 @@ const MAX_CONNECTOR_START_BODY = 16 * 1024;
 const MAX_CONNECTOR_START_RESPONSE = 16 * 1024;
 const MAX_CONNECTOR_CALLBACK_QUERY = 12 * 1024;
 const MAX_WORKSPACE_IDENTITY_RESPONSE = 16 * 1024;
+const MAX_MANUAL_JOB_BODY = 12 * 1024;
+const MAX_CONTROL_PLANE_BODY = 32 * 1024;
 const CONSOLE_ROOT = "/v1/console/runs";
 const WORKSPACE_ROOT = "/v1/workspace/runs";
+const WORKSPACE_JOBS_ROOT = "/v1/workspace/jobs";
+const CONTROL_PLANE_PROXY_ROOT = "/api/control-plane";
 const SITE_ORIGIN = "https://agent9-rally.pages.dev";
-const CONTROL_PLANE_ORIGIN = "https://rally-control-plane-u5xngrbzna-ue.a.run.app";
+const CONTROL_PLANE_ORIGIN = "https://rally-control-plane-1000134647783.us-east1.run.app";
 const GOOGLE_CALLBACK_PATH = "/admin/google/callback";
 const CONNECTOR_START_ROOT = "/admin/connect/start/";
 const CONNECTOR_CALLBACK_PATH = "/admin/connect/callback";
@@ -39,6 +45,11 @@ const OAUTH_SECRET = /^[A-Za-z0-9_-]{32,128}$/;
 const OAUTH_COOKIE_PREFIX = "__Secure-rally-oauth-";
 const RUN_ID = /^r-[0-9a-z-]{3,77}$/;
 const WORKSPACE_ID = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,95}$/;
+const USER_ID = /^[A-Za-z0-9._:-]{1,255}$/;
+const SIMPLE_EMAIL = /^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]{1,64}@[A-Za-z0-9.-]{1,253}$/;
+const DOMAIN_LABEL = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
+const IDEMPOTENCY_KEY = /^[A-Za-z0-9][A-Za-z0-9._:-]{15,127}$/;
+const SHA256_HEX = /^[0-9a-f]{64}$/;
 const RUN_STATUSES = new Set(["running", "complete", "blocked", "halted"]);
 const TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/;
 
@@ -127,6 +138,29 @@ function userAuthHeaders(request) {
   return headers;
 }
 
+function normalizedEmail(value) {
+  if (typeof value !== "string") return null;
+  const email = value.trim().toLowerCase();
+  if (!SIMPLE_EMAIL.test(email)) return null;
+  const [localPart, domain] = email.split("@");
+  if (
+    !localPart ||
+    localPart.startsWith(".") ||
+    localPart.endsWith(".") ||
+    localPart.includes("..") ||
+    !domain.includes(".") ||
+    !domain.split(".").every((label) => DOMAIN_LABEL.test(label))
+  ) return null;
+  return email;
+}
+
+async function sha256Hex(value) {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+  return [...new Uint8Array(digest)]
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
 async function workspaceKey(workspaceId, secret) {
   if (!WORKSPACE_ID.test(workspaceId) || typeof secret !== "string" || !secret) {
     return null;
@@ -172,11 +206,124 @@ async function authenticatedWorkspace(request, env) {
   } catch (_) {
     return { response: json({ detail: "workspace authentication is unavailable" }, 502) };
   }
-  const key = await workspaceKey(identity?.workspace_id || "", env.POLL_TOKEN || "");
+  const workspaceId = typeof identity?.workspace_id === "string"
+    ? identity.workspace_id.trim()
+    : "";
+  // Tenant partition keys must outlive runner credential rotation. Never fall
+  // back to POLL_TOKEN: a missing partition secret is safer as a hard outage
+  // than silently making historical workspace records disappear.
+  const key = await workspaceKey(workspaceId, env.WORKSPACE_KEY_SECRET || "");
   if (!key) {
     return { response: json({ detail: "workspace is not configured" }, 503) };
   }
-  return { key };
+  const userId = typeof identity?.uid === "string" ? identity.uid.trim() : "";
+  return {
+    key,
+    identity: {
+      user_id: USER_ID.test(userId) ? userId : null,
+      email: normalizedEmail(identity?.email),
+      workspace_id: workspaceId,
+    },
+  };
+}
+
+function controlPlaneProxyRule(method, path) {
+  const exact = new Map([
+    ["POST /v1/auth/magic-link/request", { auth: "public", body: true }],
+    ["POST /v1/auth/magic-link/consume", { auth: "public", body: true }],
+    ["POST /v1/auth/exchange", { auth: "public", body: true }],
+    ["POST /v1/auth/logout", { auth: "session", body: false }],
+    ["GET /v1/me", { auth: "user", body: false }],
+    ["GET /v1/email-provider-options", { auth: "user", body: false }],
+    ["GET /v1/teammates", { auth: "user", body: false }],
+    ["POST /v1/teammates", { auth: "user", body: true }],
+    ["GET /v1/connectors", { auth: "user", body: false }],
+    ["GET /v1/connections", { auth: "user", body: false }],
+  ]);
+  const rule = exact.get(`${method} ${path}`);
+  if (rule) return rule;
+
+  const connection = path.match(/^\/v1\/connections\/([a-z0-9-]{1,64})(\/verify|\/oauth\/pending)?$/);
+  if (!connection) return null;
+  const suffix = connection[2] || "";
+  if (!suffix && method === "PUT") return { auth: "user", body: true };
+  if (!suffix && method === "DELETE") return { auth: "user", body: false };
+  if (suffix === "/verify" && method === "POST") return { auth: "user", body: false };
+  if (suffix === "/oauth/pending" && method === "DELETE") {
+    return { auth: "user", body: false };
+  }
+  return null;
+}
+
+async function proxyControlPlane(request, url, path) {
+  const upstreamPath = path.slice(CONTROL_PLANE_PROXY_ROOT.length);
+  const rule = controlPlaneProxyRule(request.method, upstreamPath);
+  if (!rule || url.search || url.hash) {
+    return json({ detail: "control-plane route not found" }, 404);
+  }
+
+  const headers = new Headers();
+  if (rule.auth === "user") {
+    const auth = userAuthHeaders(request);
+    if (!auth) return json({ detail: "authentication required" }, 401);
+    for (const [name, value] of auth) headers.set(name, value);
+  } else if (rule.auth === "session") {
+    const session = request.headers.get("x-rally-session") || "";
+    if (!OAUTH_SECRET.test(session)) {
+      return json({ detail: "authentication required" }, 401);
+    }
+    headers.set("x-rally-session", session);
+  }
+
+  const requestId = request.headers.get("x-request-id") || "";
+  if (/^[A-Za-z0-9._:-]{1,128}$/.test(requestId)) {
+    headers.set("x-request-id", requestId);
+  }
+
+  let body;
+  if (rule.body) {
+    const contentType = request.headers.get("content-type") || "";
+    if (!contentType.toLowerCase().startsWith("application/json")) {
+      return json({ detail: "invalid request" }, 415);
+    }
+    body = await boundedText(request, MAX_CONTROL_PLANE_BODY);
+    if (body === null) return json({ detail: "request too large" }, 413);
+    headers.set("content-type", "application/json");
+  } else if (request.body) {
+    return json({ detail: "invalid request" }, 400);
+  }
+
+  try {
+    const upstream = await fetch(`${CONTROL_PLANE_ORIGIN}${upstreamPath}`, {
+      method: request.method,
+      headers,
+      body,
+      redirect: "manual",
+    });
+    const responseHeaders = new Headers({
+      "cache-control": "no-store",
+      "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+      "referrer-policy": "no-referrer",
+      "x-content-type-options": "nosniff",
+    });
+    for (const name of ["content-type", "location", "pragma", "www-authenticate"]) {
+      const value = upstream.headers.get(name);
+      if (value) responseHeaders.set(name, value);
+    }
+    return new Response(upstream.body, {
+      status: upstream.status,
+      statusText: upstream.statusText,
+      headers: responseHeaders,
+    });
+  } catch (error) {
+    console.error(JSON.stringify({
+      event: "control_plane_proxy_failed",
+      method: request.method,
+      path: upstreamPath,
+      error: error instanceof Error ? error.message : String(error),
+    }));
+    return json({ detail: "Rally control plane is temporarily unavailable" }, 502);
+  }
 }
 
 async function proxyConnectorStart(request, connectorId) {
@@ -490,6 +637,277 @@ async function boundedText(request, maximum) {
   return new TextDecoder().decode(joined);
 }
 
+function normalizeManualJob(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error("body must be an object");
+  }
+  const allowed = new Set(["title", "goal", "source_run_id", "second_wind"]);
+  const keys = Object.keys(value);
+  if (
+    !Object.hasOwn(value, "title") ||
+    !Object.hasOwn(value, "goal") ||
+    keys.some((key) => !allowed.has(key))
+  ) {
+    throw new Error("body contains unsupported fields");
+  }
+  if (typeof value.title !== "string" || typeof value.goal !== "string") {
+    throw new Error("title and goal must be strings");
+  }
+  const title = value.title.trim();
+  const goal = value.goal.trim();
+  const unsafeControl = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/;
+  if (!title || title.length > 160 || /[\r\n]/.test(title) || unsafeControl.test(title)) {
+    throw new Error("title must be between 1 and 160 characters on one line");
+  }
+  if (!goal || goal.length > 6000 || unsafeControl.test(goal)) {
+    throw new Error("goal must be between 1 and 6000 characters");
+  }
+  const sourceRunId = value.source_run_id == null ? null : value.source_run_id;
+  if (sourceRunId !== null && (typeof sourceRunId !== "string" || !RUN_ID.test(sourceRunId))) {
+    throw new Error("source_run_id is invalid");
+  }
+  if (Object.hasOwn(value, "second_wind") && typeof value.second_wind !== "boolean") {
+    throw new Error("second_wind must be a boolean");
+  }
+  return {
+    title,
+    goal,
+    source_run_id: sourceRunId,
+    second_wind: Object.hasOwn(value, "second_wind") ? value.second_wind : null,
+  };
+}
+
+function acceptedManualJob(envelope, fingerprint, workspaceId) {
+  return Boolean(
+    envelope &&
+    typeof envelope === "object" &&
+    !Array.isArray(envelope) &&
+    envelope.source === "dashboard" &&
+    envelope.schema_version === 1 &&
+    RUN_ID.test(envelope.run_id || "") &&
+    TIMESTAMP.test(envelope.accepted_at || "") &&
+    SHA256_HEX.test(envelope.request_fingerprint || "") &&
+    envelope.request_fingerprint === fingerprint &&
+    envelope.authority?.workspace_id === workspaceId &&
+    typeof envelope.job?.title === "string"
+  );
+}
+
+function acceptedManualJobResponse(receipt, fingerprint) {
+  if (
+    !receipt ||
+    !RUN_ID.test(receipt.run_id || "") ||
+    !TIMESTAMP.test(receipt.created_at || "") ||
+    !SHA256_HEX.test(receipt.request_fingerprint || "")
+  ) {
+    return json({ detail: "job intake is temporarily unavailable" }, 503);
+  }
+  if (receipt.request_fingerprint !== fingerprint) {
+    return json({ detail: "idempotency-key was already used for another job" }, 409);
+  }
+  return json(
+    { run_id: receipt.run_id, status: "accepted", accepted_at: receipt.created_at },
+    202,
+    { location: `${WORKSPACE_ROOT}/${receipt.run_id}` },
+  );
+}
+
+function queuedRunProjection(record) {
+  const createdAt = TIMESTAMP.test(record?.created_at || "") ? record.created_at : "";
+  const updatedAt = TIMESTAMP.test(record?.updated_at || "") ? record.updated_at : createdAt;
+  const sourceRunId = RUN_ID.test(record?.source_run_id || "") ? record.source_run_id : null;
+  return {
+    schema_version: 1,
+    visibility: "private",
+    run_id: text(record?.run_id, 80),
+    title: text(record?.title, 160),
+    created_at: createdAt,
+    updated_at: updatedAt,
+    status: "queued",
+    status_detail: "Accepted into Rally and waiting for the runner to begin.",
+    turn: 0,
+    next_actor: "",
+    progress: { done: 0, total: 0 },
+    source_run_id: sourceRunId,
+    agents: [],
+    checklist: [],
+    timeline: [],
+    provenance: {
+      source: "Rally authenticated workspace intake",
+      storage: "Cloudflare D1",
+      accepted_at: createdAt,
+    },
+  };
+}
+
+async function createManualJob(request, env, workspace) {
+  const contentType = request.headers.get("content-type") || "";
+  if (!contentType.toLowerCase().startsWith("application/json")) {
+    return json({ detail: "content-type must be application/json" }, 415);
+  }
+  const idempotencyKey = request.headers.get("idempotency-key") || "";
+  if (!IDEMPOTENCY_KEY.test(idempotencyKey)) {
+    return json({ detail: "a valid idempotency-key is required" }, 400);
+  }
+  if (!workspace.identity?.user_id || !workspace.identity?.email) {
+    return json({ detail: "workspace identity is unavailable" }, 503);
+  }
+
+  const raw = await boundedText(request, MAX_MANUAL_JOB_BODY);
+  if (raw === null) return json({ detail: "job request is too large" }, 413);
+  let job;
+  try {
+    job = normalizeManualJob(JSON.parse(raw));
+  } catch (error) {
+    return json({ detail: error instanceof Error ? error.message : "invalid job request" }, 400);
+  }
+
+  const fingerprint = await sha256Hex(JSON.stringify(job));
+  const idempotencyDigest = await sha256Hex(`${workspace.key}\u0000${idempotencyKey}`);
+  const eventId = `dashboard:${idempotencyDigest}`;
+  const database = typeof env.INBOX.withSession === "function"
+    ? env.INBOX.withSession("first-primary")
+    : env.INBOX;
+
+  try {
+    const receipt = await database.prepare(
+      `SELECT run_id, created_at, request_fingerprint
+         FROM workspace_jobs
+        WHERE event_id = ? AND workspace_key = ?
+        LIMIT 1`
+    ).bind(eventId, workspace.key).first();
+    if (receipt) return acceptedManualJobResponse(receipt, fingerprint);
+
+    // A short-lived deployment of dashboard intake may have accepted a
+    // message before this projection table existed. Lazily converge it onto
+    // the durable receipt without touching unrelated email envelopes.
+    const legacy = await database.prepare(
+      "SELECT payload FROM messages WHERE event_id = ? LIMIT 1"
+    ).bind(eventId).first();
+    if (legacy) {
+      let stored;
+      try {
+        stored = JSON.parse(legacy.payload || "");
+      } catch (_) {
+        return json({ detail: "job intake is temporarily unavailable" }, 503);
+      }
+      if (!acceptedManualJob(stored, fingerprint, workspace.identity.workspace_id)) {
+        return json({ detail: "idempotency-key was already used for another job" }, 409);
+      }
+      await database.prepare(
+        `INSERT OR IGNORE INTO workspace_jobs
+         (run_id, workspace_key, event_id, request_fingerprint, title,
+          created_at, updated_at, source_run_id, superseded_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL)`
+      ).bind(
+        stored.run_id,
+        workspace.key,
+        eventId,
+        stored.request_fingerprint,
+        stored.job.title,
+        stored.accepted_at,
+        stored.accepted_at,
+        stored.job.source_run_id || null,
+      ).run();
+      const restored = await database.prepare(
+        `SELECT run_id, created_at, request_fingerprint
+           FROM workspace_jobs
+          WHERE event_id = ? AND workspace_key = ?
+          LIMIT 1`
+      ).bind(eventId, workspace.key).first();
+      return acceptedManualJobResponse(restored, fingerprint);
+    }
+  } catch (error) {
+    console.error(JSON.stringify({
+      event: "manual_job_receipt_lookup_failed",
+      error: error instanceof Error ? error.message : String(error),
+    }));
+    return json({ detail: "job intake is temporarily unavailable" }, 503);
+  }
+
+  if (job.source_run_id) {
+    try {
+      const source = await database.prepare(
+        "SELECT run_id FROM console_runs WHERE run_id = ? AND workspace_key = ? LIMIT 1"
+      ).bind(job.source_run_id, workspace.key).first();
+      if (!source) return json({ detail: "source run not found" }, 404);
+    } catch (error) {
+      console.error(JSON.stringify({
+        event: "manual_job_source_lookup_failed",
+        error: error instanceof Error ? error.message : String(error),
+      }));
+      return json({ detail: "job intake is temporarily unavailable" }, 503);
+    }
+  }
+
+  const acceptedAt = new Date().toISOString();
+  const runId = `r-${acceptedAt.slice(0, 10).replaceAll("-", "")}-${crypto.randomUUID()}`;
+  const messageId = crypto.randomUUID();
+  const envelope = {
+    source: "dashboard",
+    schema_version: 1,
+    run_id: runId,
+    accepted_at: acceptedAt,
+    request_fingerprint: fingerprint,
+    job,
+    authority: workspace.identity,
+  };
+
+  try {
+    await database.batch([
+      database.prepare(
+        "INSERT INTO messages (id, event_id, received_at, payload) VALUES (?, ?, ?, ?)"
+      ).bind(messageId, eventId, acceptedAt, JSON.stringify(envelope)),
+      database.prepare(
+        `INSERT INTO workspace_jobs
+         (run_id, workspace_key, event_id, request_fingerprint, title,
+          created_at, updated_at, source_run_id, superseded_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL)`
+      ).bind(
+        runId,
+        workspace.key,
+        eventId,
+        fingerprint,
+        job.title,
+        acceptedAt,
+        acceptedAt,
+        job.source_run_id,
+      ),
+    ]);
+    console.log(JSON.stringify({
+      event: "manual_job_accepted",
+      run_id: runId,
+    }));
+    return acceptedManualJobResponse({
+      run_id: runId,
+      created_at: acceptedAt,
+      request_fingerprint: fingerprint,
+    }, fingerprint);
+  } catch (error) {
+    // Concurrent retries can both miss the initial lookup. The unique event
+    // key lets one atomic batch win; the loser replays that durable receipt.
+    try {
+      const replayDatabase = typeof env.INBOX.withSession === "function"
+        ? env.INBOX.withSession("first-primary")
+        : env.INBOX;
+      const receipt = await replayDatabase.prepare(
+        `SELECT run_id, created_at, request_fingerprint
+           FROM workspace_jobs
+          WHERE event_id = ? AND workspace_key = ?
+          LIMIT 1`
+      ).bind(eventId, workspace.key).first();
+      if (receipt) return acceptedManualJobResponse(receipt, fingerprint);
+    } catch (_) {
+      // Report the original write failure below without exposing D1 details.
+    }
+    console.error(JSON.stringify({
+      event: "manual_job_write_failed",
+      error: error instanceof Error ? error.message : String(error),
+    }));
+    return json({ detail: "job intake is temporarily unavailable" }, 503);
+  }
+}
+
 const cleanChanges = (changes) => Array.isArray(changes) ? changes.slice(0, 50).map((item) => ({
   id: text(item?.id, 48),
   state: text(item?.state, 40),
@@ -660,7 +1078,17 @@ export default {
       return json({ ok: true, service: "rally-ingress" });
     }
 
+    if (path.startsWith(`${CONTROL_PLANE_PROXY_ROOT}/`)) {
+      return proxyControlPlane(request, url, path);
+    }
+
     // --- authenticated workspace ---------------------------------------
+    if (request.method === "POST" && path === WORKSPACE_JOBS_ROOT) {
+      const workspace = await authenticatedWorkspace(request, env);
+      if (workspace.response) return workspace.response;
+      return createManualJob(request, env, workspace);
+    }
+
     if (request.method === "GET" &&
         (path === WORKSPACE_ROOT || path.startsWith(WORKSPACE_ROOT + "/"))) {
       const workspace = await authenticatedWorkspace(request, env);
@@ -673,11 +1101,27 @@ export default {
           const { results } = await env.INBOX.prepare(
             `SELECT run_id, title, status, created_at, updated_at, turn,
                     done_items, total_items
-               FROM console_runs
-              WHERE workspace_key = ?
+               FROM (
+                 SELECT run_id, title, status, created_at, updated_at, turn,
+                        done_items, total_items
+                   FROM console_runs
+                  WHERE workspace_key = ?
+                 UNION ALL
+                 SELECT run_id, title, 'queued' AS status, created_at, updated_at,
+                        0 AS turn, 0 AS done_items, 0 AS total_items
+                   FROM workspace_jobs AS queued
+                  WHERE workspace_key = ?
+                    AND superseded_at IS NULL
+                    AND NOT EXISTS (
+                      SELECT 1
+                        FROM console_runs AS authoritative
+                       WHERE authoritative.run_id = queued.run_id
+                         AND authoritative.workspace_key = queued.workspace_key
+                    )
+               )
               ORDER BY updated_at DESC
               LIMIT ?`
-          ).bind(workspace.key, limit).all();
+          ).bind(workspace.key, workspace.key, limit).all();
           return json({
             runs: results || [],
             provenance: "workspace-scoped Cloudflare D1",
@@ -698,8 +1142,15 @@ export default {
         const record = await env.INBOX.prepare(
           "SELECT payload FROM console_runs WHERE run_id = ? AND workspace_key = ? LIMIT 1"
         ).bind(runId, workspace.key).first();
-        if (!record) return json({ detail: "run not found" }, 404);
-        return json(JSON.parse(record.payload));
+        if (record) return json(JSON.parse(record.payload));
+        const queued = await env.INBOX.prepare(
+          `SELECT run_id, title, created_at, updated_at, source_run_id
+             FROM workspace_jobs
+            WHERE run_id = ? AND workspace_key = ? AND superseded_at IS NULL
+            LIMIT 1`
+        ).bind(runId, workspace.key).first();
+        if (!queued) return json({ detail: "run not found" }, 404);
+        return json(queuedRunProjection(queued));
       } catch (error) {
         console.error(JSON.stringify({
           event: "workspace_run_read_failed",
@@ -782,40 +1233,53 @@ export default {
         } catch (error) {
           return json({ error: error instanceof Error ? error.message : "invalid record" }, 400);
         }
-        const key = await workspaceKey(normalized.workspace_id, env.POLL_TOKEN || "");
+        const key = await workspaceKey(
+          normalized.workspace_id,
+          env.WORKSPACE_KEY_SECRET || "",
+        );
         if (!key) return json({ error: "workspace projection is unavailable" }, 503);
         const { workspace_id: _workspaceId, ...browserRecord } = normalized;
         const payload = JSON.stringify(browserRecord);
         let result;
         try {
-          result = await env.INBOX.prepare(
-            `INSERT INTO console_runs
-             (run_id, created_at, updated_at, status, title, turn,
-              done_items, total_items, public, workspace_key, payload)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-           ON CONFLICT(run_id) DO UPDATE SET
-             updated_at = excluded.updated_at,
-             status = excluded.status,
-             title = excluded.title,
-             turn = excluded.turn,
-             done_items = excluded.done_items,
-             total_items = excluded.total_items,
-             public = excluded.public,
-             workspace_key = excluded.workspace_key,
-             payload = excluded.payload`
-          ).bind(
-            normalized.run_id,
-            normalized.created_at,
-            normalized.updated_at,
-            normalized.status,
-            normalized.title,
-            normalized.turn,
-            normalized.progress.done,
-            normalized.progress.total,
-            normalized.visibility === "public" ? 1 : 0,
-            key,
-            payload,
-          ).run();
+          const database = typeof env.INBOX.withSession === "function"
+            ? env.INBOX.withSession("first-primary")
+            : env.INBOX;
+          [result] = await database.batch([
+            database.prepare(
+              `INSERT INTO console_runs
+               (run_id, created_at, updated_at, status, title, turn,
+                done_items, total_items, public, workspace_key, payload)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             ON CONFLICT(run_id) DO UPDATE SET
+               updated_at = excluded.updated_at,
+               status = excluded.status,
+               title = excluded.title,
+               turn = excluded.turn,
+               done_items = excluded.done_items,
+               total_items = excluded.total_items,
+               public = excluded.public,
+               workspace_key = excluded.workspace_key,
+               payload = excluded.payload`
+            ).bind(
+              normalized.run_id,
+              normalized.created_at,
+              normalized.updated_at,
+              normalized.status,
+              normalized.title,
+              normalized.turn,
+              normalized.progress.done,
+              normalized.progress.total,
+              normalized.visibility === "public" ? 1 : 0,
+              key,
+              payload,
+            ),
+            database.prepare(
+              `UPDATE workspace_jobs
+                  SET superseded_at = COALESCE(superseded_at, ?)
+                WHERE run_id = ? AND workspace_key = ?`
+            ).bind(new Date().toISOString(), runId, key),
+          ]);
         } catch (error) {
           console.error(JSON.stringify({
             event: "console_write_failed",
@@ -873,6 +1337,16 @@ export default {
         payload = JSON.parse(raw);
       } catch (_) {
         return json({ error: "invalid json" }, 400);
+      }
+
+      // Resend can deliver outbound lifecycle events to the same webhook.
+      // They are acknowledged here, never placed ahead of commissions in D1.
+      if (!payload || typeof payload !== "object" || payload.type !== "email.received") {
+        console.log(JSON.stringify({
+          event: "inbound_event_ignored",
+          event_type: typeof payload?.type === "string" ? payload.type.slice(0, 80) : "unknown",
+        }));
+        return json({ ok: true, stored: false });
       }
 
       const id = crypto.randomUUID();

@@ -81,5 +81,13 @@
     "google_identity": true,
     "identity_service_account": "rally-local-invoker@rally-agent9-2026.iam.gserviceaccount.com",
     "timeout_sec": 180
+  },
+  "media": {
+    "enabled": true,
+    "project": "rally-agent9-2026",
+    "image_model": "gemini-2.5-flash-image",
+    "music_model": "lyria-3-pro-preview",
+    "image_timeout_sec": 180,
+    "music_timeout_sec": 300
   }
 }

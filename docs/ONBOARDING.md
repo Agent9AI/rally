@@ -4,8 +4,16 @@ The onboarding order is:
 
 1. create or enter the Rally workspace;
 2. confirm the AI workforce (at least two distinct model families);
-3. connect company systems or explicitly skip them;
-4. create the first role-based teammate and commission a real outcome.
+3. create the first role-based teammate with a human owner and commissioning policy;
+4. choose the teammate's company-owned email path;
+5. connect company systems or explicitly skip them; and
+6. commission a real outcome only through an address that has passed activation.
+
+The signed-in product always lands on **Work**, not Connections and not a
+blocking setup wizard. The dashboard, queue, and evidence record remain visible
+while an administrator completes setup. Business-system connections are an
+optional source of context; they are not a prerequisite for seeing or using the
+workspace.
 
 AI workforce authorization and company-system authorization are separate trust
 grants. Gemini, Claude, OpenAI, and xAI are workers. Drive, Slack, GitHub,
@@ -20,18 +28,65 @@ cookies.
 The product goal is not “fewer API-key steps.” It is **no customer exposure to
 infrastructure credentials on the default path**.
 
-## Path 1: managed onboarding (default)
+## Path 1: hosted onboarding (default)
 
 An administrator names the first teammate, supplies commissioner addresses,
-chooses the first outcome, and may select the systems and authority it needs.
-Agent9 owns the Cloudflare account, Resend mail plane, Google Cloud control
-plane, model configuration, secret rotation, budgets, and upgrades. Everyone
-else receives one Rally address and simply gives the team work.
+chooses an accountable human owner, selects the email identity, and may select
+the systems and authority it needs. Agent9 owns Rally's Cloudflare edge, Google
+Cloud control plane, model configuration, secret rotation, budgets, and
+upgrades. The customer's company should own the production email domain and
+provider grant. Employees receive one durable teammate address and simply give
+it work.
 
 The administrator may skip business connections and start from the request and
 attachments. This is the credible no-key experience today: it removes cloud
 accounts from the critical path instead of hiding setup behind friendly-looking
 buttons.
+
+### Email identity order
+
+The durable object is the teammate—not the mailbox vendor. Rally asks where the
+teammate should receive email in this order:
+
+1. a dedicated company subdomain such as `research@ai.company.com`;
+2. an existing company address that already routes to Rally;
+3. a Google Workspace or Microsoft 365 mailbox/send-as identity;
+4. customer-owned email infrastructure through Resend, Cloudflare Email, or an
+   advanced provider API; and
+5. a temporary Rally-domain evaluation identity, clearly marked as temporary.
+
+Company-owned routes are shown first. Resend, Cloudflare, direct API, and trial
+choices stay in an expanded secondary section so the default decision remains
+simple. Where a provider offers both OAuth and API keys, OAuth is selected by
+default and the customer-managed API key is an equal optional route—not an
+error fallback. Resend's published path supports
+[OAuth 2.1 with PKCE and refresh-token rotation](https://resend.com/changelog/oauth-support).
+
+Cloudflare Email is intentionally token-only in the current setup catalog.
+Cloudflare supports
+[third-party OAuth generally](https://developers.cloudflare.com/fundamentals/oauth/),
+but its
+[Email Sending REST API](https://developers.cloudflare.com/email-service/api/send-emails/rest-api/)
+currently documents API-token authentication and Rally has not certified an
+exact Email Sending OAuth scope. The UI will add one-click Cloudflare consent
+only after that narrower path passes a real authorization and mail canary.
+
+Creating a teammate currently persists a workspace-scoped setup record:
+business role, human owner, address, provider choice, preferred connection
+method, reachability, and approved senders. It does **not** make the address
+live. Google, Microsoft, Resend, Cloudflare, DNS, existing-address, advanced,
+and trial records all remain in an explicit activation-required state until a
+real provider authorization and/or bidirectional mail check ships and passes.
+Pending customer-domain claims are scoped to the workspace so an unverified
+tenant cannot globally squat another company's address. Rally-owned trial
+addresses remain globally unique.
+
+The current Agent9 pilot address is assigned server-side to the configured
+Agent9 workspace through `RALLY_PILOT_EMAIL_ADDRESS`; it is no longer hard-coded
+into the browser bundle. An authenticated administrator in that workspace sees
+the pilot commission shortcut. A workspace without an assigned or genuinely
+ready address sees **Finish email setup** instead. This is a single-workspace
+bridge, not a claim of multi-tenant mailbox provisioning.
 
 ## Path 2: self-hosted (advanced)
 
@@ -45,8 +100,8 @@ A future guided installer should orchestrate provider-native browser consent:
    entitlement. Rally never pools a subscription seat.
 6. Each business-system OAuth connection is stored in that commissioner's
    isolated profile and Keychain namespace.
-7. A mail provider is connected or the customer uses an Agent9-managed Rally
-   address.
+7. A customer-owned mail provider is connected, or a temporary Rally trial
+   identity is explicitly activated for evaluation.
 8. A final readiness call proves send, receive, Gemini, Claude, Codex, Firestore,
    duplicate suppression, and human reply routing.
 

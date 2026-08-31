@@ -15,7 +15,7 @@ This implementation uses the official `a2a-sdk` Python package, pinned in
 The public Agent Card is available at:
 
 ```text
-https://agent9-rally.pages.dev/.well-known/agent-card.json
+https://rally.agent9.dev/.well-known/agent-card.json
 ```
 
 The same card is served by the authenticated Cloud Run service. It advertises
@@ -83,12 +83,12 @@ HTTP+JSON. They cover Agent Card fields and security, authentication rejection,
 streamed states, artifacts, task polling and listing, idempotent replay,
 conflicting replay, empty input, and the 12,000-character boundary.
 
-Rally was also exercised with the official A2A Technology Compatibility Kit at
-commit `5996b79f9cefa6fc390980e383e358a66fb9e49e`. The mandatory run against the
-two bindings Rally declares completed with 141 passing, 94 capability/transport
-skips, and zero failures. The TCK requires prescribed fixture responses, so they
-are isolated behind `RALLY_A2A_TCK_MODE=1`; a release test proves that flag is
-absent from the Docker and Terraform production configuration.
+Rally includes an opt-in boundary for the prescribed fixture responses used by
+the official A2A Technology Compatibility Kit. Those responses are isolated
+behind `RALLY_A2A_TCK_MODE=1`; a release test proves that flag is absent from
+the Docker and Terraform production configuration. No reproducible TCK output
+is committed in this release, so the public compatibility claim is limited to
+the shipped SDK-client tests and implemented bindings above.
 
 `A2A v1.0 compatible` means those implemented protocol surfaces interoperate
 with the official SDK. It does not mean Google, the Linux Foundation, the

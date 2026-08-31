@@ -1,0 +1,43 @@
+{
+  "evidence_kind": "sanitized_repository_snapshot",
+  "signed_attestation": false,
+  "run_id": "r-20260830-447f2f",
+  "status": "complete",
+  "governed_turns": 11,
+  "workspace_commit": "118a6db4e5ba2fe56d1d1fd5b3f55de7ad4dd756",
+  "workspace_tree": "ae087f441d8531c11f4ed19e89d3ace998db7cba",
+  "deliverable": {
+    "launches": 12,
+    "claims": 36,
+    "validation": "passed"
+  },
+  "model_families": [
+    {"worker": "agy", "family": "google", "model": "gemini-3.7-flash-low"},
+    {"worker": "claude", "family": "anthropic", "model": "sonnet"}
+  ],
+  "checklist": [
+    {"id": "c1", "state": "done", "owner": "agy", "verified_by": "claude", "rejections": 1},
+    {"id": "c2", "state": "done", "owner": "agy", "verified_by": "claude", "rejections": 1},
+    {"id": "c3", "state": "done", "owner": "agy", "verified_by": "claude", "rejections": 1},
+    {"id": "c4", "state": "done", "owner": "agy", "verified_by": "claude", "rejections": 1},
+    {"id": "c5", "state": "done", "owner": "claude", "verified_by": "agy", "rejections": 0},
+    {"id": "c6", "state": "done", "owner": "agy", "verified_by": "claude", "rejections": 0}
+  ],
+  "second_wind": {
+    "at": "2026-08-30T01:55:23Z",
+    "turn": 7,
+    "from_worker": "claude",
+    "to_worker": "agy",
+    "item": "c6",
+    "status": "recovered",
+    "handoff_event": "SECOND WIND 1/2: claude handed recovery to agy for c6",
+    "recovery_event": "SECOND WIND RECOVERED: agy accepted the recovery handoff without bypassing verification."
+  },
+  "privacy_redactions": [
+    "message identifiers",
+    "request and idempotency keys",
+    "local filesystem paths",
+    "raw model payloads"
+  ]
+}
+

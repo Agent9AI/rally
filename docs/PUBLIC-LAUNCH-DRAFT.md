@@ -43,14 +43,16 @@ gate. Rally now passes six live cases—including policy bypass, hostile artifac
 instructions, and a production-shaped release workflow—at 1.00 trajectory and
 1.00 response quality.
 
-The current release has 263 deterministic automated tests plus that live
+The current release has 369 deterministic automated tests (183 local and 186
+Cloud) plus that live
 scorecard. More importantly, the demo shows the agents doing the work: researching
 primary sources, building an executive presentation, running its checks, placing an item into
 `awaiting-verification`, and receiving a verdict from another model family.
-The full unedited run is published beside the four-minute walkthrough.
+Before publishing this draft, publish the full unedited run beside the
+four-minute walkthrough and replace every placeholder below.
 
 - Product: <https://rally.agent9.dev/#demo>
-- Source and reproducible setup: <https://github.com/Agent9AI/rally>
+- Source and reproducible setup: [PUBLIC SOURCE LINK — add after repository publication]
 - Four-minute walkthrough: [VIDEO LINK]
 - Full unedited agent run: [UNEDITED RUN LINK]
 
@@ -64,13 +66,14 @@ One email commissions real repository work. Gemini 3.7 + Google ADK governs the
 handoff. Gemini, Claude, and OpenAI Codex implement, test, challenge, and verify. Deterministic
 policy enforces one rule neither model can waive: owner ≠ verifier.
 
-263 tests. 6/6 live ADK evals at 1.00/1.00. Full unedited agent run included.
+369 tests. 6/6 live ADK evals at 1.00/1.00. [Add only after capture: Full
+unedited agent run included.]
 
 One request. Three model families. Zero self-approval.
 
 [VIDEO OR PRODUCT LINK]
 
-Created for the All Things Agentic Hackathon. #AllThingsAgentic
+Created for the All Things Agentic Hackathon. #AllThingsAgenticHackathon
 
 ## Short social variant
 
@@ -81,4 +84,4 @@ confidence—enforces zero self-approval.
 
 Demo + full unedited run: [LINK]
 
-Created for the All Things Agentic Hackathon. #AllThingsAgentic
+Created for the All Things Agentic Hackathon. #AllThingsAgenticHackathon

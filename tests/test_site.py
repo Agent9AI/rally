@@ -184,19 +184,27 @@ class TestProductSite(unittest.TestCase):
             admin_html = handle.read()
         with open(os.path.join(admin_root, "app.js")) as handle:
             admin_app = handle.read()
+        with open(os.path.join(admin_root, "config.js")) as handle:
+            admin_config = handle.read()
         self.assertEqual(admin_html.count('class="connection-card'), 9)
         self.assertEqual(admin_html.count("data-primary-action"), 9)
         self.assertNotIn("data-token-action", admin_html)
         self.assertIn("data-advanced-token", admin_html)
         self.assertIn('data-workspace-view="work"', admin_html)
+        self.assertIn('data-workspace-view="teammates"', admin_html)
         self.assertIn('data-workspace-view="workforce"', admin_html)
         self.assertIn('data-workspace-view="connections"', admin_html)
         self.assertIn('data-workspace-view="policy"', admin_html)
         self.assertIn("Task management", admin_html)
         self.assertIn("Work queue", admin_html)
-        self.assertIn("Skip connections &amp; start", admin_html)
+        self.assertIn("Skip for now", admin_html)
+        self.assertIn("Persistent business roles", admin_html)
+        self.assertIn("Identity before infrastructure", admin_html)
+        self.assertIn("Company-owned mail is preferred", admin_html)
+        self.assertIn("Accountable human owner", admin_html)
+        self.assertIn("Who may commission it?", admin_html)
         self.assertIn("Grok Build", admin_html)
-        self.assertIn("Use an existing API key instead", admin_app)
+        self.assertIn("Advanced: use an existing API key", admin_app)
         self.assertIn('/v1/workspace/runs', admin_app)
         self.assertIn("workspaceApi", admin_app)
         self.assertIn("Google Cloud KMS", admin_html)
@@ -214,6 +222,22 @@ class TestProductSite(unittest.TestCase):
         self.assertIn('state.get("rally-connection")', admin_app)
         self.assertIn("window.location.assign", admin_app)
         self.assertIn('api("/v1/connectors")', admin_app)
+        self.assertIn("loadConnectionSetup", admin_app)
+        self.assertIn('state.textContent = "Temporarily unavailable"', admin_app)
+        self.assertIn('api("/v1/email-provider-options")', admin_app)
+        self.assertIn('api("/v1/teammates")', admin_app)
+        self.assertIn('method: "POST"', admin_app)
+        self.assertIn("The address stays inactive until", admin_app)
+        self.assertIn('api_key: "API key"', admin_app)
+        self.assertIn(" (recommended)", admin_app)
+        self.assertIn("Best for most teams", admin_app)
+        self.assertIn("Email infrastructure, API, and trial options", admin_app)
+        self.assertIn("applyRoleSuggestion", admin_app)
+        self.assertIn("it has not been labeled live", admin_app)
+        self.assertIn("pilotCommissionAddress", admin_app)
+        self.assertIn("providerResult.value.pilot_address", admin_app)
+        self.assertNotIn("rally@updates.agent9.dev", admin_html)
+        self.assertNotIn("rally@updates.agent9.dev", admin_app)
         self.assertIn("Opening secure consent", admin_app)
         self.assertIn("Every tool remains off", admin_app)
         self.assertIn("recertification_required", admin_app)
@@ -222,7 +246,7 @@ class TestProductSite(unittest.TestCase):
         self.assertIn('return "Finish setup"', admin_app)
         self.assertNotIn('return "Reconnect"', admin_app)
         self.assertIn("data-api-key-action", admin_app)
-        self.assertIn("Use API key", admin_app)
+        self.assertIn("Advanced setup", admin_app)
         self.assertNotIn("window.open", admin_app)
         self.assertNotIn('headers.set("Authorization"', admin_app)
         self.assertIn('target="_blank"', admin_html)
@@ -249,12 +273,14 @@ class TestProductSite(unittest.TestCase):
             security_headers = handle.read()
         self.assertIn("https://accounts.google.com/gsi/client", security_headers)
         self.assertIn("https://accounts.google.com/gsi/style", security_headers)
-        self.assertIn("https://*.a.run.app", security_headers)
+        self.assertIn('apiBase: "https://rally.agent9.dev/api/control-plane"', admin_config)
+        self.assertNotIn(".run.app", admin_config)
+        self.assertNotIn("*.a.run.app", security_headers)
         self.assertIn("form-action 'self'", security_headers)
         self.assertNotIn("form-action 'self' https://*.a.run.app", security_headers)
         self.assertIn("/admin/connect/callback*", security_headers)
         self.assertIn("Referrer-Policy: no-referrer", security_headers)
-        self.assertIn("92  runner + ingress + policy + site", self.html)
+        self.assertIn("183 runner + ingress + policy + site", self.html)
         self.assertIn('href="privacy/"', self.html)
         self.assertIn('href="terms/"', self.html)
         self.assertIn('href="#trust">Security &amp; audit</a>', self.html)
@@ -280,6 +306,8 @@ class TestProductSite(unittest.TestCase):
             "Retention and deletion",
             "two-minute exchange code and 30-minute session",
             "SHA-256 hashes",
+            "Teammate and email setup",
+            "does not label an address live",
             "terry@agent9.dev",
         ):
             self.assertIn(phrase, privacy)
@@ -287,6 +315,7 @@ class TestProductSite(unittest.TestCase):
             "Autonomy requires accountable use",
             "Connect only what you control",
             "Human accountability remains",
+            "a teammate address as live",
             "Apache License 2.0",
             "Disclaimers, responsibility, and liability",
             "terry@agent9.dev",
@@ -300,12 +329,101 @@ class TestProductSite(unittest.TestCase):
             "THE ACCOUNTABLE AI TEAM",
             "You already have email",
             "Add accountable AI teammates",
-            "263",
+            "369",
             "6/6",
             "0",
         ):
             self.assertIn(phrase, card)
         self.assertNotIn("99 TESTS", card)
+
+    def test_workspace_manual_commission_contract(self):
+        admin_root = os.path.join(SITE, "admin")
+        with open(os.path.join(admin_root, "index.html")) as handle:
+            admin_html = handle.read()
+        with open(os.path.join(admin_root, "app.js")) as handle:
+            admin_app = handle.read()
+        with open(os.path.join(admin_root, "styles.css")) as handle:
+            admin_styles = handle.read()
+        with open(os.path.join(SITE, "styles.css")) as handle:
+            site_styles = handle.read()
+
+        for contract in (
+            "Two doors. One accountable queue.",
+            "Choose an assistant",
+            "Set expertise &amp; autonomy",
+            "Connect approved assets",
+            "Choose communication",
+            "Executive strategist",
+            "Security lead",
+            "Creative director",
+            "Planned, not available",
+            'id="manual-job-composer"',
+            'data-job-form',
+            'name="title"',
+            'name="goal"',
+            'name="source_run_id"',
+            'name="second_wind"',
+            'data-job-receipt',
+            "Accepted into Rally",
+        ):
+            self.assertIn(contract, admin_html)
+        self.assertIn('workspaceApi("/v1/workspace/jobs", {', admin_app)
+        self.assertIn('method: "POST"', admin_app)
+        self.assertIn('headers: { "Idempotency-Key": pendingJobIdempotencyKey }', admin_app)
+        self.assertIn("body: JSON.stringify(payload)", admin_app)
+        self.assertIn("acceptedRunIdFrom", admin_app)
+        self.assertIn("loadWorkspaceRuns({ openRunId: runId, provisional })", admin_app)
+        self.assertIn("queuedFallback", admin_app)
+        self.assertIn("assistantProfiles", admin_app)
+        self.assertIn("syncAssistantSetup({ prefill: true })", admin_app)
+        self.assertIn('selectedAutonomy === "resilient"', admin_app)
+        self.assertIn('const payload = { title, goal, second_wind: secondWind };', admin_app)
+        self.assertNotIn("persona:", admin_app.split("const payload = { title, goal", 1)[1].split("workspaceApi", 1)[0])
+        self.assertIn("Advanced setup", admin_app)
+        self.assertNotIn("Provider consent could not open. If your company prefers", admin_app)
+        oauth_start = admin_app.split("async function startOAuth(item, trigger", 1)[1]
+        oauth_start = oauth_start.split("async function verifyReturnedConnector", 1)[0]
+        self.assertNotIn('"token"', oauth_start)
+        self.assertIn("Retry provider sign-in from this card", oauth_start)
+        self.assertIn(".commission-hub", admin_styles)
+        self.assertIn(".assistant-setup", admin_styles)
+        self.assertIn(".persona-card.is-selected", admin_styles)
+        self.assertIn(".job-acceptance", admin_styles)
+        self.assertNotIn("#7e57c2", (admin_styles + site_styles).lower())
+
+    def test_workspace_live_refresh_contract(self):
+        admin_root = os.path.join(SITE, "admin")
+        with open(os.path.join(admin_root, "index.html")) as handle:
+            admin_html = handle.read()
+        with open(os.path.join(admin_root, "app.js")) as handle:
+            admin_app = handle.read()
+        with open(os.path.join(admin_root, "styles.css")) as handle:
+            admin_styles = handle.read()
+
+        self.assertIn("data-workspace-live-status", admin_html)
+        self.assertIn(".workspace-live-status[data-state=\"fresh\"]", admin_styles)
+        self.assertIn("const WORKSPACE_REFRESH_INTERVAL_MS = 13000", admin_app)
+        self.assertIn("document.addEventListener(\"visibilitychange\"", admin_app)
+        self.assertIn("workspaceRefreshInFlight", admin_app)
+        self.assertIn("const controller = new AbortController()", admin_app)
+        self.assertIn("signal: controller.signal", admin_app)
+        self.assertIn("workspaceRefreshController?.abort()", admin_app)
+        self.assertIn("refreshActive: true,", admin_app)
+        self.assertIn("silent: true,", admin_app)
+        self.assertIn("stopWorkspacePolling();\n    idToken = \"\";", admin_app)
+        self.assertIn("if (silent || dashboard.hidden) return false;", admin_app)
+        self.assertNotIn("setInterval(", admin_app)
+
+        refresh_body = admin_app.split("async function refreshWorkspaceFromRunner()", 1)[1]
+        refresh_body = refresh_body.split("function startWorkspacePolling", 1)[0]
+        for composer_state in (
+            "jobForm.reset()",
+            "selectedAssistant =",
+            "selectedExpertise =",
+            "selectedAutonomy =",
+            "syncAssistantSetup",
+        ):
+            self.assertNotIn(composer_state, refresh_body)
 
     def test_local_assets_exist_and_no_dead_hash_links(self):
         parser = LinkCollector()
@@ -374,6 +492,9 @@ class TestProductSite(unittest.TestCase):
         self.assertIn("authenticatedWorkspace(request, env)", worker)
         self.assertIn("WHERE workspace_key = ?", worker)
         self.assertIn("crypto.subtle.importKey", worker)
+        self.assertIn("env.WORKSPACE_KEY_SECRET", worker)
+        self.assertNotIn("workspaceKey(workspaceId, env.POLL_TOKEN", worker)
+        self.assertNotIn("workspaceKey(normalized.workspace_id, env.POLL_TOKEN", worker)
         workspace_migration = os.path.join(
             ROOT, "src", "worker", "migrations", "0003_private_workspaces.sql"
         )
@@ -382,6 +503,21 @@ class TestProductSite(unittest.TestCase):
             migration = handle.read()
         self.assertIn("workspace_key TEXT NOT NULL", migration)
         self.assertIn("idx_console_runs_workspace_updated", migration)
+        queued_migration = os.path.join(
+            ROOT, "src", "worker", "migrations", "0004_workspace_jobs.sql"
+        )
+        self.assertTrue(os.path.exists(queued_migration))
+        with open(queued_migration) as handle:
+            migration = handle.read()
+        self.assertIn("CREATE TABLE IF NOT EXISTS workspace_jobs", migration)
+        self.assertIn("event_id            TEXT UNIQUE NOT NULL", migration)
+        self.assertIn("request_fingerprint TEXT NOT NULL", migration)
+        self.assertIn("superseded_at       TEXT", migration)
+        self.assertIn("idx_workspace_jobs_workspace_queued", migration)
+        self.assertIn("await database.batch([", worker)
+        self.assertIn("'queued' AS status", worker)
+        self.assertIn("queuedRunProjection(queued)", worker)
+        self.assertIn("SET superseded_at = COALESCE(superseded_at, ?)", worker)
 
     def test_worker_callback_contract(self):
         result = subprocess.run(

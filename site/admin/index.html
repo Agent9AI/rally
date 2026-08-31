@@ -7,9 +7,9 @@
   <meta name="theme-color" content="#f7f9fc">
   <title>Rally Workspace · Work, workforce, and connections</title>
   <link rel="icon" href="../rally-symbol.png">
-  <link rel="stylesheet" href="styles.css?v=20260831b">
-  <script src="config.js" defer></script>
-  <script src="app.js?v=20260831c" defer></script>
+  <link rel="stylesheet" href="styles.css?v=20260831m">
+  <script src="config.js?v=20260831i" defer></script>
+  <script src="app.js?v=20260831m" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to workspace</a>
@@ -28,6 +28,15 @@
         <div class="vault-location" aria-label="Credential storage location"><span>Stored in Google Cloud</span><b>Ciphertext only · KMS protected</b></div>
         <div class="signin-action">
           <div data-google-button></div>
+          <div class="signin-divider"><span>or use an invited company email</span></div>
+          <form class="magic-link-form" data-magic-link-form>
+            <label for="magic-link-email">Approved business email</label>
+            <div>
+              <input id="magic-link-email" name="email" type="email" inputmode="email" autocomplete="email" maxlength="320" required placeholder="you@company.com" data-magic-link-email>
+              <button type="submit" data-magic-link-submit>Send secure link</button>
+            </div>
+            <p class="magic-link-status" role="status" aria-live="polite" aria-atomic="true" data-magic-link-status></p>
+          </form>
           <p class="configuration-note" role="status" aria-live="polite" aria-atomic="true" data-configuration-note>Checking secure sign-in…</p>
           <a class="signin-fallback" href="private-browser/">Privacy browser or blocked pop-up? Use full-page sign-in <span aria-hidden="true">→</span></a>
         </div>
@@ -35,7 +44,7 @@
       <aside class="security-receipt" aria-label="Credential security architecture">
         <div class="receipt-heading"><span class="shield">✓</span><div><p>Credential boundary</p><h2>Models get tools.<br>Never tokens.</h2></div></div>
         <ol>
-          <li><span>1</span><div><b>Google verifies the account</b><small>The immutable Google subject—not an email address—owns the vault.</small></div></li>
+          <li><span>1</span><div><b>Your identity is verified</b><small>Continue with Google or prove an approved company email with a one-time link.</small></div></li>
           <li><span>2</span><div><b>Rally encrypts before storage</b><small>A unique AES-256-GCM data key protects every credential.</small></div></li>
           <li><span>3</span><div><b>Cloud KMS wraps the data key</b><small>Firestore receives ciphertext, a wrapped key, and non-secret metadata—not a usable credential.</small></div></li>
         </ol>
@@ -47,10 +56,11 @@
       <aside class="workspace-sidebar" aria-label="Rally workspace">
         <div class="workspace-name"><span>Agent9</span><b>Rally workspace</b></div>
         <nav class="workspace-nav" aria-label="Workspace navigation">
-          <button class="is-active" type="button" data-workspace-nav="work" aria-current="page"><span aria-hidden="true">▤</span>Work</button>
-          <button type="button" data-workspace-nav="workforce"><span aria-hidden="true">◎</span>AI workforce</button>
-          <button type="button" data-workspace-nav="connections"><span aria-hidden="true">⌁</span>Connections</button>
-          <button type="button" data-workspace-nav="policy"><span aria-hidden="true">✓</span>Policy</button>
+          <button class="is-active" type="button" data-workspace-nav="work" aria-current="page"><span aria-hidden="true"><svg viewBox="0 0 20 20"><path d="M4 4.5h12v11H4zM7 8h6M7 11h6"/></svg></span>Work</button>
+          <button type="button" data-workspace-nav="teammates"><span aria-hidden="true"><svg viewBox="0 0 20 20"><circle cx="7" cy="7" r="2.3"/><circle cx="13.5" cy="8" r="1.8"/><path d="M3.5 15c.4-2.4 1.6-3.6 3.5-3.6s3.1 1.2 3.5 3.6M11.3 12.1c2.7-.6 4.3.4 4.8 2.9"/></svg></span>Teammates</button>
+          <button type="button" data-workspace-nav="workforce"><span aria-hidden="true"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="2.2"/><circle cx="10" cy="10" r="6"/><path d="M10 2v2M10 16v2M2 10h2M16 10h2"/></svg></span>AI workforce</button>
+          <button type="button" data-workspace-nav="connections"><span aria-hidden="true"><svg viewBox="0 0 20 20"><path d="M7.8 12.2 6 14a2.8 2.8 0 0 1-4-4l2.5-2.5a2.8 2.8 0 0 1 4 0M12.2 7.8 14 6a2.8 2.8 0 0 1 4 4l-2.5 2.5a2.8 2.8 0 0 1-4 0M7 13l6-6"/></svg></span>Connections</button>
+          <button type="button" data-workspace-nav="policy"><span aria-hidden="true"><svg viewBox="0 0 20 20"><path d="M10 2.5 16 5v4.7c0 3.7-2.2 6.3-6 7.8-3.8-1.5-6-4.1-6-7.8V5zM7.2 10l1.8 1.8 3.8-4"/></svg></span>Policy</button>
         </nav>
         <div class="account-card"><img data-user-picture alt="" hidden><span class="account-initial" data-user-initial>R</span><div><b data-user-name>Rally administrator</b><small data-user-email></small></div></div>
       </aside>
@@ -59,7 +69,7 @@
         <section class="workspace-view" data-workspace-view="work">
           <div class="workspace-heading">
             <div><p class="eyebrow">Work</p><h1 tabindex="-1" data-dashboard-title>Your accountable team at work.</h1><p>Commission work by email, follow every active job, and inspect the evidence before anything is called complete.</p></div>
-            <a class="workspace-primary" href="mailto:rally@updates.agent9.dev?subject=New%20Rally%20job&body=Outcome%3A%0A%0AContext%20or%20attachments%3A%0A%0ADue%20date%3A">New job</a>
+            <button class="workspace-primary" type="button" aria-expanded="false" aria-controls="manual-job-composer" data-open-job-composer>New job</button>
           </div>
 
           <div class="work-metrics" aria-label="Work status">
@@ -69,22 +79,163 @@
             <div><span data-connection-count>0</span><p>certified systems</p></div>
           </div>
 
-          <section class="onboarding-card" data-onboarding aria-labelledby="onboarding-title">
-            <div class="onboarding-copy"><p class="eyebrow">First run</p><h2 id="onboarding-title">Useful immediately. More powerful when connected.</h2><p>Rally’s approved AI workforce is separate from your company systems. Connect trusted context now, or skip it and commission work from your email and attachments.</p></div>
-            <ol class="onboarding-steps">
-              <li class="is-ready"><span>1</span><div><b>AI workforce ready</b><small>Gemini, Claude, and OpenAI are available on the approved execution host.</small></div><strong>Ready</strong></li>
-              <li><span>2</span><div><b>Connect company systems</b><small>Optional. Add only the sources this workspace should use.</small></div><button type="button" data-open-connections>Choose connections</button></li>
-              <li><span>3</span><div><b>Commission the outcome</b><small>Email Rally normally; the thread becomes the task record.</small></div><a href="mailto:rally@updates.agent9.dev?subject=My%20first%20Rally%20job&body=Outcome%3A%0A%0AContext%20or%20attachments%3A">Skip connections &amp; start</a></li>
-            </ol>
+          <section class="commission-hub" data-onboarding aria-labelledby="commission-title">
+            <header class="commission-intro">
+              <div>
+                <p class="eyebrow">Your accountable AI teammate</p>
+                <h2 id="commission-title">Choose the role. Rally assembles the team.</h2>
+                <p data-commission-summary>You define the business outcome. Rally quietly routes the right models, approved systems, recovery, and independent verification underneath.</p>
+              </div>
+              <div class="commission-intro-actions">
+                <span class="commission-trust"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.5 16 5v4.7c0 3.7-2.2 6.3-6 7.8-3.8-1.5-6-4.1-6-7.8V5zM7.2 10l1.8 1.8 3.8-4"/></svg>Policy stays on</span>
+                <button class="commission-setup-toggle" type="button" aria-expanded="true" aria-controls="assistant-setup" data-toggle-assistant-setup>Hide setup</button>
+              </div>
+            </header>
+
+            <div class="assistant-setup" id="assistant-setup" aria-label="Configure an accountable AI teammate">
+              <section class="setup-step setup-persona" aria-labelledby="setup-persona-title">
+                <div class="setup-step-heading"><span>1</span><div><p>Choose an assistant</p><h3 id="setup-persona-title">Who should lead?</h3></div></div>
+                <div class="persona-grid" role="group" aria-label="Assistant persona">
+                  <button class="persona-card is-selected" type="button" data-assistant-persona="strategist" aria-pressed="true">
+                    <span class="persona-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7.5"/><path d="m14.8 9.2-1.7 3.9-3.9 1.7 1.7-3.9z"/></svg></span>
+                    <span><b>Executive strategist</b><small>Research, decide, brief</small></span>
+                  </button>
+                  <button class="persona-card" type="button" data-assistant-persona="security" aria-pressed="false">
+                    <span class="persona-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3 19 6v5.5c0 4.3-2.5 7.4-7 9.2-4.5-1.8-7-4.9-7-9.2V6z"/><path d="m9 12 2 2 4-4"/></svg></span>
+                    <span><b>Security lead</b><small>Assess, harden, prove</small></span>
+                  </button>
+                  <button class="persona-card" type="button" data-assistant-persona="creative" aria-pressed="false">
+                    <span class="persona-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 3 1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5z"/><path d="m18.5 16 .7 2.3 2.3.7-2.3.7-.7 2.3-.7-2.3-2.3-.7 2.3-.7z"/></svg></span>
+                    <span><b>Creative director</b><small>Concept, create, refine</small></span>
+                  </button>
+                </div>
+              </section>
+
+              <section class="setup-step setup-posture" aria-labelledby="setup-posture-title">
+                <div class="setup-step-heading"><span>2</span><div><p>Set expertise &amp; autonomy</p><h3 id="setup-posture-title">How should it work?</h3></div></div>
+                <div class="posture-control">
+                  <span>Expertise</span>
+                  <div class="segmented-control" role="group" aria-label="Expertise depth">
+                    <button class="is-selected" type="button" data-expertise="balanced" aria-pressed="true">Focused</button>
+                    <button type="button" data-expertise="deep" aria-pressed="false">Deep specialist</button>
+                  </div>
+                </div>
+                <div class="posture-control">
+                  <span>Autonomy</span>
+                  <div class="segmented-control" role="group" aria-label="Recovery autonomy">
+                    <button type="button" data-autonomy="guarded" aria-pressed="false">Guarded</button>
+                    <button class="is-selected" type="button" data-autonomy="resilient" aria-pressed="true">Resilient <em>Recommended</em></button>
+                  </div>
+                </div>
+                <p class="posture-note" data-posture-note>One bounded recovery handoff is allowed. A different model must still approve the work.</p>
+              </section>
+
+              <section class="setup-step setup-assets" aria-labelledby="setup-assets-title">
+                <div class="setup-step-heading"><span>3</span><div><p>Connect approved assets</p><h3 id="setup-assets-title">Give it trusted context.</h3></div></div>
+                <div class="asset-status"><strong data-connection-count>0</strong><span><b>certified systems</b><small>Optional for the first job. Nothing is implied as connected until discovery and a live read pass.</small></span></div>
+                <button class="setup-action" type="button" data-open-connections>Manage approved systems <span aria-hidden="true">&#8594;</span></button>
+              </section>
+
+              <section class="setup-step setup-channel" aria-labelledby="setup-channel-title">
+                <div class="setup-step-heading"><span>4</span><div><p>Choose communication</p><h3 id="setup-channel-title">Two doors. One accountable queue.</h3></div></div>
+                <div class="channel-grid">
+                  <button class="channel-card is-primary" type="button" aria-expanded="false" aria-controls="manual-job-composer" data-open-job-composer>
+                    <span class="channel-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 4.5h14v15H5zM8 9h8M8 13h5"/></svg></span>
+                    <span><b>Dashboard</b><small>Write a request here</small></span><span aria-hidden="true">&#8595;</span>
+                  </button>
+                  <a class="channel-card" href="?view=teammates" data-first-job-link="email-door">
+                    <span class="channel-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="2"/><path d="m5 8 7 5 7-5"/></svg></span>
+                    <span><b>Email</b><small data-commission-address>Finish email setup</small></span><span aria-hidden="true">&#8599;</span>
+                  </a>
+                  <button class="channel-card is-future" type="button" disabled aria-disabled="true">
+                    <span class="channel-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 5.5h14v10H9l-4 3z"/><path d="M9 9h6M9 12h4"/></svg></span>
+                    <span><b>Messenger</b><small>Planned, not available</small></span><em>Future</em>
+                  </button>
+                </div>
+              </section>
+            </div>
+
+            <form class="job-composer" id="manual-job-composer" data-job-form aria-labelledby="job-composer-title" aria-busy="false" hidden>
+              <div class="job-composer-heading">
+                <div><p class="eyebrow">New dashboard job</p><h3 id="job-composer-title" tabindex="-1">Describe the outcome—not the busywork.</h3><p class="composer-brief"><span data-composer-persona>Executive strategist</span><span data-composer-expertise>Focused expertise</span><span data-composer-autonomy>Resilient recovery</span></p></div>
+                <button type="button" aria-label="Close new job form" data-close-job-composer>&times;</button>
+              </div>
+              <div class="job-fields">
+                <label><span>Job title</span><input name="title" type="text" required maxlength="160" autocomplete="off" placeholder="Audit our launch readiness" data-job-title></label>
+                <label class="job-goal"><span>What does done look like?</span><textarea name="goal" rows="4" required maxlength="6000" placeholder="Review the launch plan, identify material gaps, and return a prioritized recommendation with evidence." data-job-goal></textarea></label>
+              </div>
+              <details class="job-continuity">
+                <summary>Continuity options</summary>
+                <div class="job-options">
+                  <label><span>Source run ID <small>optional</small></span><input name="source_run_id" type="text" maxlength="128" pattern="[A-Za-z0-9][A-Za-z0-9._:-]*" autocomplete="off" spellcheck="false" placeholder="Continue or recover an earlier run" data-job-source-run></label>
+                  <label class="job-checkbox"><input name="second_wind" type="checkbox" checked data-job-second-wind><span><b>Allow Second Wind</b><small>One bounded recovery handoff. Independent approval still applies.</small></span></label>
+                </div>
+              </details>
+              <div class="job-submit-row"><p role="status" aria-live="polite" aria-atomic="true" data-job-form-status></p><button class="workspace-primary" type="submit" data-job-submit>Accept into queue</button></div>
+            </form>
+
+            <div class="job-acceptance" role="status" aria-live="polite" aria-atomic="false" tabindex="-1" data-job-receipt hidden>
+              <span class="job-acceptance-mark" aria-hidden="true">&#10003;</span>
+              <div><p>Accepted into Rally</p><h3 data-job-receipt-title>Job accepted</h3><p><code data-job-receipt-id></code><span data-job-receipt-detail>Queued with Rally policy attached.</span></p></div>
+              <div class="job-acceptance-actions"><button type="button" data-view-accepted-job>View job</button><button type="button" data-compose-another>Add another</button></div>
+            </div>
           </section>
 
           <div class="work-board">
             <section class="run-queue" aria-labelledby="queue-title">
-              <div class="queue-heading"><div><p class="eyebrow">Task management</p><h2 id="queue-title">Work queue</h2></div><label><span class="sr-only">Search work</span><input type="search" placeholder="Search jobs" autocomplete="off" data-work-search></label></div>
+              <div class="queue-heading"><div><p class="eyebrow">Task management</p><div class="queue-title-line"><h2 id="queue-title">Work queue</h2><span class="workspace-live-status" data-state="paused" data-workspace-live-status>Updates paused</span></div></div><label><span class="sr-only">Search work</span><input type="search" placeholder="Search jobs" autocomplete="off" data-work-search></label></div>
               <div class="queue-filters" role="group" aria-label="Filter work"><button class="is-active" type="button" data-run-filter="all">All</button><button type="button" data-run-filter="running">Active</button><button type="button" data-run-filter="attention">Attention</button><button type="button" data-run-filter="complete">Complete</button></div>
               <div class="run-list" data-work-run-list aria-live="polite"><div class="run-loading"><span></span><p>Loading your workspace queue…</p></div></div>
             </section>
-            <section class="run-detail" data-work-run-detail aria-live="polite"><div class="run-detail-empty"><span>↗</span><h2>Select a job</h2><p>Open a run to inspect its progress, workers, checklist, and independent verification receipts.</p></div></section>
+            <section class="run-detail" data-work-run-detail aria-live="polite" tabindex="-1"><div class="run-detail-empty"><span>↗</span><h2>Select a job</h2><p>Open a run to inspect its progress, workers, checklist, and independent verification receipts.</p></div></section>
+          </div>
+        </section>
+
+        <section class="workspace-view" data-workspace-view="teammates" hidden>
+          <div class="workspace-heading"><div><p class="eyebrow">Teammates</p><h1 tabindex="-1">Create the role people will work with.</h1><p>A teammate is the durable business identity. Models are workers behind it; email providers are channels beneath it.</p></div><button class="workspace-secondary" type="button" data-focus-teammate-form>New teammate</button></div>
+          <div class="teammate-boundary"><b>Identity before infrastructure</b><p>Choosing a provider creates a workspace-owned setup record. Rally marks the address live only after the provider authorization, DNS, or bidirectional verification step genuinely passes.</p></div>
+          <div class="teammate-layout">
+            <section class="teammate-roster" aria-labelledby="teammate-roster-title">
+              <div class="teammate-section-heading"><p class="eyebrow">Your team</p><h2 id="teammate-roster-title">Persistent business roles</h2></div>
+              <div class="teammate-list" data-teammate-list aria-live="polite"><div class="run-loading"><span></span><p>Loading teammates…</p></div></div>
+            </section>
+
+            <form class="teammate-form" data-teammate-form aria-labelledby="teammate-form-title">
+              <div class="teammate-form-heading"><p class="eyebrow">New teammate</p><h2 id="teammate-form-title" tabindex="-1">Name the role. Then choose where it lives.</h2><p>The email identity belongs to this workspace and remains separate from model credentials and company-system access.</p></div>
+
+              <fieldset>
+                <legend>1. Business identity</legend>
+                <div class="teammate-fields two-column">
+                  <label><span>Teammate name</span><input name="name" type="text" maxlength="80" required placeholder="Rally Research" data-teammate-name></label>
+                  <label><span>Role</span><select name="role" required data-teammate-role><option value="research">Research</option><option value="security">Security</option><option value="operations">Operations</option><option value="finance">Finance</option><option value="customer_success">Customer success</option><option value="general">General dispatcher</option><option value="custom">Custom role</option></select></label>
+                  <label class="full-column" data-custom-role-field hidden><span>Custom role</span><input name="custom_role" type="text" maxlength="120" placeholder="Procurement analyst" data-custom-role></label>
+                  <label class="full-column"><span>Accountable human owner</span><input name="human_owner_email" type="email" maxlength="320" required autocomplete="email" placeholder="owner@company.com" data-teammate-owner></label>
+                </div>
+              </fieldset>
+
+              <fieldset>
+                <legend>2. Email identity</legend>
+                <p class="field-intro">Company-owned mail is preferred. A Rally-domain identity is available only as a temporary trial.</p>
+                <div class="email-provider-grid" data-email-provider-options aria-live="polite"><div class="provider-loading">Loading provider options…</div></div>
+                <div class="teammate-fields email-address-fields">
+                  <label><span>Address</span><input name="email_local_part" type="text" maxlength="64" required placeholder="research" autocapitalize="none" spellcheck="false" data-email-local></label>
+                  <span class="address-at" aria-hidden="true">@</span>
+                  <label><span>Domain</span><input name="email_domain" type="text" maxlength="253" required placeholder="ai.company.com" autocapitalize="none" spellcheck="false" data-email-domain></label>
+                </div>
+                <div class="connection-choice" data-email-methods></div>
+                <p class="provider-readiness" data-provider-readiness role="status" aria-live="polite"></p>
+              </fieldset>
+
+              <fieldset>
+                <legend>3. Who may commission it?</legend>
+                <div class="teammate-fields">
+                  <label><span>Reachability</span><select name="reachability" data-teammate-reachability><option value="selected_senders">Selected senders</option><option value="entire_company">Entire company</option><option value="approved_domains">Approved people or domains</option><option value="public_intake">Public intake — no privileged context</option></select></label>
+                  <label><span>Additional approved senders <small>optional</small></span><textarea name="allowed_senders" rows="3" maxlength="16000" placeholder="analyst@company.com, @trusted-partner.com" data-allowed-senders></textarea><small>Separate addresses or @domains with commas or new lines. The human owner is always included.</small></label>
+                </div>
+              </fieldset>
+
+              <div class="teammate-submit-row"><p data-teammate-form-status role="status" aria-live="polite"></p><button class="workspace-primary" type="submit" data-teammate-submit>Create teammate</button></div>
+            </form>
           </div>
         </section>
 

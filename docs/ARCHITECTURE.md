@@ -6,26 +6,35 @@ OpenAI Codex runtimes; deterministic code—not a model—decides whether work i
 
 ```mermaid
 flowchart LR
-    H["Human executive<br/>email"] --> R["Resend<br/>signed inbound webhook"]
-    R --> W["Cloudflare Worker + D1<br/>durable edge queue"]
-    W -->|"poll token"| L["Rally runner<br/>policy authority"]
-    L -->|"Cloud Run IAM + service token<br/>idempotency key"| C["Cloud Run<br/>Google ADK + Gemini 3.7"]
-    C <--> F["Firestore<br/>commission records"]
-    C --> K["Agent catalog<br/>capability + authority discovery"]
-    C -.-> T["Cloud Logging + Trace<br/>metadata only"]
+    H["Executive email"] --> RI["Resend<br/>signed inbound webhook"]
+    D["Google-authenticated<br/>private dashboard"] -->|"manual commission"| W["Cloudflare Worker + D1<br/>durable queue + receipts"]
+    RI --> W
+    W -->|"poll + retry-safe ack"| L["Deterministic Rally runner<br/>local checklist · budgets · done gate"]
+
+    subgraph GC["Google Cloud coordination + control"]
+      I["Cloud Run identity control plane<br/>Google account + sessions"]
+      C["IAM-protected Cloud Run<br/>Gemini 3.7 Flash + Google ADK"]
+      F["Firestore<br/>atomic claims · leases · fencing"]
+      S["Secret Manager + Cloud KMS<br/>service token · connector vault"]
+      T["Cloud Trace + OpenTelemetry<br/>metadata only · content off"]
+      C <--> F
+      C -.-> T
+      S -.-> C
+      S -.-> I
+    end
+
+    D -.->|"identity check"| I
+    L -->|"IAM + service token<br/>idempotency key"| C
     L --> A["Claude CLI<br/>Anthropic family"]
     L --> G["Antigravity CLI<br/>Gemini family"]
     L --> O["Codex CLI<br/>OpenAI family"]
-    A <-->|"work + review"| G
-    G <-->|"work + review"| O
-    O <-->|"work + review"| A
-    A -->|"executive turn email"| H
-    G -->|"executive turn email"| H
-    O -->|"executive turn email"| H
-    L -->|"final evidence report"| H
-    L -->|"allowlisted public projection"| W
-    W --> D["Judge console<br/>Pages live UI"]
-    B["Human + browser agent<br/>shared WebMCP page"] <--> D
+    A -->|"proposed work + evidence"| L
+    G -->|"proposed work + evidence"| L
+    O -->|"proposed work + evidence"| L
+    L -->|"final report"| RO["Resend<br/>outbound email"]
+    RO --> H
+    L -->|"workspace-scoped<br/>evidence projection"| W
+    W --> D
 ```
 
 ## What each layer is allowed to decide
@@ -33,12 +42,13 @@ flowchart LR
 | Layer | Authority | Explicitly cannot do |
 |---|---|---|
 | Email edge | Verify webhook, queue, deduplicate delivery | Approve a sender or complete work |
-| Google ADK coordinator | Preserve the request verbatim and produce a bounded handoff | Modify files, invent evidence, waive review |
+| Google ADK coordinator | Provide the required model-mediated intake gate around a deterministic, normalized handoff | Modify files, invent evidence, waive review |
 | Rally runner | Authenticate commissioners, advance state, authorize bounded Second Wind recovery, enforce budgets and verification | Change its own policy from model output |
+| Workspace teammate plane | Persist a business role, accountable owner, requested email identity, reachability, and activation state | Provision mail, mark an address live, or grant runtime sender authority without provider and mail proof |
 | Gemini / Claude / OpenAI workers | Scope, implement, test, reject, and repair work | Verify their own checklist items or share credentials across users |
 | Connector gateway | Discover approved remote MCP tools, enforce a frozen per-run allowlist, call read tools, write content-free receipts | Reveal OAuth tokens, widen authority, or execute gated writes |
 | WebMCP page | Search public runs, inspect bounded verification receipts, populate a visible job draft | Read private runs, transmit a draft, connect a provider, or grant authority |
-| Firestore | Atomically claim request keys and retain coordinator state | Trigger unbounded retries |
+| Firestore | Atomically claim request keys, retain coordinator state, and hold workspace-scoped teammate setup records | Trigger unbounded retries or turn a pending address into authority |
 
 ## The completion invariant
 
@@ -66,12 +76,14 @@ never authoritative.
   records the failure, preserves the checklist, and asks the next family to
   inspect any partial workspace edits before taking custody.
 
-## Fleet discovery and lifecycle
+## Operator-visible fleet catalog and lifecycle
 
 Authenticated operators can inspect `GET /v1/agents` to discover each approved
 agent's model family, framework/runtime, capabilities, department scope,
 authority, prohibitions, and lifecycle status. The versioned source catalog is
 `cloud/agent_catalog.json`; prompts and credentials are never part of discovery.
+The catalog is descriptive operator metadata, not a capability router, memory
+bank, or source of runtime completion authority.
 
 Every Cloud commission records creation/update timestamps, attempt number,
 retention horizon, status, and lease metadata. The catalog declares 30-day
@@ -84,8 +96,9 @@ The Cloud Run service is not public. A commission must pass two independent
 checks:
 
 1. Cloud Run IAM accepts only the least-privilege `rally-local-invoker` service
-   account. `imterryim@gmail.com` may mint its short-lived, service-audience ID
-   tokens but cannot turn an ordinary user token into an invocation.
+   account. An explicitly authorized operator may mint its short-lived,
+   service-audience ID tokens but cannot turn an ordinary user token into an
+   invocation.
 2. The FastAPI service compares `X-Rally-Service-Token` with a Secret Manager
    value using constant-time comparison.
 
@@ -107,6 +120,22 @@ the private coordinator. A compromised browser token therefore cannot be
 exchanged for Rally's machine-to-machine authority. The browser carries exactly
 one identity in `X-Rally-ID-Token` or `X-Rally-Session` so Cloud Run does not
 mistake application identity for a service-to-service IAM credential.
+
+Teammate onboarding shares that authenticated control-plane boundary but not
+the connector vault. A stable configured workspace ID scopes teammate records;
+the creating Google subject remains internal audit metadata and is omitted from
+the public response. Pending customer-domain address claims are unique only
+inside that workspace, preventing an unverified tenant from globally reserving
+another company's address. Rally-domain trial claims are global because Rally
+controls that namespace. No status returned by the current create route is
+`ready`; provider authorization, DNS, and send/receive verification remain a
+separate activation state machine.
+
+An existing live pilot address may be assigned to the configured workspace by
+`RALLY_PILOT_EMAIL_ADDRESS`. The authenticated provider-options response returns
+that address to the workspace UI; the static HTML and JavaScript do not contain
+it. Without that assignment or a future `ready` teammate, every commission CTA
+routes back to email setup instead of exposing another tenant's address.
 
 Each hosted connector credential is encrypted with a newly generated 256-bit
 AES-GCM data key and user/connector-bound associated data. Google Cloud KMS
@@ -137,7 +166,8 @@ verifier is selected. See
 
 ## Observability without prompt leakage
 
-Cloud Trace captures request and Gemini spans. Structured Cloud Logging records
+Cloud Trace captures Rally's explicit coordination span plus instrumented Gemini
+spans. Structured Cloud Logging records
 request ID, run ID, event, status, duplicate flag, latency, and trace linkage.
 `ADK_CAPTURE_MESSAGE_CONTENT_IN_SPANS=false` and
 `OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=NO_CONTENT` are set in both

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>dev.agent9.rally.runner</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/zsh</string>
+    <string>-lc</string>
+    <string>exec ./bin/rally --serve</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>/Users/terry/rally</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/opt/homebrew/bin:/usr/local/bin:/Users/terry/.local/bin:/Users/terry/.npm-global/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    <key>PYTHONUNBUFFERED</key>
+    <string>1</string>
+  </dict>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <dict>
+    <key>SuccessfulExit</key>
+    <false/>
+  </dict>
+  <key>ProcessType</key>
+  <string>Background</string>
+  <key>ThrottleInterval</key>
+  <integer>10</integer>
+  <key>StandardOutPath</key>
+  <string>/Users/terry/rally/.runtime/runner.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/terry/rally/.runtime/runner.error.log</string>
+</dict>
+</plist>

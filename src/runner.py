@@ -8,11 +8,15 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import fcntl
+import hashlib
 import time
 import json
 import os
+import re
+import shutil
 import subprocess
 import sys
+import tempfile
 import uuid
 import html as html_lib
 from typing import Dict, List, Optional
@@ -24,6 +28,7 @@ import cloud_coordinator  # noqa: E402
 import connectors  # noqa: E402
 import console as rally_console  # noqa: E402
 import envelope as E  # noqa: E402
+import media  # noqa: E402
 import report  # noqa: E402
 import transport  # noqa: E402
 
@@ -35,6 +40,8 @@ LEDGER = os.path.join(RUNS, "send-ledger.json")
 SERVE_LOCK = os.path.join(RUNS, "serve.lock")
 QUARANTINE = os.path.join(RUNS, "quarantine.jsonl")
 MAIL_DOMAIN = "updates.agent9.dev"
+RALLY_MAILBOX = "Rally <rally@updates.agent9.dev>"
+RUN_ID_RE = re.compile(r"^r-[0-9a-z-]{3,77}$")
 
 RULES = """You are one worker in a Rally run. The other workers are from
 different model families. You share one authoritative checklist and hand work
@@ -65,6 +72,10 @@ The envelope:
  "checklist":[{"id":"c1","description":"...","state":"open|claimed|awaiting-verification|done|blocked|disputed",
  "owner":"<AGENT_IDS>|null","verified_by":null,"evidence":"...","rejections":0}]}
 ```"""
+
+
+class NoteRejected(RuntimeError):
+    """A non-retryable note that failed run-scoped authority checks."""
 
 
 def load_config(path: str = CONFIG) -> Dict:
@@ -193,12 +204,28 @@ class Run:
     @classmethod
     def create(cls, task: str, workdir: str, cfg: Dict,
                run_id: Optional[str] = None,
-               connector_subject: str = "local") -> "Run":
+               connector_subject: str = "local",
+               commissioned_by: Optional[str] = None,
+               commission_message_id: Optional[str] = None,
+               commission_request_key: Optional[str] = None,
+               workspace_id: Optional[str] = None,
+               source_run_id: Optional[str] = None,
+               second_wind: Optional[bool] = None) -> "Run":
         rid = run_id or "r-%s-%s" % (
             dt.datetime.utcnow().strftime("%Y%m%d"), uuid.uuid4().hex[:6])
+        if not isinstance(rid, str) or not RUN_ID_RE.fullmatch(rid):
+            raise ValueError("invalid run_id")
+        if workspace_id is not None:
+            workspace_id = rally_console.validate_workspace_id(workspace_id)
+        connectors.assert_worker_isolation(cfg, connector_subject)
+        os.makedirs(RUNS, exist_ok=True)
         d = os.path.join(RUNS, rid)
-        os.makedirs(d, exist_ok=True)
         order = configured_agent_order(cfg)
+        continuity = continuity_policy(cfg)
+        if second_wind is not None:
+            enabled = bool(second_wind) and continuity["max_recoveries_per_run"] > 0
+            continuity["second_wind"] = enabled
+            continuity["mode"] = "second_wind" if enabled else "halt"
         state = {
             "run_id": rid, "task": task, "workdir": os.path.abspath(workdir),
             "turn": 0, "actor": order[0], "agent_order": order,
@@ -207,14 +234,45 @@ class Run:
             "last_digest": "", "created": now(), "log": [],
             "turns": [],
             "thread_message_id": None, "thread_references": [], "reprompts": 0,
-            "commission_message_id": None, "commission_request_key": None,
-            "continuity": continuity_policy(cfg),
+            "commission_message_id": commission_message_id,
+            "commission_request_key": (
+                commission_request_key
+                or (rid if commissioned_by is not None else None)
+            ),
+            "continuity": continuity,
+            "report_generation": 0, "report_delivery": None,
         }
-        connectors.assert_worker_isolation(cfg, connector_subject)
+        if commissioned_by is not None:
+            state["commissioned_by"] = commissioned_by
+        if workspace_id is not None:
+            state["workspace_id"] = workspace_id
+        if source_run_id:
+            state["source_run_id"] = source_run_id
+        if commission_message_id:
+            state["thread_message_id"] = commission_message_id
+            state["thread_references"] = [commission_message_id]
+        staging = tempfile.mkdtemp(prefix=".%s.create-" % rid, dir=RUNS)
+        try:
+            staged = cls(state, os.path.join(staging, "state.json"))
+            staged.save()
+            # Publish a fully formed initial state in one rename. The lock makes
+            # the existence check and publish exclusive across Rally processes;
+            # an existing preallocated run directory is never reused.
+            with open(os.path.join(RUNS, ".create.lock"), "a+") as claim:
+                fcntl.flock(claim.fileno(), fcntl.LOCK_EX)
+                if os.path.lexists(d):
+                    raise FileExistsError("run directory already exists: %s" % d)
+                os.rename(staging, d)
+            r = cls(state, os.path.join(d, "state.json"))
+        finally:
+            # A normal exception before publication is recoverable by retrying;
+            # a process crash can leave only a hidden staging directory, never
+            # an authoritative run-id directory without state.
+            if os.path.isdir(staging):
+                shutil.rmtree(staging)
         state["connector_authority"] = connectors.prepare_run(
             rid, d, cfg, connector_subject
         )
-        r = cls(state, os.path.join(d, "state.json"))
         r.save()
         return r
 
@@ -236,6 +294,8 @@ class Run:
             return None
         matches: List["Run"] = []
         for rid in entries:
+            if not RUN_ID_RE.fullmatch(rid):
+                continue
             state_path = os.path.join(RUNS, rid, "state.json")
             if not os.path.isfile(state_path):
                 continue
@@ -314,6 +374,18 @@ def build_prompt(run: Run, actor: str, cfg: Dict) -> str:
     connector_context = connectors.prompt_text(s.get("connector_authority") or {})
     if connector_context:
         parts.append("\n" + connector_context)
+
+    generations = s.get("media_generations") or []
+    if generations:
+        receipt = generations[-1]
+        parts.append(
+            "\nGOOGLE MEDIA TOOL RECEIPT (tool output, not completion proof):\n%s\n"
+            "The runner placed this receipt and any ready artifact inside the isolated "
+            "workspace before model work began. Inspect the actual file and its contents. "
+            "A different model family must still verify the relevant checklist item; never "
+            "treat a provider receipt or file existence alone as approval."
+            % json.dumps(receipt, indent=2)
+        )
 
     if not s["checklist"]:
         parts.append(
@@ -490,9 +562,12 @@ def mail_turn(run: Run, cfg: Dict, actor: str, narrative: str, commit: Optional[
     if not mail.get("enabled", True):
         return
     s = run.s
-    other = next_actor(s, cfg, actor)
-    addrs = {k: v["address"] for k, v in cfg["agents"].items()}
     human = s.get("commissioned_by") or mail.get("cc_human")
+    # Agent turns happen through the deterministic runner, not through SMTP.
+    # Email is the commissioner's view of that work, so keep legacy worker
+    # mailboxes inside authoritative state and expose one stable Rally thread.
+    if not human:
+        return
     limits = cfg["limits"]
     ledger = transport.Ledger(LEDGER)
     ledger.check_and_reserve(s["run_id"], limits["sends_per_run"])
@@ -502,8 +577,8 @@ def mail_turn(run: Run, cfg: Dict, actor: str, narrative: str, commit: Optional[
         json.dumps({"rally_version": 1, "run_id": s["run_id"], "turn": s["turn"],
                     "from_agent": actor, "commit": commit,
                     "checklist": s["checklist"]}, indent=2))
-    sender_address = addrs[actor]
-    recipient_address = addrs[other]
+    sender_address = "Rally"
+    recipient_address = human
     body = ("RALLY EXECUTIVE UPDATE\n"
             "Run: %s\nTurn: %s\nFrom: %s\nTo: %s\nStatus: In progress\n\n"
             "%s\n\n"
@@ -527,8 +602,8 @@ def mail_turn(run: Run, cfg: Dict, actor: str, narrative: str, commit: Optional[
     if references:
         headers["References"] = " ".join(references)
     transport.send(
-        key=key, sender="Rally %s <%s>" % (actor, sender_address),
-        to=recipient_address, cc=human,
+        key=key, sender=RALLY_MAILBOX,
+        to=human,
         subject="[rally #%s] %s" % (s["run_id"], subject_fragment(s["task"])),
         text=body,
         html=html,
@@ -536,7 +611,7 @@ def mail_turn(run: Run, cfg: Dict, actor: str, narrative: str, commit: Optional[
     )
     s["thread_message_id"] = message_id
     s["thread_references"] = references + [message_id]
-    run.note("mailed turn %s to %s" % (s["turn"], other))
+    run.note("mailed turn %s update to commissioner" % s["turn"])
 
 
 def write_report(run: Run, cfg: Dict, halt: str, dry: bool = False) -> str:
@@ -558,16 +633,69 @@ def write_report(run: Run, cfg: Dict, halt: str, dry: bool = False) -> str:
         return report.mechanical_summary(s, halt)
 
 
+def record_report(run: Run, text: str, halt: str,
+                  request_key: Optional[str] = None) -> None:
+    """Persist a generated report and a distinct, replayable delivery record."""
+    try:
+        generation = int(run.s.get("report_generation") or 0) + 1
+    except (TypeError, ValueError):
+        generation = 1
+    idempotency_key = "rally-final-report-%s-%d" % (run.s["run_id"], generation)
+    run.s["report"] = text
+    run.s["report_halt"] = halt
+    run.s["report_generated_at"] = now()
+    run.s["report_generation"] = generation
+    run.s["report_delivery"] = {
+        "status": "pending",
+        "generation": generation,
+        "provider": "resend",
+        "idempotency_key": idempotency_key,
+        "request_key": request_key,
+        "provider_message_id": None,
+        "accepted_at": None,
+    }
+    run.save()
+
+
 def mail_report(run: Run, cfg: Dict, text: str, halt: str) -> None:
     mail = cfg.get("mail", {})
-    human = run.s.get("commissioned_by") or mail.get("cc_human")
-    if not mail.get("enabled", True) or not human:
-        return
     s = run.s
+    delivery = s.get("report_delivery")
+    if not isinstance(delivery, dict):
+        try:
+            generation = max(1, int(s.get("report_generation") or 1))
+        except (TypeError, ValueError):
+            generation = 1
+        delivery = {
+            "status": "pending",
+            "generation": generation,
+            "provider": "resend",
+            "idempotency_key": "rally-final-report-%s-%d" % (
+                s["run_id"], generation
+            ),
+            "provider_message_id": None,
+            "accepted_at": None,
+        }
+        s["report_generation"] = generation
+        s["report_delivery"] = delivery
+        run.save()
+    if delivery.get("status") in {"delivered", "not_required"}:
+        return
+    human = s.get("commissioned_by") or mail.get("cc_human")
+    if not mail.get("enabled", True) or not human:
+        delivery["status"] = "not_required"
+        delivery["completed_at"] = now()
+        run.note("report delivery not required")
+        run.save()
+        return
     actor = s["actor"]
     status = report.classify(halt)[0]
     ledger = transport.Ledger(LEDGER)
-    ledger.check_and_reserve(s["run_id"], cfg["limits"]["sends_per_run"])
+    ledger.check_and_reserve(
+        s["run_id"],
+        cfg["limits"]["sends_per_run"],
+        reservation_key=delivery["idempotency_key"],
+    )
     key = transport.get_key(mail.get("keychain_service", "rally-resend"))
     message_id = "<%s-report@%s>" % (s["run_id"], MAIL_DOMAIN)
     prior = s.get("thread_message_id")
@@ -575,32 +703,40 @@ def mail_report(run: Run, cfg: Dict, text: str, halt: str) -> None:
     if prior and prior not in references:
         references.append(prior)
     headers = {"X-Rally-Run": s["run_id"], "X-Rally-Report": status,
+               "X-Rally-From": actor,
                "Auto-Submitted": "auto-generated", "Message-ID": message_id}
     if prior:
         headers["In-Reply-To"] = prior
     if references:
         headers["References"] = " ".join(references)
-    transport.send(
+    provider_message_id = transport.send(
         key=key,
-        sender="Rally %s <%s>" % (actor, cfg["agents"][actor]["address"]),
+        sender=RALLY_MAILBOX,
         to=human,
         subject="[rally #%s] %s" % (s["run_id"], subject_fragment(s["task"])),
         text=("RALLY EXECUTIVE REPORT\n"
               "Run: %s\nFrom: %s\nStatus: %s\n\n%s\n\n%s\n"
               "Workdir: %s\n" %
-              (s["run_id"], cfg["agents"][actor]["address"], status,
+              (s["run_id"], "Rally", status,
                text.strip(), watermark(s["run_id"], "report",
-                                       cfg["agents"][actor]["address"], human),
+                                       "Rally", human),
                s["workdir"])),
         html=executive_html("Executive report", s["run_id"], "report",
-                            cfg["agents"][actor]["address"], human, status,
+                            "Rally", human, status,
                             text.strip()),
         headers=headers,
+        idempotency_key=delivery["idempotency_key"],
     )
+    # Only a successful provider response crosses the delivery boundary. The
+    # idempotency key was persisted before this call, so a crash before this
+    # save can safely submit the same final report again.
+    delivery["status"] = "delivered"
+    delivery["provider_message_id"] = provider_message_id or None
+    delivery["accepted_at"] = now()
     s["thread_message_id"] = message_id
     s["thread_references"] = references + [message_id]
-    run.save()
     run.note("report mailed to %s" % human)
+    run.save()
 
 
 def take_turn(run: Run, cfg: Dict, dry: bool = False) -> Optional[str]:
@@ -827,6 +963,23 @@ def new_workspace(run_id: str) -> str:
     return ws
 
 
+def initialize_commission_run(run: Run, cfg: Dict, connector_subject: str) -> None:
+    """Finish replay-safe setup after the commission record is durable."""
+    changed = False
+    workdir = new_workspace(run.s["run_id"])
+    if run.s.get("workdir") != workdir:
+        run.s["workdir"] = workdir
+        changed = True
+    if not run.s.get("connector_authority"):
+        connectors.assert_worker_isolation(cfg, connector_subject)
+        run.s["connector_authority"] = connectors.prepare_run(
+            run.s["run_id"], os.path.dirname(run.path), cfg, connector_subject
+        )
+        changed = True
+    if changed:
+        run.save()
+
+
 def attach_cloud_coordination(run: Run, cfg: Dict, request_key: str) -> bool:
     """Attach the Google ADK record before agent execution; fail closed if required."""
     if run.s.get("cloud_coordinator"):
@@ -865,62 +1018,132 @@ def attach_cloud_coordination(run: Run, cfg: Dict, request_key: str) -> bool:
     return True
 
 
+def prepare_media(run: Run, cfg: Dict, task: Optional[str] = None,
+                  revision: bool = False) -> Optional[Dict]:
+    """Run a bounded Google media tool for an explicit image or song request."""
+    prior = run.s.get("media_generations") or []
+    previous_kind = prior[-1].get("kind") if prior else None
+    request = media.detect_request(task or run.s.get("task") or "", previous_kind)
+    if request is None:
+        return None
+    fingerprint = hashlib.sha256(
+        request["prompt"].encode("utf-8")
+    ).hexdigest()
+    if not revision:
+        for existing in prior:
+            if (existing.get("prompt_fingerprint") == fingerprint
+                    and existing.get("status") == "ready"):
+                return existing
+    try:
+        receipt = media.generate(request, run.s["workdir"], cfg)
+        run.note(
+            "Google %s deliverable generated with %s"
+            % (request["kind"], receipt["model"])
+        )
+    except media.MediaGenerationError as exc:
+        receipt = {
+            "kind": request["kind"],
+            "status": "failed",
+            "provider": "Google Vertex AI",
+            "prompt_fingerprint": fingerprint,
+            "error": " ".join(str(exc).split())[:300],
+            "generated_at": now(),
+        }
+        run.note("Google %s generation failed safely: %s" % (request["kind"], exc))
+    run.s.setdefault("media_generations", []).append(receipt)
+    run.save()
+    return receipt
+
+
 def handle_commission(cfg: Dict, task: str, sender: str,
                       message_id: Optional[str] = None,
-                      request_key: Optional[str] = None) -> str:
-    durable_key = request_key or message_id
+                      request_key: Optional[str] = None,
+                      run_id: Optional[str] = None,
+                      source_run_id: Optional[str] = None,
+                      second_wind: Optional[bool] = None,
+                      workspace_id: Optional[str] = None) -> str:
+    if workspace_id is not None:
+        workspace_id = rally_console.validate_workspace_id(workspace_id)
+    durable_key = request_key or message_id or run_id
     run = Run.find_commission(durable_key, message_id)
     if run:
         print("recovered commission %s from durable ingress replay" % run.s["run_id"])
+        if workspace_id is not None and run.s.get("workspace_id") != workspace_id:
+            raise RuntimeError("commission workspace does not match its durable run")
         if run.s.get("report"):
-            run.note("duplicate commission ignored after terminal report")
+            delivery = run.s.get("report_delivery") or {}
+            if delivery.get("status") in {"delivered", "not_required"}:
+                run.note("duplicate commission ignored after terminal report delivery")
+                run.save()
+                return run.s["run_id"]
+            run.note("retrying pending final report delivery")
             run.save()
+            halt = (run.s.get("report_halt")
+                    or (run.s.get("halt") or {}).get("reason")
+                    or "complete")
+            mail_report(run, cfg, run.s["report"], halt)
             return run.s["run_id"]
         run.s["halt"] = None
         run.note("resuming incomplete commission after delivery retry")
     else:
-        run = Run.create(task, ".", cfg, connector_subject=sender)
-        run.s["workdir"] = new_workspace(run.s["run_id"])
-        run.s["commissioned_by"] = sender
-        run.s["commission_message_id"] = message_id
-        run.s["commission_request_key"] = durable_key or run.s["run_id"]
-        if message_id:
-            run.s["thread_message_id"] = message_id
-            run.s["thread_references"] = [message_id]
-        run.save()
+        run = Run.create(
+            task,
+            ".",
+            cfg,
+            run_id=run_id,
+            connector_subject=sender,
+            commissioned_by=sender,
+            commission_message_id=message_id,
+            commission_request_key=durable_key,
+            workspace_id=workspace_id,
+            source_run_id=source_run_id,
+            second_wind=second_wind,
+        )
         print("commissioned %s by %s" % (run.s["run_id"], sender))
+    initialize_commission_run(run, cfg, sender)
     request_key = run.s.get("commission_request_key") or message_id or run.s["run_id"]
     if not attach_cloud_coordination(run, cfg, request_key):
         halt = "cloud_coordinator_error"
         text = report.mechanical_summary(run.s, halt)
-        run.s["report"] = text
-        run.save()
+        record_report(run, text, halt, request_key=request_key)
         sync_console(run, cfg)
-        try:
-            mail_report(run, cfg, text, halt)
-        except transport.SendBlocked as exc:
-            run.note("failure report not mailed: %s" % exc)
+        mail_report(run, cfg, text, halt)
         return run.s["run_id"]
+    prepare_media(run, cfg)
     sync_console(run, cfg)
     halt = loop(run, cfg)
     text = write_report(run, cfg, halt)
-    run.s["report"] = text
-    run.save()
+    record_report(run, text, halt, request_key=request_key)
     sync_console(run, cfg)
-    try:
-        mail_report(run, cfg, text, halt)
-    except transport.SendBlocked as exc:
-        run.note("report not mailed: %s" % exc)
+    mail_report(run, cfg, text, halt)
     return run.s["run_id"]
 
 
-def handle_note(cfg: Dict, run_id: str, text: str, message_id: Optional[str] = None) -> None:
+def handle_note(cfg: Dict, run_id: str, text: str,
+                message_id: Optional[str] = None,
+                sender: Optional[str] = None,
+                request_key: Optional[str] = None) -> None:
     try:
         run = Run.load(run_id)
     except IOError:
         print("note for unknown run %s, dropped" % run_id)
         return
-    run.s["human_note"] = text
+    expected_sender = str(run.s.get("commissioned_by") or "").strip().lower()
+    authenticated_sender = str(sender or "").strip().lower()
+    if not expected_sender or authenticated_sender != expected_sender:
+        raise NoteRejected("note sender is not the run commissioner")
+    note_key = request_key or message_id
+    delivery = run.s.get("report_delivery") or {}
+    if (note_key and delivery.get("request_key") == note_key
+            and run.s.get("report")):
+        if delivery.get("status") not in {"delivered", "not_required"}:
+            sync_console(run, cfg)
+            halt = (run.s.get("report_halt")
+                    or (run.s.get("halt") or {}).get("reason")
+                    or "complete")
+            mail_report(run, cfg, run.s["report"], halt)
+        return
+    apply_human_note(run, text)
     if message_id:
         prior = run.s.get("thread_message_id")
         refs = list(run.s.get("thread_references") or [])
@@ -934,22 +1157,76 @@ def handle_note(cfg: Dict, run_id: str, text: str, message_id: Optional[str] = N
         run.save()
         print("run %s stopped by human" % run_id)
         report_text = report.mechanical_summary(run.s, "stopped_by_human")
-        try:
-            mail_report(run, cfg, report_text, "stopped_by_human")
-        except transport.SendBlocked:
-            pass
+        record_report(
+            run, report_text, "stopped_by_human", request_key=note_key
+        )
         sync_console(run, cfg)
+        mail_report(run, cfg, report_text, "stopped_by_human")
         return
+    prepare_media(run, cfg, task=text, revision=True)
     print("note delivered to %s, resuming" % run_id)
     halt = loop(run, cfg)
     text_out = write_report(run, cfg, halt)
-    run.s["report"] = text_out
-    run.save()
+    record_report(run, text_out, halt, request_key=note_key)
     sync_console(run, cfg)
-    try:
-        mail_report(run, cfg, text_out, halt)
-    except transport.SendBlocked:
-        pass
+    mail_report(run, cfg, text_out, halt)
+
+
+def apply_human_note(run: Run, text: str) -> List[str]:
+    """Stage authenticated guidance and reopen blocked work without approving it.
+
+    A model may not grant itself recovery authority, but the commissioner must
+    be able to supply new information. A non-STOP note therefore moves only
+    blocked/disputed items back to ``open``. It never marks work complete,
+    chooses a verifier, changes budgets, or relaxes policy.
+    """
+    run.s["human_note"] = text
+    if text.strip().upper().startswith("STOP"):
+        return []
+    reopened: List[str] = []
+    for item in run.s.get("checklist") or []:
+        if item.get("state") not in ("blocked", "disputed"):
+            continue
+        reopened.append(str(item.get("id") or ""))
+        item["state"] = "open"
+        item["owner"] = None
+        item["verified_by"] = None
+    if reopened:
+        run.s["halt"] = None
+        run.s["reprompts"] = 0
+        run.s["digest_streak"] = 0
+        run.note(
+            "HUMAN RESUME: reopened %s for normal ownership and independent "
+            "verification" % ", ".join(reopened)
+        )
+    elif run.s.get("checklist") and all(
+        item.get("state") == "done" for item in run.s.get("checklist") or []
+    ):
+        numeric_ids = [
+            int(match.group(1)) for item in run.s.get("checklist") or []
+            for match in [re.fullmatch(r"c(\d+)", str(item.get("id") or ""))]
+            if match
+        ]
+        item_id = "c%d" % ((max(numeric_ids) if numeric_ids else 0) + 1)
+        description = "Apply authenticated human follow-up: %s" % " ".join(text.split())
+        run.s["checklist"].append({
+            "id": item_id,
+            "description": description[:420],
+            "state": "open",
+            "owner": None,
+            "verified_by": None,
+            "evidence": None,
+            "rejections": 0,
+        })
+        reopened.append(item_id)
+        run.s["halt"] = None
+        run.s["reprompts"] = 0
+        run.s["digest_streak"] = 0
+        run.note(
+            "HUMAN REVISION: added %s without changing prior approvals"
+            % item_id
+        )
+    return reopened
 
 
 def serve(cfg: Dict, once: bool = False) -> int:
@@ -985,13 +1262,28 @@ def serve(cfg: Dict, once: bool = False) -> int:
                             detail["task"],
                             detail["sender"],
                             detail.get("message_id"),
-                            request_key=m.get("id"),
+                            request_key=detail.get("request_key") or m.get("id"),
+                            run_id=detail.get("run_id"),
+                            source_run_id=detail.get("source_run_id"),
+                            second_wind=detail.get("second_wind"),
+                            workspace_id=detail.get("workspace_id"),
                         )
                     elif kind == "note":
-                        handle_note(cfg, detail["run_id"], detail["text"], detail.get("message_id"))
+                        handle_note(
+                            cfg,
+                            detail["run_id"],
+                            detail["text"],
+                            detail.get("message_id"),
+                            sender=detail.get("sender"),
+                            request_key=m.get("id"),
+                        )
                     else:
                         print("ignored: %s" % (detail.get("why") or m.get("error")))
                         quarantine(m, detail.get("why") or m.get("error") or "ignored")
+                    succeeded = True
+                except NoteRejected as exc:
+                    print("handling %s rejected: %s" % (m.get("id"), exc))
+                    quarantine(m, str(exc))
                     succeeded = True
                 except Exception as exc:
                     print("handling %s failed: %s" % (m.get("id"), exc))
@@ -1071,8 +1363,7 @@ def cmd_retry(run_id: str, cfg: Dict) -> int:
     run.save()
     halt = loop(run, cfg)
     text = write_report(run, cfg, halt)
-    run.s["report"] = text
-    run.save()
+    record_report(run, text, halt)
     sync_console(run, cfg)
     try:
         mail_report(run, cfg, text, halt)
@@ -1261,7 +1552,7 @@ def main(argv: List[str]) -> int:
             sync_console(run, cfg)
             return 1
     if a.note:
-        run.s["human_note"] = a.note
+        apply_human_note(run, a.note)
         run.save()
     sync_console(run, cfg)
     print("run %s  workdir %s" % (run.s["run_id"], run.s["workdir"]))
@@ -1273,8 +1564,7 @@ def main(argv: List[str]) -> int:
           % (status, halt, run.s["turn"], done, len(run.s["checklist"])))
 
     text = write_report(run, cfg, halt, a.dry)
-    run.s["report"] = text
-    run.save()
+    record_report(run, text, halt)
     sync_console(run, cfg)
     try:
         mail_report(run, cfg, text, halt)

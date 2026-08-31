@@ -170,6 +170,16 @@ class ConsoleSnapshotTests(unittest.TestCase):
         self.assertEqual(payload["visibility"], "private")
         self.assertEqual(payload["workspace_id"], "workspace-test")
 
+    def test_dashboard_run_workspace_overrides_the_email_cli_fallback(self):
+        payload = rally_console.build_snapshot(
+            state(workspace_id="workspace-dashboard"), config()
+        )
+        self.assertEqual(payload["workspace_id"], "workspace-dashboard")
+
+    def test_invalid_stored_workspace_does_not_fall_back_to_config(self):
+        with self.assertRaises(rally_console.ConsoleError):
+            rally_console.build_snapshot(state(workspace_id="invalid workspace"), config())
+
     def test_disabled_workspace_sync_does_not_publish(self):
         with mock.patch.object(rally_console.urllib.request, "urlopen") as urlopen:
             self.assertIsNone(rally_console.publish(state(), config(enabled=False, public=False)))
