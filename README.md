@@ -217,9 +217,10 @@ and attempts to bypass independent review.
 ### Live Google media deliverables
 
 Rally can now turn an explicit email or dashboard request into a real file—not
-just prose. A live Vertex call produced a [69.96-second All Things Agentic song
-with Lyria 3 Pro](docs/evidence/media/all-things-agentic-lyria-3-pro.mp3) and a
-[1024×1024 beagle image](docs/evidence/media/beagle-gemini-image.png) with
+just prose. Live Vertex calls produced a [69.96-second All Things Agentic song
+with Lyria 3 Pro](docs/evidence/media/all-things-agentic-lyria-3-pro.mp3), a
+[73.33-second soulful hip-hop variant](docs/evidence/media/all-things-agentic-soulful-hip-hop-lyria-3-pro.mp3),
+and a [1024×1024 beagle image](docs/evidence/media/beagle-gemini-image.png) with
 Gemini 2.5 Flash Image. The repository preserves their hashes and non-secret
 [generation receipt](docs/evidence/media/generation-receipt.json).
 
@@ -575,7 +576,7 @@ studio/demo-teleprompter.html
 | Security and governance | Dual-auth private coordinator, tenant identity, encrypted connector vault, immutable tool authority, no self-approval |
 | Telemetry | OpenTelemetry and Cloud Trace with model message capture disabled |
 | Proof of action | Real email commission, rejected claims, cross-family repair, independent audit, final report, live dashboard projection, and reviewable Lyria/image files |
-| Bonus Google model | Lyria 3 Pro generated and returned the committed 69.96-second song artifact |
+| Bonus Google model | Lyria 3 Pro generated and returned two committed, playable song artifacts: the 69.96-second original and a 73.33-second soulful hip-hop variant |
 
 The architecture intentionally implements Fortified concerns with ADK and
 Google Cloud primitives. It does **not** claim Gemini Enterprise Agent Platform,
