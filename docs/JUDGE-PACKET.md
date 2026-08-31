@@ -2,15 +2,16 @@
 
 ## The thesis
 
-**Rally turns the AI models a company already trusts into one accountable team.
-One difficult goal comes in; Gemini governs the handoff; Gemini, Claude, and
-OpenAI Codex do visible work and review; and one independently verified result
-comes out.**
+**Rally gives companies accountable AI teammates employees can email like
+coworkers. One familiar message commissions the work; Gemini governs the
+handoff; independent model families execute and review; and one verified result
+with receipts returns in the same thread.**
 
 Primary category: **Fortified Enterprise Fleet**.
 
-The category fit is not “we used several agents.” Rally makes isolated models
-behave like one accountable company team, then provides discovery,
+The category fit is not “we used several agents.” Rally gives people a stable
+role while making isolated models behave like one accountable company team,
+then provides discovery,
 runtime and memory, security and governance, and telemetry for agents that can
 modify production repositories. The unlikely hero is a nontechnical product or
 operations leader commissioning that work from a phone.
@@ -19,7 +20,7 @@ operations leader commissioning that work from a phone.
 
 | Time | Judge question | Live proof | Receipt |
 |---|---|---|---|
-| 0:00 | Is this useful? | Give the accountable AI team one hard goal by email | One familiar identity; no CLI or key for the commissioner |
+| 0:00 | Is this useful? | Email a role-based Rally teammate one finished outcome | One familiar address; no new employee app or key |
 | 0:25 | Is it really an agent system? | First scoped checklist email | Distinct run ID and model-family watermark |
 | 0:55 | Is Google load-bearing? | Cloud Run revision → Firestore record | Gemini 3.7 + ADK handoff, atomic request key, attempt metadata |
 | 1:30 | Are agents actually working? | Split view: repository edit, test run, `awaiting-verification`, other-family verdict | Continuous owner-to-verifier sequence |
@@ -38,6 +39,7 @@ owner-to-verifier transition continuous in the four-minute cut.
 | No self-approval | `src/envelope.py` | `tests/test_envelope.py` | Rejected owner transition, then different-family verification |
 | Distinct model families | `src/agents.py` | `tests/test_agents.py` | Gemini, Claude, and OpenAI worker identities in the roster and thread |
 | Per-user authorization | connector profiles + native CLI sign-in | connector isolation and adapter tests | One-way profile ID; no pooled token or seat |
+| Private work dashboard | `src/worker/index.js`, D1 workspace index, `/admin/` | workspace-isolation contract | Signed-in Work queue and run receipt; Connections are a separate view |
 | Durable email intake | `src/worker/index.js`, D1 schema | runner reliability tests | Queued D1 row before acknowledgement |
 | Retry-safe coordination | `cloud/store.py`, `cloud/service.py` | store/service recovery and fencing tests | Failed record resumes with incremented attempt |
 | Cross-model recovery | `src/runner.py`, `src/envelope.py` | Second Wind runner and custody-transfer tests | Backup repairs a blocker but cannot self-approve |
@@ -60,6 +62,12 @@ the filmed profile uses Gemini 3.7 Flash for predictable latency.
 
 That is a deliberate allocation by workload, not a compatibility workaround.
 The required Gemini 3.5+ path is substantive and visible.
+
+xAI Grok Build is a fourth-family candidate, not a launch claim. Its safe
+adapter uses a dedicated profile and disables memory, subagents, automatic
+updates, and web search. It remains outside the active fleet and cannot enter a
+connector-backed run until Rally can prove sole-gateway MCP isolation and a
+live symmetric execution test.
 
 ## Fast answers to likely objections
 
@@ -102,7 +110,7 @@ stale owner from overwriting the new attempt.
 
 ## Truth boundary
 
-The post-deploy evidence checklist passed on August 29, 2026. Tie every live
+The post-deploy evidence checklist passed again on August 31, 2026. Tie every live
 claim to the private Cloud Run revision, Firestore record, IAM policy, or
 content-free Trace shown in the demo; never substitute a diagram for that proof.
 
@@ -123,13 +131,13 @@ request keys, account menus, and raw prompt fields off screen.
 | Cloud project | `rally-agent9-2026` |
 | Cloud Run | `rally-google-coordinator-00006-v7q` in `us-east1` |
 | Coordinator digest | `sha256:b4c8a20343aaeec64a602b108bfdcb73fa723525af1498cba0fa15c0fe64d769` |
-| Hosted control plane | `rally-control-plane-00006-cnp`; `sha256:8d8de1f7c6877c1124d2b78ff34452f88c9420b7e2b5ba83a7d91d1af3e1c532` |
-| Release Cloud Build | `fa539b5b-5966-440f-b55e-f143206db59e` (`SUCCESS`) |
+| Hosted control plane | `rally-control-plane-00007-lft`; `sha256:a13e4bd39b14f5d292d40a957f036a77b71dc46a98b1864c04f02ae94dd52cf0` |
+| Release Cloud Build | `c89b0e68-1af8-4be2-8391-501a6894a8b9` (`SUCCESS`) |
 | Firestore proof record | `r-cloud-redaction-20260829` in `(default)` |
 | Content-free Cloud Trace | `05b54fcc39e0f869fcb486ed62d5350f` — eight linked spans, all ADK payload attributes `{}` |
-| Cloudflare Worker | `rally-ingress` version `f9942b51-ac13-451d-a711-9636792c0c06` |
-| Pages production release | <https://rally.agent9.dev/>; immediately before recording, confirm the first Production row from `wrangler pages deployment list --project-name agent9-rally` |
-| Submission source | <https://github.com/Agent9AI/rally> — keep `main` private during final hardening, then make it public under Apache-2.0 and record the frozen submission commit |
+| Cloudflare Worker | `rally-ingress` version `a71d349d-a151-4e16-a786-118ab47d71ec` |
+| Pages production release | `87877d3e-3d49-4fe8-9ad6-268c065afd1b` from source `8832f05`; <https://rally.agent9.dev/> |
+| Submission source | <https://github.com/Agent9AI/rally> — release commit `8832f05`; repository remains private during final hardening |
 
 Prepare these in order before recording:
 

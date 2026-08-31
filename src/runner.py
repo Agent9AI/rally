@@ -1203,7 +1203,7 @@ def main(argv: List[str]) -> int:
     ap.add_argument("--resume", metavar="RUN_ID")
     ap.add_argument("--status", metavar="RUN_ID", help="show run state")
     ap.add_argument("--publish-console", metavar="RUN_ID",
-                    help="republish one completed run through the public allowlist")
+                    help="republish one completed run to its configured workspace projection")
     ap.add_argument("--stop", metavar="RUN_ID", help="stop a run")
     ap.add_argument("--retry", metavar="RUN_ID", help="retry a halted run")
     ap.add_argument("--workdir", default=None,
