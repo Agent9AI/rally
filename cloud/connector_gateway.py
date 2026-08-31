@@ -159,9 +159,7 @@ class RegisteredClientTokenStorage(TokenStorage):
             return None
         return OAuthClientInformationFull(
             redirect_uris=[self.redirect_uri],
-            token_endpoint_auth_method=(
-                "client_secret_post" if client.client_secret else "none"
-            ),
+            token_endpoint_auth_method=("client_secret_post" if client.client_secret else "none"),
             grant_types=["authorization_code", "refresh_token"],
             response_types=["code"],
             scope=self.scope,
@@ -444,9 +442,7 @@ async def discover_tools(
     return tools
 
 
-def _dispatch_tool(
-    connector: dict[str, Any], public_tool_name: str
-) -> tuple[dict[str, Any], str]:
+def _dispatch_tool(connector: dict[str, Any], public_tool_name: str) -> tuple[dict[str, Any], str]:
     dispatch = connector.get("dispatch") or {}
     if dispatch.get("strategy") != "tool_prefix":
         return connector, public_tool_name
@@ -477,8 +473,7 @@ def _constraint_failure(rule: dict[str, Any], arguments: dict[str, Any]) -> str 
         if "allowed_values" in constraint and value not in constraint["allowed_values"]:
             return "argument_outside_allowlist"
         if "max_length" in constraint and (
-            not isinstance(value, (str, list, dict))
-            or len(value) > constraint["max_length"]
+            not isinstance(value, (str, list, dict)) or len(value) > constraint["max_length"]
         ):
             return "argument_too_long"
     return None
@@ -547,8 +542,9 @@ async def call_allowed_tool(
     started = time.monotonic()
     argument_bytes = len(json.dumps(args, sort_keys=True, default=str).encode())
     constraints = rule.get("constraints") or {}
-    argument_limit = min(int(constraints.get("max_argument_bytes", MAX_ARGUMENT_BYTES)),
-                         MAX_ARGUMENT_BYTES)
+    argument_limit = min(
+        int(constraints.get("max_argument_bytes", MAX_ARGUMENT_BYTES)), MAX_ARGUMENT_BYTES
+    )
     constraint_failure = _constraint_failure(rule, args)
     if argument_bytes > argument_limit or constraint_failure:
         reason = constraint_failure or "arguments_too_large"
@@ -644,8 +640,9 @@ async def call_allowed_tool(
             result = await session.call_tool(remote_tool, args)
         payload = result.model_dump(mode="json", by_alias=True, exclude_none=True)
         result_bytes = len(json.dumps(payload, default=str, separators=(",", ":")).encode())
-        result_limit = min(int(constraints.get("max_result_bytes", MAX_RESULT_BYTES)),
-                           MAX_RESULT_BYTES)
+        result_limit = min(
+            int(constraints.get("max_result_bytes", MAX_RESULT_BYTES)), MAX_RESULT_BYTES
+        )
         if result_bytes > result_limit:
             raise ConnectorGatewayError(
                 f"{connector_id}.{tool_name} result exceeds Rally's size limit"
@@ -663,11 +660,7 @@ async def call_allowed_tool(
                 "argument_bytes": argument_bytes,
                 "result_bytes": result_bytes,
                 "duration_ms": round((time.monotonic() - started) * 1000),
-                **(
-                    {"approval_id": approval_receipt["approval_id"]}
-                    if approval_receipt
-                    else {}
-                ),
+                **({"approval_id": approval_receipt["approval_id"]} if approval_receipt else {}),
             },
         )
         return payload

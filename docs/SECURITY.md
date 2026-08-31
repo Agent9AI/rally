@@ -12,9 +12,12 @@ delivery repeats, and autonomous loops eventually behave unexpectedly.
 | Stolen or omitted app credential | Secret Manager-backed token; constant-time check; fail closed | `cloud/service.py` |
 | Cross-tenant credential access | Verified Google `sub` ownership, tenant-derived document IDs, and owner-hash checks | `cloud/user_auth.py`; `cloud/credential_vault.py` |
 | Redirect login replay or CSRF | Exact callback route, Google's double-submit CSRF check, atomic one-use code, hashed short-lived session, Firestore TTL | `src/worker/index.js`; `cloud/auth_sessions.py`; control-plane tests |
-| Connector OAuth replay, mix-up, or SSRF | Hashed one-use PKCE state, exact callback, provider-pinned HTTPS metadata/token hosts, redirect refusal, encrypted ten-minute flow, atomic consume | `src/worker/index.js`; `cloud/connector_oauth.py`; OAuth tests |
+| Connector OAuth replay, login CSRF, mix-up, or SSRF | Hashed one-use PKCE state, per-flow same-browser `HttpOnly` binding, production-only Worker callback, provider-pinned HTTPS metadata/token hosts, redirect refusal, encrypted ten-minute flow, atomic consume, and same-card return | `src/worker/index.js`; `cloud/connector_oauth.py`; OAuth tests |
 | Connector credential disclosure | Unique AES-256-GCM data key per connection, wrapped by Cloud KMS; ciphertext-only Firestore records | `cloud/credential_vault.py`; KMS tests |
-| Over-broad connector consent | Provider-specific minimum OAuth scopes plus exact live-tool intersection with committed safe presets | `cloud/hosted_connectors.py`; `cloud/connector_presets.py` |
+| Stored credential mistaken for working authority | Ready requires live authentication, bounded discovery matched to a committed safe allowlist, and one predetermined harmless read; the proof stores only canary/schema metadata | `cloud/hosted_connectors.py`; `cloud/credential_vault.py`; certification tests |
+| Over-broad connector consent | Provider-specific minimum OAuth scopes plus exact live-tool intersection with committed safe presets; unavailable app registrations remain disabled | `cloud/hosted_connectors.py`; `cloud/connector_presets.py` |
+| Disconnect leaves provider access live | Execution is disabled first; a published OAuth revocation endpoint is called before local deletion, and failure leaves ciphertext sealed. Without automatic revocation—including manual keys or tokens—Rally deletes its copy and requires provider action | `cloud/connector_oauth.py`; `cloud/control_plane.py`; OAuth tests |
+| Hosted vault silently becomes autonomous model authority | Hosted direct invocation is tenant-authenticated, Certified, preset-bound, read-only, and receipted; agent runs additionally require an immutable, user-bound authority snapshot | `cloud/control_plane.py`; `cloud/hosted_connector_execution.py`; `src/connectors.py`; gateway tests |
 | Rejected credential reflected by API | Redacted `SecretStr` input plus a non-reflective validation handler | `cloud/control_plane.py`; control-plane tests |
 | Prompt injection changes policy | ADK is advisory; runner reconciles every transition | `cloud/rally_adk/agent.py`; `src/envelope.py` |
 | Agent approves its own work | Owner/verifier invariant enforced in code | checklist tests |
@@ -72,15 +75,68 @@ double-submit CSRF token and atomically consumes a two-minute exchange code.
 Rally keys tenancy only by the Google `sub` claim; email is display data and may
 change.
 
-The browser keeps the short-lived ID token or 30-minute Rally session and a
-submitted credential only in memory. It never writes those raw values to
-cookies, local storage, session storage, HTML, logs, repository files, or
-Firestore. Firestore stores only hashes of redirect codes and sessions with
-verified identity metadata and expiration timestamps. The API never returns
-credential material and replaces FastAPI's default validation detail with a
-non-reflective error so an invalid oversized secret cannot be echoed.
+The admin keeps the short-lived ID token or 30-minute Rally session and a pasted
+credential only in page memory. It does not write those raw values to cookies,
+local storage, or session storage. Connector consent uses one separate,
+ten-minute `HttpOnly`, `Secure`, `SameSite=Lax` cookie containing only an
+opaque per-flow browser binding. Page JavaScript cannot read it, it contains no
+identity or provider credential, and the Worker clears it on callback. Firestore
+stores only hashes of redirect codes and sessions with verified identity
+metadata and expiration timestamps. The API never returns credential material
+and replaces FastAPI's default validation detail with a non-reflective error so
+an invalid oversized secret cannot be echoed.
+
+The registered production connector callback is intercepted by the Cloudflare
+Worker. It derives the binding-cookie name from the returned state, forwards the
+opaque binding and only bounded callback fields to the control plane, and clears
+the cookie. The control plane compares the binding hash before atomically
+consuming the flow. The admin page sees neither the provider access token nor the
+authorization code. The static Pages origin is not a callback fallback; an
+unavailable Worker makes consent fail closed. Rally returns only a one-time
+session-restoration code in a URL fragment, which the admin removes immediately
+after reading it.
+
+Workers Logs and automatic tracing are disabled for the callback-bearing Worker,
+so Rally does not persist provider callback URLs in those Cloudflare
+observability products. Deployments must preserve and verify that boundary. The
+browser and Cloudflare edge still necessarily process the callback URL, and this
+control is not a universal claim that infrastructure outside Rally never handles
+request metadata.
+
+The sign-out control asks the control plane to delete the hashed Rally session,
+then clears page memory. If the revocation request cannot complete, the browser
+still clears locally and the 30-minute server expiry is the backstop.
 
 The browser sends identity in exactly one dedicated application header:
 `X-Rally-ID-Token` for the Google fast path or `X-Rally-Session` for the
 full-page fallback. It never uses `Authorization`, which Cloud Run reserves for
 its own IAM token processing.
+
+Rally Web sign-in and Google Workspace authorization are deliberately separate
+OAuth clients and grants. The web client proves the administrator's identity and
+vault ownership only. A distinct confidential Workspace connector client asks
+for the read-only business scopes. The public UI exposes one Workspace card,
+but certification opens Gmail, Drive, Docs, Sheets, Slides, Calendar, Chat, and
+People independently and fails the aggregate card if any service does not match
+its committed allowlist. A fixed People profile read is the only live canary;
+the vault retains its name and schema digest, not its returned content.
+
+The same fail-closed rule applies to provider availability. A card whose
+Rally-owned app registration is incomplete remains disabled; the public flow
+does not redirect a nontechnical customer to a provider console to finish
+Rally's configuration. A provider callback returns to the originating card,
+but the card can show Ready only when a content-free certification record
+exists. This is a qualification rule, not evidence that any named production
+provider connection has already passed it.
+
+Finally, the hosted vault does not grant autonomous model authority. A signed-in
+administrator can invoke a Certified, preset-allowlisted read through the hosted
+control plane; each call rechecks tenant ownership, readiness, arguments, and
+policy and stores a content-free receipt. Agent runs additionally require a
+separate immutable, user-bound authority snapshot.
+
+Disconnect disables execution first. When an OAuth provider publishes a
+revocation endpoint, Rally revokes the grant before deleting its encrypted copy;
+failure leaves that copy sealed for retry. Without automatic revocation, Rally
+deletes its copy and reports that provider action is still required. Manually
+supplied keys and tokens must be revoked in provider settings.

@@ -6,7 +6,7 @@ WORKDIR /app
 COPY pyproject.toml uv.lock ./
 COPY rally_adk ./rally_adk
 COPY agent_catalog.json a2a_adapter.py a2a_store.py catalog.py service.py store.py telemetry.py ./
-COPY auth_sessions.py connector_oauth.py connector_presets.py control_plane.py credential_vault.py hosted_connectors.py user_auth.py ./
+COPY auth_sessions.py connector_oauth.py connector_presets.py control_plane.py credential_vault.py hosted_connector_execution.py hosted_connectors.py hosted_mcp_transport.py user_auth.py ./
 RUN uv sync --frozen --no-dev
 
 ENV PYTHONDONTWRITEBYTECODE=1 \

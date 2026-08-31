@@ -65,9 +65,7 @@ def test_store_is_profile_namespaced_and_rejects_unsafe_identifiers():
     with pytest.raises(ConnectorCredentialError, match="invalid credential profile"):
         ProfileKeychainStore("rally-connector-github", "../other")
 
-    resolved = ProfileKeychainStore.from_namespaced_service(
-        "rally-connector-github-p-123"
-    )
+    resolved = ProfileKeychainStore.from_namespaced_service("rally-connector-github-p-123")
     assert resolved.service == "rally-connector-github-p-123"
     with pytest.raises(ConnectorCredentialError, match="invalid Keychain service"):
         ProfileKeychainStore.from_namespaced_service("bad/service")
@@ -255,9 +253,7 @@ def test_external_bearer_auth_reads_keychain_and_injects_github_safety_headers(f
     assert "token-one" not in repr(auth)
 
     store.save_tokens(OAuthTokenMaterial("token-two"))
-    second = next(
-        auth.auth_flow(httpx.Request("POST", "https://api.githubcopilot.com/mcp"))
-    )
+    second = next(auth.auth_flow(httpx.Request("POST", "https://api.githubcopilot.com/mcp")))
     assert second.headers["Authorization"] == "Bearer token-two"
 
 
@@ -266,9 +262,7 @@ def test_github_auth_constructor_cannot_omit_fixed_safety_headers(fake_security)
     store.save_tokens(OAuthTokenMaterial("stored-token"))
     auth = ExternalBearerAuth.for_github(store, toolsets=("repos",))
 
-    request = next(
-        auth.auth_flow(httpx.Request("POST", "https://api.githubcopilot.com/mcp"))
-    )
+    request = next(auth.auth_flow(httpx.Request("POST", "https://api.githubcopilot.com/mcp")))
     assert request.headers["X-MCP-Toolsets"] == "repos"
     assert request.headers["X-MCP-Readonly"] == "true"
     assert request.headers["X-MCP-Lockdown"] == "true"

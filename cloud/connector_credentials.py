@@ -284,7 +284,9 @@ class ProfileKeychainStore:
                 if first_error is None:
                     first_error = exc
         if first_error is not None:
-            raise ConnectorCredentialError("could not delete connector credentials") from first_error
+            raise ConnectorCredentialError(
+                "could not delete connector credentials"
+            ) from first_error
         return deleted
 
 

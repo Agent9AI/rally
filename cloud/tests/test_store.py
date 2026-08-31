@@ -26,8 +26,7 @@ async def test_request_key_is_idempotent():
 async def test_concurrent_request_key_has_one_winner():
     store = MemoryRunStore()
     records = [
-        {"run_id": f"r-{index}", "request_key": "same", "status": "queued"}
-        for index in range(20)
+        {"run_id": f"r-{index}", "request_key": "same", "status": "queued"} for index in range(20)
     ]
     results = await __import__("asyncio").gather(*(store.create(record) for record in records))
     assert results.count(True) == 1

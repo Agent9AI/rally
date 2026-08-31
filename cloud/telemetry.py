@@ -1,4 +1,5 @@
 """Metadata-only OpenTelemetry setup for Cloud Run and Gemini."""
+
 from __future__ import annotations
 
 import json
@@ -63,9 +64,7 @@ def configure_tracing() -> None:
     # (model, token counts, tools, timing) without prompt, response, or tool
     # payloads.
     os.environ.setdefault("ADK_CAPTURE_MESSAGE_CONTENT_IN_SPANS", "false")
-    os.environ.setdefault(
-        "OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT", "NO_CONTENT"
-    )
+    os.environ.setdefault("OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT", "NO_CONTENT")
     os.environ.setdefault("OTEL_SEMCONV_STABILITY_OPT_IN", "gen_ai_latest_experimental")
     if os.getenv("RALLY_ENABLE_CLOUD_TRACE", "0") != "1":
         return
@@ -77,15 +76,15 @@ def configure_tracing() -> None:
     from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
     provider = TracerProvider(
-        resource=Resource.create({
-            "service.name": "rally-google-coordinator",
-            "service.version": os.getenv("K_REVISION", "local"),
-        })
+        resource=Resource.create(
+            {
+                "service.name": "rally-google-coordinator",
+                "service.version": os.getenv("K_REVISION", "local"),
+            }
+        )
     )
     provider.add_span_processor(
-        BatchSpanProcessor(
-            CloudTraceSpanExporter(project_id=os.getenv("GOOGLE_CLOUD_PROJECT"))
-        )
+        BatchSpanProcessor(CloudTraceSpanExporter(project_id=os.getenv("GOOGLE_CLOUD_PROJECT")))
     )
     trace.set_tracer_provider(provider)
     GoogleGenAiSdkInstrumentor().instrument(tracer_provider=provider)

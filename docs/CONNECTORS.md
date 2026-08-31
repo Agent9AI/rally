@@ -6,14 +6,16 @@ each customer system.
 
 All ten catalogued providers—Google Workspace, Slack, GitHub, Cloudflare
 Observability, n8n Cloud, Stripe, BigQuery, Atlassian, Salesforce, and
-Hyperagent—have runnable gateway adapters. They are committed **disabled**.
-A customer connection becomes usable
-only after all four gates pass:
+Hyperagent—have deny-by-default gateway adapters. Catalogued does not mean
+connected or certified. A customer connection becomes usable only after these
+gates pass:
 
-1. the user authenticates their own Google ADC or browser OAuth profile;
-2. live MCP tool discovery answers from the provider;
-3. an administrator explicitly allowlists individual read tools for that user; and
-4. every worker receives the same immutable authority snapshot for the run.
+1. the user authenticates their own Google ADC or provider OAuth profile;
+2. bounded live MCP discovery answers from the pinned provider endpoint;
+3. the discovered tools match the connector's committed safe allowlist;
+4. one predetermined, harmless read-only canary succeeds and Rally stores only
+   its content-free proof; and
+5. every worker receives the same immutable authority snapshot for the run.
 
 Everything else defaults to deny. Retrieved connector content is untrusted
 input. Arguments and results are hashed into receipts; their content is not
@@ -32,16 +34,50 @@ The Google-authenticated admin at `/admin/` is the hosted connection front
 door. Cloudflare Observability, n8n Cloud, Stripe, Atlassian, and HyperAgent use
 OAuth Authorization Code with PKCE and an exact Rally callback. Their OAuth
 metadata and token endpoints are restricted to provider-owned hosts. GitHub has
-a guided fine-grained-token path. Google Workspace, Slack, and Salesforce are
-honestly held at provider-app setup instead of showing a Connect button that
-cannot complete.
+a guided fine-grained-token path. A provider whose Rally-owned app registration
+is incomplete stays disabled and says “Not available yet.” Its card does not
+send a nontechnical user to a provider console and call that a connection.
 
-The browser retains neither credential nor connection session in persistent
-storage. Google Cloud KMS envelope-encrypts tokens in the user-owned vault.
-“Ready” is emitted only after live MCP discovery succeeds and at least one live
-tool matches the committed safe preset. Hosted readiness does not itself grant
-an agent authority: a later run must receive a separate immutable, run-scoped
-authority snapshot through the execution gateway described below.
+The registered production callback at `rally.agent9.dev` is handled by the
+Cloudflare Worker. Starting consent sets a ten-minute, per-flow `HttpOnly`,
+`Secure`, `SameSite=Lax` browser-binding cookie. On return, the Worker matches
+that cookie to the one-use state, relays only bounded callback fields to the
+control plane, and clears the cookie before returning the browser to the
+originating card. The admin page receives neither the authorization code nor a
+provider token. There is no less-secure static callback fallback; an unavailable
+Worker makes authorization fail closed. Google Workspace additionally requires
+a separate confidential connector client. That client is not the Google
+Identity Services web client used to sign into Rally.
+
+The admin keeps its identity token, short-lived Rally session, and any pasted
+credential only in page memory; it does not save those values to cookies, local
+storage, or session storage. The only Rally cookie in connector consent is the
+opaque, short-lived browser binding above; it contains no identity or provider
+credential and page JavaScript cannot read it. A provider authorization code
+necessarily reaches the callback URL, and Rally's one-time session-restoration
+code briefly appears in a URL fragment; both are single-use and removed from the
+visible URL. Signing out requests deletion of the server-side session hash and
+clears page memory. If that request cannot complete, the 30-minute expiry remains
+the backstop. Google Cloud KMS envelope-encrypts provider tokens in the
+user-owned vault.
+“Ready” is emitted only after authentication, allowlist-matched discovery, and
+the connector's fixed harmless live read succeed. The proof contains the canary
+name, input-schema digest, time, and approved-tool count—not its returned
+business content. A credential or tool list alone is never Ready.
+
+The hosted vault is an activation bridge, not autonomous model authority. A
+signed-in administrator can invoke only a Certified, preset-allowlisted read
+tool through the hosted control plane; each call rechecks tenant ownership,
+readiness, arguments, and policy and writes a content-free receipt. Agent runs
+additionally require a separate immutable, user-bound authority snapshot.
+
+On disconnect, Rally disables the connector before any network call. For OAuth,
+it uses a published revocation endpoint before deleting its encrypted copy; a
+failed automatic revocation leaves that copy sealed for retry. When no automatic
+revocation exists, Rally deletes its copy and reports that provider action is
+still required. A manually supplied key or token must be revoked in provider
+settings. This contract defines what can qualify as Ready. It is not a claim
+that every catalogued provider has passed live production certification.
 
 ## Per-user isolation
 
@@ -79,11 +115,22 @@ will refuse to run if a model could bypass the gateway.
 
 ### Google Workspace
 
-Workspace is one Rally connector backed by eight official, pinned Google MCP
-services. Rally qualifies discovered tools by service (`gmail.search_threads`,
-`drive.search_files`, and so on) and dispatches each call only to that service.
+Workspace is one Rally product card backed by eight official, pinned Google MCP
+services: Gmail, Drive, Docs, Sheets, Slides, Calendar, Chat, and People. Rally
+opens and checks each service independently, qualifies discovered tools by
+service (`gmail.search_threads`, `drive.search_files`, and so on), and dispatches
+each call only to that service. Every service must expose at least one tool from
+the committed allowlist. Fixed, resource-free live reads prove Gmail, Drive,
+Calendar, Chat, and People; returned content is discarded after the content-free
+proof is computed. Docs, Sheets, and Slides require user-owned resource IDs, so
+discovery alone never places their tools in the certified manifest. A discovery
+or canary failure fails the aggregate card closed.
+
 The read-minimal preset requests 15 read-only Google scopes and contains no
-draft, send, share, create, update, or delete tool.
+draft, send, share, create, update, or delete tool. The connector uses a
+confidential Workspace OAuth client owned by Rally. It is a separate credential
+and consent grant from the Google Identity Services client that signs an
+administrator into Rally.
 
 ```bash
 ./bin/rally connectors --profile person@company.com register-client google-workspace
@@ -92,9 +139,14 @@ draft, send, share, create, update, or delete tool.
 ./bin/rally connectors --profile person@company.com auth google-workspace
 ```
 
-The administrator must first enable the eight Workspace MCP services, configure
-Google OAuth, and register Rally's local callback URI. The client registration
-and user token stay in that profile's macOS Keychain namespace.
+For the local runtime path above, an operator must enable the eight Workspace MCP
+services, configure a connector OAuth client, and register Rally's local callback
+URI; the registration and user token stay in that profile's macOS Keychain
+namespace. For hosted onboarding, Rally owns that confidential registration.
+Until its client ID and secret are deployed, the Workspace card stays disabled
+instead of sending the customer to Google Cloud Console. This section describes
+the admission contract and does not assert a live hosted Workspace
+certification.
 
 ### Slack
 
@@ -148,8 +200,10 @@ classify the underlying API method, not merely the wrapper tool name.
 Rally accepts only the tenant-scoped HTTPS endpoint
 `https://<tenant>.app.n8n.cloud/mcp-server/http`. Arbitrary self-hosted URLs are
 not accepted through this adapter. n8n exposes workflows at the user level, so
-administrators must disable automatic exposure and bind each allowed tool call
-to explicit workflow IDs using Rally's argument constraints.
+administrators must keep automatic exposure off and bind each allowed tool call
+to explicit workflow IDs using Rally's argument constraints. n8n currently
+defaults automatic exposure to off; Rally does not rely on that default as the
+enforcement boundary.
 
 ```bash
 ./bin/rally connectors --profile person@company.com enable n8n \
@@ -299,14 +353,23 @@ make test
 make cloud-test
 ```
 
-`doctor` is evidence: it authenticates, initializes an MCP session, and lists
-the tools the provider actually returned. An enabled connector with zero read
-tools remains discovery-only. `human_approval` tools use the shipped exact,
-expiring, one-time approval ledger. `verify_first` continues to fail closed
-until an independent pre-execution verifier is selected; it is never treated as
-post-hoc review.
+`doctor` is runtime-gateway evidence: it authenticates, initializes an MCP
+session, and lists the tools the provider actually returned. It is not the
+hosted-card certification by itself. Hosted certification additionally requires
+the discovered surface to match the committed allowlist and one fixed harmless
+read to return successfully; its proof stores metadata and digests, never the
+returned content. An enabled connector with zero read tools remains
+discovery-only. `human_approval` tools use the shipped exact, expiring, one-time
+approval ledger. `verify_first` continues to fail closed until an independent
+pre-execution verifier is selected; it is never treated as post-hoc review.
 
 ## Run receipts
+
+The hosted connection proof and a run receipt answer different questions. The
+connection proof says that one user's sealed credential reached an allowlisted
+provider surface and completed its fixed harmless read. It does not authorize a
+run. The run receipt records what the execution gateway later permitted under a
+separate immutable authority snapshot.
 
 Every run freezes its connector authority into
 `runs/<run-id>/connector-authority.json`. Allowed, denied, and failed calls append

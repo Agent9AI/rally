@@ -80,8 +80,7 @@ def verify_google_id_token(token: str) -> UserIdentity:
     allowed_domains = {item.casefold() for item in _csv_env("RALLY_ALLOWED_GOOGLE_DOMAINS")}
     hosted_domain = claims.get("hd")
     if allowed_domains and (
-        not isinstance(hosted_domain, str)
-        or hosted_domain.casefold() not in allowed_domains
+        not isinstance(hosted_domain, str) or hosted_domain.casefold() not in allowed_domains
     ):
         raise HTTPException(status_code=403, detail="this Google Workspace is not approved")
 

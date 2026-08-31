@@ -13,6 +13,7 @@
  *   GET  /v1/console/runs      Public, sanitized judge console feed.
  *   GET  /v1/console/runs/:id Public, sanitized run detail.
  *   POST /admin/google/callback Exact, bounded Google redirect handoff.
+ *   POST /admin/connect/start/:id Same-origin provider OAuth start and browser binding.
  *   GET  /admin/connect/callback Exact, bounded provider OAuth handoff.
  *   GET  /health           Liveness, no auth, no data.
  */
@@ -20,12 +21,18 @@
 const MAX_BODY = 512 * 1024;
 const MAX_CONSOLE_BODY = 96 * 1024;
 const MAX_GOOGLE_FORM_BODY = 32 * 1024;
+const MAX_CONNECTOR_START_BODY = 16 * 1024;
+const MAX_CONNECTOR_START_RESPONSE = 16 * 1024;
 const MAX_CONNECTOR_CALLBACK_QUERY = 12 * 1024;
 const CONSOLE_ROOT = "/v1/console/runs";
 const SITE_ORIGIN = "https://agent9-rally.pages.dev";
 const CONTROL_PLANE_ORIGIN = "https://rally-control-plane-u5xngrbzna-ue.a.run.app";
 const GOOGLE_CALLBACK_PATH = "/admin/google/callback";
+const CONNECTOR_START_ROOT = "/admin/connect/start/";
 const CONNECTOR_CALLBACK_PATH = "/admin/connect/callback";
+const CONNECTOR_ID = /^[a-z0-9-]{1,64}$/;
+const OAUTH_SECRET = /^[A-Za-z0-9_-]{32,128}$/;
+const OAUTH_COOKIE_PREFIX = "__Secure-rally-oauth-";
 const RUN_ID = /^r-[0-9a-z-]{3,77}$/;
 const RUN_STATUSES = new Set(["running", "complete", "blocked", "halted"]);
 const TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/;
@@ -52,8 +59,20 @@ async function serveSite(request, url) {
   try {
     // Preserve the response stream and its security/cache headers. Rally's
     // custom domain stays on this Worker so the console API is same-origin,
-    // while Cloudflare Pages remains the static asset origin.
-    return await fetch(new Request(upstreamUrl, request));
+    // while Cloudflare Pages remains the static asset origin. Never forward a
+    // caller credential or callback cookie across that internal origin hop.
+    const headers = new Headers(request.headers);
+    for (const name of [
+      "authorization",
+      "cookie",
+      "proxy-authorization",
+      "x-rally-id-token",
+      "x-rally-oauth-binding",
+      "x-rally-session",
+    ]) {
+      headers.delete(name);
+    }
+    return await fetch(new Request(upstreamUrl, { method: request.method, headers }));
   } catch (error) {
     console.error(JSON.stringify({
       event: "site_origin_failed",
@@ -62,6 +81,115 @@ async function serveSite(request, url) {
     }));
     return json({ error: "site temporarily unavailable" }, 502);
   }
+}
+
+async function oauthCookieName(state) {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(state));
+  const suffix = [...new Uint8Array(digest)]
+    .slice(0, 16)
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+  return `${OAUTH_COOKIE_PREFIX}${suffix}`;
+}
+
+function cookieValue(request, name) {
+  const prefix = `${name}=`;
+  const match = (request.headers.get("cookie") || "")
+    .split(";")
+    .map((part) => part.trim())
+    .find((part) => part.startsWith(prefix));
+  return match ? match.slice(prefix.length) : "";
+}
+
+function safeUpstreamDetail(value) {
+  return typeof value === "string" && /^[A-Za-z0-9 _.-]{1,128}$/.test(value)
+    ? value
+    : "provider authorization is unavailable";
+}
+
+async function proxyConnectorStart(request, connectorId) {
+  if (!CONNECTOR_ID.test(connectorId)) {
+    return json({ detail: "connector not found" }, 404);
+  }
+  const contentType = request.headers.get("content-type") || "";
+  if (!contentType.toLowerCase().startsWith("application/json")) {
+    return json({ detail: "invalid connection request" }, 415);
+  }
+  const raw = await boundedText(request, MAX_CONNECTOR_START_BODY);
+  if (raw === null) return json({ detail: "invalid connection request" }, 413);
+
+  const idToken = request.headers.get("x-rally-id-token") || "";
+  const session = request.headers.get("x-rally-session") || "";
+  if (Boolean(idToken) === Boolean(session)) {
+    return json({ detail: "authentication required" }, 401);
+  }
+  const headers = new Headers({ "content-type": "application/json" });
+  if (/^[A-Za-z0-9._-]{100,16384}$/.test(idToken)) {
+    headers.set("x-rally-id-token", idToken);
+  } else if (OAUTH_SECRET.test(session)) {
+    headers.set("x-rally-session", session);
+  } else {
+    return json({ detail: "authentication required" }, 401);
+  }
+
+  let upstream;
+  try {
+    upstream = await fetch(
+      `${CONTROL_PLANE_ORIGIN}/v1/connections/${encodeURIComponent(connectorId)}/oauth/start`,
+      { method: "POST", headers, body: raw, redirect: "manual" },
+    );
+  } catch (_) {
+    return json({ detail: "provider authorization is unavailable" }, 502);
+  }
+  const responseText = await boundedText(upstream, MAX_CONNECTOR_START_RESPONSE);
+  if (responseText === null) {
+    return json({ detail: "provider authorization is unavailable" }, 502);
+  }
+  let result;
+  try {
+    result = JSON.parse(responseText);
+  } catch (_) {
+    return json({ detail: "provider authorization is unavailable" }, 502);
+  }
+  if (!upstream.ok) {
+    return json(
+      { detail: safeUpstreamDetail(result?.detail) },
+      upstream.status >= 400 && upstream.status < 600 ? upstream.status : 502,
+    );
+  }
+
+  let authorization;
+  try {
+    authorization = new URL(result.authorization_url);
+  } catch (_) {
+    return json({ detail: "provider authorization is unavailable" }, 502);
+  }
+  const stateValues = authorization.searchParams.getAll("state");
+  if (
+    result.connector_id !== connectorId ||
+    authorization.protocol !== "https:" ||
+    authorization.username ||
+    authorization.password ||
+    authorization.hash ||
+    stateValues.length !== 1 ||
+    !OAUTH_SECRET.test(stateValues[0]) ||
+    !OAUTH_SECRET.test(result.browser_binding || "")
+  ) {
+    return json({ detail: "provider authorization is unavailable" }, 502);
+  }
+  const cookieName = await oauthCookieName(stateValues[0]);
+  return json(
+    {
+      connector_id: connectorId,
+      authorization_url: authorization.href,
+      return_to: "https://rally.agent9.dev/admin/",
+    },
+    200,
+    {
+      "referrer-policy": "no-referrer",
+      "set-cookie": `${cookieName}=${result.browser_binding}; Max-Age=600; Path=/admin/connect/callback; Secure; HttpOnly; SameSite=Lax`,
+    },
+  );
 }
 
 async function proxyGoogleCallback(request) {
@@ -114,11 +242,112 @@ async function proxyGoogleCallback(request) {
   }
 }
 
+function safeConnectorReturn(value) {
+  try {
+    const target = new URL(value);
+    if (
+      target.origin !== "https://rally.agent9.dev" ||
+      target.pathname !== "/admin/" ||
+      target.search ||
+      target.username ||
+      target.password
+    ) return null;
+    const fragment = new URLSearchParams(target.hash.slice(1));
+    const allowed = new Set([
+      "rally-login-code",
+      "rally-connection",
+      "rally-connection-status",
+    ]);
+    for (const name of fragment.keys()) {
+      if (!allowed.has(name) || fragment.getAll(name).length !== 1) return null;
+    }
+    const loginCode = fragment.get("rally-login-code") || "";
+    const connector = fragment.get("rally-connection") || "";
+    const status = fragment.get("rally-connection-status") || "";
+    if (loginCode && !/^[A-Za-z0-9_-]{32,128}$/.test(loginCode)) return null;
+    if (connector && !/^[a-z0-9-]{1,64}$/.test(connector)) return null;
+    if (!new Set([
+      "ready",
+      "verifying",
+      "cancelled",
+      "needs-attention",
+      "disconnect-first",
+      "provider-cleanup-required",
+      "invalid-or-expired",
+    ]).has(status)) {
+      return null;
+    }
+    return target.href;
+  } catch (_) {
+    return null;
+  }
+}
+
+function htmlAttribute(value) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
+}
+
+async function connectorProgressResponse(upstreamRequest, clearCookie) {
+  const nonce = crypto.randomUUID().replaceAll("-", "");
+  const shell = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Rally · Securing connection</title><style nonce="${nonce}">:root{color-scheme:light;font-family:Roboto,Arial,sans-serif;color:#10233f;background:#f7f9fc}*{box-sizing:border-box}body{min-height:100vh;margin:0;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at 70% 15%,#eaf1ff 0,transparent 38%),#f7f9fc}.shell{width:min(760px,100%);padding:54px;border:1px solid #d9e0ea;border-radius:30px;background:#fff;box-shadow:0 22px 70px rgba(16,35,63,.12)}.brand{display:flex;align-items:center;gap:10px;font-weight:750}.mark{width:38px;height:38px;display:grid;place-items:center;color:#fff;border-radius:12px;background:#246bfd}.eyebrow{margin:50px 0 14px;color:#246bfd;font-size:.72rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}h1{margin:0;font-size:clamp(2.6rem,7vw,4.8rem);font-weight:520;line-height:1;letter-spacing:-.055em}p{max-width:610px;margin:24px 0 0;color:#526178;line-height:1.6}.rail{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:38px}.rail span{padding:11px 8px;text-align:center;color:#617188;border-radius:999px;background:#f0f3f8;font-size:.68rem;font-weight:750}.rail span:nth-child(-n+2){color:#174ea6;background:#e9f0ff}.pulse{display:inline-block;width:9px;height:9px;margin-right:8px;border-radius:50%;background:#20a66a;box-shadow:0 0 0 7px rgba(32,166,106,.1);animation:pulse 1.2s ease-in-out infinite}@keyframes pulse{50%{opacity:.4;transform:scale(.78)}}a{display:inline-flex;margin:28px 22px 0 0;color:#246bfd;font-weight:700;text-decoration:none}</style></head><body><main class="shell"><div class="brand"><span class="mark">R</span>Rally</div><p class="eyebrow"><span class="pulse"></span>Secure provider return</p><h1>Approval received.<br>Securing it now.</h1><p>Rally is encrypting the provider grant and returning you to the exact connection card. It will test live access there before enabling any tool.</p><div class="rail" aria-label="Connection progress"><span>Approved</span><span>Encrypted</span><span>Returned</span><span>Tested</span></div><div aria-live="polite">`;
+  let body;
+  let completed = false;
+  try {
+    const upstream = await upstreamRequest();
+    const target = safeConnectorReturn(upstream.headers.get("location") || "");
+    if (upstream.status < 300 || upstream.status >= 400 || !target) {
+      throw new Error("invalid control-plane return");
+    }
+    const escaped = htmlAttribute(target);
+    completed = true;
+    body = `${shell}<p>Approval secured. Returning you to finish the live connection test…</p><a href="${escaped}">Continue to Rally</a></div><script nonce="${nonce}">window.location.replace(${JSON.stringify(target)});</script></main></body></html>`;
+  } catch (error) {
+    console.error(JSON.stringify({
+      event: "connector_callback_failed",
+      error: error instanceof Error ? error.message : String(error),
+    }));
+    body = `${shell}<p>Rally could not confirm whether this provider return completed. Go back to your connections; if this card is not connected, choose Connect again.</p><a href="/admin/">Return to connections</a></div></main></body></html>`;
+  }
+  const headers = {
+    "cache-control": "no-store",
+    "content-security-policy": `default-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'; script-src 'nonce-${nonce}'; style-src 'nonce-${nonce}'`,
+    "content-type": "text/html; charset=utf-8",
+    "referrer-policy": "no-referrer",
+    "x-content-type-options": "nosniff",
+    "x-frame-options": "DENY",
+    "x-robots-tag": "noindex, nofollow",
+  };
+  if (completed) headers["set-cookie"] = clearCookie;
+  return new Response(body, {
+    status: 200,
+    headers,
+  });
+}
+
 async function proxyConnectorCallback(request, url) {
   if (url.search.length > MAX_CONNECTOR_CALLBACK_QUERY) {
     return json({ error: "authorization response too large" }, 413);
   }
-  const allowed = new Set(["code", "state", "error", "error_description"]);
+  // OAuth providers may add non-authority response metadata. Google, for
+  // example, returns scope/authuser/prompt (and sometimes hd). Rally accepts a
+  // fixed singleton allowlist but forwards only code, state, and error.
+  const allowed = new Set([
+    "code",
+    "state",
+    "error",
+    "error_description",
+    "error_uri",
+    "scope",
+    "authuser",
+    "hd",
+    "prompt",
+    "iss",
+    "session_state",
+  ]);
   for (const name of url.searchParams.keys()) {
     if (!allowed.has(name) || url.searchParams.getAll(name).length !== 1) {
       return json({ error: "invalid authorization response" }, 400);
@@ -127,44 +356,38 @@ async function proxyConnectorCallback(request, url) {
   const state = url.searchParams.get("state") || "";
   const code = url.searchParams.get("code") || "";
   const error = url.searchParams.get("error") || "";
+  const issuer = url.searchParams.get("iss") || "";
   if (
-    !/^[A-Za-z0-9_-]{32,128}$/.test(state) ||
-    (!code && !error) ||
+    !OAUTH_SECRET.test(state) ||
+    Boolean(code) === Boolean(error) ||
     code.length > 8192 ||
-    error.length > 128
+    error.length > 128 ||
+    (error && !/^[A-Za-z0-9_.-]+$/.test(error)) ||
+    (issuer && (issuer.length > 2048 || !/^https:\/\/[^\s]+$/.test(issuer)))
   ) {
     return json({ error: "invalid authorization response" }, 400);
   }
 
-  try {
-    const upstream = await fetch(`${CONTROL_PLANE_ORIGIN}/auth/connector/callback`, {
+  const cookieName = await oauthCookieName(state);
+  const browserBinding = cookieValue(request, cookieName);
+  const clearCookie = `${cookieName}=; Max-Age=0; Path=/admin/connect/callback; Secure; HttpOnly; SameSite=Lax`;
+  return await connectorProgressResponse(() =>
+    fetch(`${CONTROL_PLANE_ORIGIN}/auth/connector/callback`, {
       method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ state, code: code || null, error: error || null }),
+      headers: {
+        "content-type": "application/json",
+        "x-rally-oauth-binding": browserBinding,
+      },
+      body: JSON.stringify({
+        state,
+        code: code || null,
+        error: error || null,
+        issuer: issuer || null,
+      }),
       redirect: "manual",
-    });
-    const responseHeaders = new Headers({
-      "cache-control": "no-store",
-      "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
-      "referrer-policy": "no-referrer",
-      "x-content-type-options": "nosniff",
-    });
-    for (const name of ["content-type", "location", "pragma", "www-authenticate"]) {
-      const value = upstream.headers.get(name);
-      if (value) responseHeaders.set(name, value);
-    }
-    return new Response(upstream.body, {
-      status: upstream.status,
-      statusText: upstream.statusText,
-      headers: responseHeaders,
-    });
-  } catch (error) {
-    console.error(JSON.stringify({
-      event: "connector_callback_failed",
-      error: error instanceof Error ? error.message : String(error),
-    }));
-    return json({ error: "connector authorization temporarily unavailable" }, 502);
-  }
+    }),
+    clearCookie,
+  );
 }
 
 const text = (value, limit) =>
@@ -495,8 +718,16 @@ export default {
       return proxyGoogleCallback(request);
     }
 
-    // Provider authorization returns here in the same tab. OAuth state—not a
-    // browser-stored Rally session—restores the user and exact connector card.
+    // Begin provider consent through Rally's own origin. The Worker keeps the
+    // opaque browser binding in a short-lived HttpOnly cookie and never exposes
+    // it to page JavaScript.
+    if (request.method === "POST" && path.startsWith(CONNECTOR_START_ROOT)) {
+      const connectorId = path.slice(CONNECTOR_START_ROOT.length);
+      return proxyConnectorStart(request, connectorId);
+    }
+
+    // Provider authorization returns here in the same tab. State identifies
+    // the flow; the per-flow HttpOnly cookie proves this browser initiated it.
     if (request.method === "GET" && path === CONNECTOR_CALLBACK_PATH) {
       return proxyConnectorCallback(request, url);
     }

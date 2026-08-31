@@ -103,9 +103,7 @@ _PRESETS: dict[tuple[str, str], ToolPolicy] = {
         "listRecentSobjectRecords": {
             "risk": "read",
             "constraints": {
-                "arguments": {
-                    "sobject-name": {"required": True, "max_length": 255}
-                },
+                "arguments": {"sobject-name": {"required": True, "max_length": 255}},
                 "max_argument_bytes": 8 * 1024,
                 "max_result_bytes": 256 * 1024,
             },
@@ -207,7 +205,7 @@ _PRESETS: dict[tuple[str, str], ToolPolicy] = {
     ("atlassian", "read-minimal"): {
         "atlassianUserInfo": deepcopy(_READ_SMALL),
         "getAccessibleAtlassianResources": deepcopy(_READ_SMALL),
-        "search": {
+        "searchAtlassian": {
             "risk": "read",
             "constraints": {
                 "arguments": {"query": {"required": True, "max_length": 2000}},
@@ -215,7 +213,7 @@ _PRESETS: dict[tuple[str, str], ToolPolicy] = {
                 "max_result_bytes": 256 * 1024,
             },
         },
-        "fetch": {
+        "fetchAtlassian": {
             "risk": "read",
             "constraints": {
                 "arguments": {"id": {"required": True, "max_length": 512}},
@@ -244,9 +242,7 @@ _KNOWN_CONNECTORS = frozenset(connector for connector, _ in _PRESETS)
 
 def _workflow_ids(values: Iterable[str] | None) -> list[str]:
     if values is None or isinstance(values, (str, bytes)):
-        raise ConnectorPresetError(
-            "n8n workflow-bounded requires one or more allowed workflow IDs"
-        )
+        raise ConnectorPresetError("n8n workflow-bounded requires one or more allowed workflow IDs")
     materialized = list(values)
     if any(not isinstance(value, str) for value in materialized):
         raise ConnectorPresetError("n8n workflow IDs must be strings")
@@ -273,15 +269,11 @@ def build_connector_preset(
         raise ConnectorPresetError(f"unknown connector: {connector_id}")
     key = (connector_id, preset_name)
     if key not in _PRESETS:
-        raise ConnectorPresetError(
-            f"unknown preset for {connector_id}: {preset_name}"
-        )
+        raise ConnectorPresetError(f"unknown preset for {connector_id}: {preset_name}")
 
     policy = deepcopy(_PRESETS[key])
     if key == ("n8n", "workflow-bounded"):
         workflow_ids = _workflow_ids(allowed_workflow_ids)
         for rule in policy.values():
-            rule["constraints"]["arguments"]["workflowId"]["allowed_values"] = list(
-                workflow_ids
-            )
+            rule["constraints"]["arguments"]["workflowId"]["allowed_values"] = list(workflow_ids)
     return policy

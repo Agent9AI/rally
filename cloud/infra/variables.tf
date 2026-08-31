@@ -23,12 +23,12 @@ variable "a2a_base_url" {
 }
 
 variable "image_uri" {
-  description = "Immutable coordinator image URI; unused during bootstrap."
+  description = "Digest-pinned coordinator image URI; unused during bootstrap."
   type        = string
 }
 
 variable "control_plane_image_uri" {
-  description = "Immutable control-plane image URI; defaults to image_uri when omitted."
+  description = "Digest-pinned control-plane image URI; defaults to image_uri when omitted."
   type        = string
   default     = ""
 }
@@ -65,6 +65,20 @@ variable "google_web_client_id" {
   }
 }
 
+variable "google_workspace_client_id" {
+  description = "Dedicated confidential OAuth client ID for the aggregate Google Workspace connector."
+  type        = string
+  default     = ""
+
+  validation {
+    condition = (
+      var.google_workspace_client_id == "" ||
+      can(regex("^[0-9]+-[A-Za-z0-9_-]+\\.apps\\.googleusercontent\\.com$", var.google_workspace_client_id))
+    )
+    error_message = "google_workspace_client_id must be empty or a Google OAuth web client ID."
+  }
+}
+
 variable "control_plane_allowed_origins" {
   description = "Exact browser origins permitted to call the public control plane."
   type        = list(string)
@@ -72,9 +86,9 @@ variable "control_plane_allowed_origins" {
 }
 
 variable "control_plane_allowed_user_emails" {
-  description = "Optional initial account allowlist; empty enables any verified Google account."
+  description = "Initial account allowlist; explicitly pass an empty list only for a deliberate public launch."
   type        = list(string)
-  default     = []
+  default     = ["imterryim@gmail.com"]
 }
 
 variable "operator_member" {

@@ -54,7 +54,7 @@ Terraform creates:
 - an optional public Cloud Run control plane whose customer routes still
   require verified, audience-bound Google ID tokens
 
-### Approved two-phase deployment
+### Approved gated deployment
 
 The registry must exist before an image can be pushed, and the image must exist
 before Cloud Run can start. Rally encodes that dependency as an explicit safe
@@ -68,26 +68,42 @@ terraform -chdir=cloud/infra apply \
   -var='image_uri=bootstrap-not-used'
 ```
 
-Phase 2 builds and pushes a commit-addressed image:
+Phase 2 builds and pushes a commit-addressed candidate, then resolves the
+registry digest that Terraform will pin:
 
 ```bash
 gcloud builds submit cloud \
   --config=cloud/cloudbuild.yaml \
   --project=rally-agent9-2026 \
   --substitutions=_IMAGE=us-east1-docker.pkg.dev/rally-agent9-2026/rally/rally-google-coordinator:<commit-sha>
+
+gcloud artifacts docker images describe \
+  us-east1-docker.pkg.dev/rally-agent9-2026/rally/rally-google-coordinator:<commit-sha> \
+  --project=rally-agent9-2026 \
+  --format='value(image_summary.digest)'
 ```
 
-Phase 3 creates the private service and sole invoker grant from that immutable
-image:
+Phase 3 creates the digest-pinned private coordinator and authenticated public
+control plane. The empty Workspace client ID is deliberate for this release:
+the Workspace card stays unavailable until its dedicated confidential OAuth
+client is registered and tested.
 
 ```bash
-terraform -chdir=cloud/infra apply \
+terraform -chdir=cloud/infra plan -out=/tmp/rally-production.tfplan \
   -var='deploy_service=true' \
-  -var='image_uri=us-east1-docker.pkg.dev/rally-agent9-2026/rally/rally-google-coordinator:<commit-sha>'
+  -var='deploy_control_plane=true' \
+  -var='image_uri=us-east1-docker.pkg.dev/rally-agent9-2026/rally/rally-google-coordinator@sha256:<proven-coordinator-digest>' \
+  -var='control_plane_image_uri=us-east1-docker.pkg.dev/rally-agent9-2026/rally/rally-google-coordinator@sha256:<control-plane-digest>' \
+  -var='google_web_client_id=<public-client-id>' \
+  -var='google_workspace_client_id=""' \
+  -var='control_plane_allowed_origins=["https://rally.agent9.dev"]' \
+  -var='control_plane_allowed_user_emails=["imterryim@gmail.com"]'
+
+terraform -chdir=cloud/infra apply /tmp/rally-production.tfplan
 ```
 
-Review each plan and approve it interactively. Never add `-auto-approve` to the
-operator path.
+Review the saved plan immediately before applying it; discard and regenerate a
+stale plan. Never add `-auto-approve` to the operator path.
 
 The deployed service also checks the Secret Manager token. The local runner
 impersonates the dedicated invoker to mint a token whose audience is the exact
@@ -130,36 +146,36 @@ only its public client ID. Add
 `https://rally.agent9.dev/admin/google/callback` as an exact authorized redirect
 URI. Do not create, transmit, or commit a client secret for this sign-in flow.
 
-Once the public client ID exists, activate the control plane without changing
-the private coordinator boundary:
+Once the public client ID exists, use the Phase 3 production recipe above. Do
+not substitute the Rally Web sign-in client for the separate Workspace
+connector client; `google_workspace_client_id=""` keeps that connector disabled
+in this release.
 
-```bash
-terraform -chdir=cloud/infra apply \
-  -var='deploy_service=true' \
-  -var='deploy_control_plane=true' \
-  -var='image_uri=us-east1-docker.pkg.dev/rally-agent9-2026/rally/rally-google-coordinator:<proven-coordinator-sha>' \
-  -var='control_plane_image_uri=us-east1-docker.pkg.dev/rally-agent9-2026/rally/rally-google-coordinator:<control-plane-sha>' \
-  -var='google_web_client_id=<public-client-id>' \
-  -var='control_plane_allowed_user_emails=["you@example.com"]'
-```
-
-Review the plan interactively. The control-plane identity can read/write its
-Firestore collection and encrypt/decrypt with one KMS key; it cannot invoke the
-coordinator, access the coordinator's Secret Manager token, or call Vertex AI.
-The API returns connection metadata only. A newly imported credential is
+The control-plane identity has database-wide Firestore data access through
+`roles/datastore.user`; tenant and collection boundaries are therefore enforced
+by the service code, not by collection-level Firestore IAM. It can
+encrypt/decrypt with the dedicated connector-vault KMS key and read the
+Workspace OAuth secret resource, but it cannot invoke the coordinator, access
+the coordinator's Secret Manager token, or call Vertex AI.
+Vault-management routes return connection metadata only. The separate
+authenticated `/invoke` route returns one bounded provider result after the
+tenant, credential generation, certified tool manifest, and safe preset all
+match; no route returns credential material. A newly imported credential is
 `stored_unverified` until Rally performs capability discovery and applies a
 safe execution preset.
 
-The separate immutable image variables keep a control-plane release from
+The separate digest-pinned image variables keep a control-plane release from
 changing the private coordinator revision. Omit `control_plane_image_uri` only
-when both services intentionally use the exact same image.
+when both services intentionally use the exact same digest.
 
 ## Cost posture
 
-Cloud Run uses zero minimum instances, at most one instance, one vCPU, and
-512 MiB memory. Firestore stores one small record per commission. Eval cases
-use Gemini Flash and remain deliberately small. The existing $8 billing alert
-is monitoring-only; it is not a hard cap.
+Both Cloud Run services use zero minimum instances, one vCPU, and 512 MiB
+memory. The private coordinator permits at most one instance; the customer
+control plane permits at most two. Firestore stores small coordination,
+identity, vault-metadata, and content-free receipt records. Eval cases use
+Gemini Flash and remain deliberately small. The existing $8 billing alert is
+monitoring-only; it is not a hard cap.
 
 ## Deployment gate
 

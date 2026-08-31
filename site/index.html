@@ -275,7 +275,7 @@
               </article>
               <article class="connector-entry" data-connector="Atlassian">
                 <div class="connector-brand"><span class="brand-plate"><img src="brandmarks/atlassian.svg" alt=""></span><div><h4>Atlassian</h4><p>Jira work, Confluence knowledge, and Compass services.</p></div></div>
-                <div class="connector-meta"><span class="readiness">Adapter ready</span><span class="guardrail">Search first · edits verified</span><a href="https://www.atlassian.com/platform/rovo-mcp" aria-label="Atlassian official connector documentation">Docs ↗</a></div>
+                <div class="connector-meta"><span class="readiness">Adapter ready</span><span class="guardrail">Read-only · edits denied</span><a href="https://www.atlassian.com/platform/rovo-mcp" aria-label="Atlassian official connector documentation">Docs ↗</a></div>
               </article>
             </div>
           </section>
@@ -303,7 +303,7 @@
             <div class="connector-list">
               <article class="connector-entry" data-connector="BigQuery">
                 <div class="connector-brand"><span class="brand-plate"><img src="brandmarks/bigquery.svg" alt=""></span><div><h4>BigQuery</h4><p>Governed data for sourced analysis, anomalies, and executive answers.</p></div></div>
-                <div class="connector-meta"><span class="readiness live-ready">Live discovery</span><span class="guardrail">Bounded query · writes gated</span><a href="https://docs.cloud.google.com/bigquery/docs/use-bigquery-mcp" aria-label="BigQuery official connector documentation">Docs ↗</a></div>
+                <div class="connector-meta"><span class="readiness live-ready">Live discovery</span><span class="guardrail">Metadata only · SQL denied</span><a href="https://docs.cloud.google.com/bigquery/docs/use-bigquery-mcp" aria-label="BigQuery official connector documentation">Docs ↗</a></div>
               </article>
               <article class="connector-entry" data-connector="Salesforce">
                 <div class="connector-brand"><span class="brand-plate wide-mark"><img src="brandmarks/salesforce.svg" alt=""></span><div><h4>Salesforce</h4><p>Customer, pipeline, and service records through hosted SObject reads.</p></div></div>
@@ -311,7 +311,7 @@
               </article>
               <article class="connector-entry" data-connector="Stripe">
                 <div class="connector-brand"><span class="brand-plate wide-mark"><img src="brandmarks/stripe.svg" alt=""></span><div><h4>Stripe</h4><p>Payments, subscriptions, customers, and financial reporting.</p></div></div>
-                <div class="connector-meta"><span class="readiness">Adapter ready</span><span class="guardrail">Report first · money moves gated</span><a href="https://docs.stripe.com/mcp" aria-label="Stripe official connector documentation">Docs ↗</a></div>
+                <div class="connector-meta"><span class="readiness">Adapter ready</span><span class="guardrail">Read-minimal · money movement denied</span><a href="https://docs.stripe.com/mcp" aria-label="Stripe official connector documentation">Docs ↗</a></div>
               </article>
             </div>
           </section>
@@ -321,7 +321,7 @@
           <div class="agent-network-intro"><p class="network-eyebrow"><span></span>External agent network</p><h3 id="agent-network-title">Bring another workforce into the accountable team.</h3><p>Gemini, Claude, and OpenAI are Rally’s core team. These systems extend it through a deliberately narrower delegation boundary.</p><div class="network-rule"><b>Different permission.</b><span>Agents receive bounded assignments—not ambient access to every connected system.</span></div></div>
           <div class="agent-network-list">
             <article class="agent-connection" data-agent-connection="Hyperagent">
-              <div class="agent-connection-top"><span class="brand-plate"><img src="brandmarks/hyperagent.svg" alt=""></span><span class="readiness">Adapter ready</span></div><h4>Hyperagent</h4><p>Hosted OAuth MCP workforce. Rally can discover agents and read results; starting work remains approval-gated.</p><div class="agent-protocol"><span>MCP delegation</span><a href="https://www.hyperagent.com/docs/concepts/agents/invocations/mcp-server/" aria-label="Hyperagent official connector documentation">Interface ↗</a></div>
+              <div class="agent-connection-top"><span class="brand-plate"><img src="brandmarks/hyperagent.svg" alt=""></span><span class="readiness">Adapter ready</span></div><h4>Hyperagent</h4><p>Hosted OAuth MCP workforce. Rally can discover agents and read results; starting work is not enabled.</p><div class="agent-protocol"><span>MCP delegation</span><a href="https://www.hyperagent.com/docs/concepts/agents/invocations/mcp-server/" aria-label="Hyperagent official connector documentation">Interface ↗</a></div>
             </article>
             <article class="agent-connection" data-agent-connection="Hermes Agent">
               <div class="agent-connection-top"><span class="brand-plate protocol-plate"><img src="a2a-icon.svg" alt=""></span><span class="readiness candidate-ready">Interface verified</span></div><h4>Hermes Agent</h4><p>Native A2A v1.0 peer. Endpoint identity, task mirroring, and failure tests must pass before admission.</p><div class="agent-protocol"><span>A2A candidate</span><a href="https://hermes-agent.nousresearch.com/docs/user-guide/messaging/a2a" aria-label="Hermes Agent A2A documentation">Interface ↗</a></div>
@@ -351,10 +351,10 @@
           </article>
           <article class="test-card">
             <div class="card-header"><div><span class="terminal-icon">›_</span><b>Release gates</b></div><span class="status-chip complete">Green</span></div>
-            <pre><code>87  runner + ingress + policy + site
-109 Cloud, A2A + connector security
+            <pre><code>88  runner + ingress + policy + site
+171 Cloud, A2A + connector security
 ───
-196 automated tests
+259 automated tests
 
 ✓ Terraform validated
 ✓ Worker bundle verified

@@ -48,6 +48,8 @@ class TestGoogleCloudContract(unittest.TestCase):
         dockerfile = (ROOT / "cloud" / "Dockerfile").read_text()
         catalog = json.loads((ROOT / "cloud" / "agent_catalog.json").read_text())
         self.assertIn("agent_catalog.json", dockerfile)
+        self.assertIn("hosted_connector_execution.py", dockerfile)
+        self.assertIn("hosted_mcp_transport.py", dockerfile)
         self.assertGreaterEqual(len(catalog["agents"]), 3)
 
     def test_private_invocation_uses_a_dedicated_audience_bound_identity(self):

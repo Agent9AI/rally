@@ -1,6 +1,16 @@
 (() => {
   "use strict";
 
+  if (
+    window.location.hostname.endsWith(".pages.dev") ||
+    window.location.hostname.endsWith(".workers.dev")
+  ) {
+    window.location.replace(
+      `https://rally.agent9.dev${window.location.pathname}${window.location.search}${window.location.hash}`,
+    );
+    return;
+  }
+
   const config = window.RALLY_ADMIN_CONFIG || {};
   const button = document.querySelector("[data-google-redirect-button]");
   const note = document.querySelector("[data-configuration-note]");

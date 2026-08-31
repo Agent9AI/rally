@@ -4,9 +4,19 @@ The public site at `https://rally.agent9.dev` is deployed from this directory.
 Its marketing and evidence surfaces are static. The hosted `/admin/` frontend
 submits a credential only after verified Google sign-in, sends it directly over
 HTTPS to the separate Google Cloud control plane, and keeps identity, session,
-and credential values in browser memory only. The control plane encrypts each
-credential before Firestore persists it and never presents a stored credential
-as a verified or executable connection.
+and credential values in page memory rather than persistent browser storage.
+The control plane encrypts each credential before Firestore persists it and
+never presents storage alone as a verified connection.
+
+The registered production connector callback is intercepted by the Cloudflare
+Worker and relayed server-side. Consent start creates a short-lived, per-flow
+`HttpOnly`, `Secure`, `SameSite=Lax` browser-binding cookie; the Worker
+requires it at callback and clears it afterward. The static Pages origin is not a
+callback fallback, so OAuth fails closed when the Worker is unavailable. The
+admin page receives neither the one-time provider code nor a provider token.
+Workers Logs and automatic tracing are disabled for this callback-bearing Worker
+so Rally does not persist callback URLs in those Cloudflare observability
+products; deployments must preserve that boundary.
 
 Validate locally with:
 

@@ -1,4 +1,5 @@
 """Durable commission records with a deterministic in-memory test backend."""
+
 from __future__ import annotations
 
 import asyncio

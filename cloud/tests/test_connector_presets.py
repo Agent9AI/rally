@@ -145,9 +145,7 @@ def test_bigquery_metadata_only_has_no_query_surface():
 
 def test_n8n_template_requires_and_freezes_allowed_workflow_ids():
     requested = ["wf-z", " wf-a ", "wf-z"]
-    policy = build_connector_preset(
-        "n8n", "workflow-bounded", allowed_workflow_ids=requested
-    )
+    policy = build_connector_preset("n8n", "workflow-bounded", allowed_workflow_ids=requested)
     requested.append("wf-late")
 
     for rule in policy.values():
@@ -166,17 +164,13 @@ def test_n8n_template_requires_and_freezes_allowed_workflow_ids():
 @pytest.mark.parametrize("workflow_ids", [None, [], (), [""], ["  "]])
 def test_n8n_template_rejects_empty_required_resources(workflow_ids):
     with pytest.raises(ConnectorPresetError, match="workflow IDs"):
-        build_connector_preset(
-            "n8n", "workflow-bounded", allowed_workflow_ids=workflow_ids
-        )
+        build_connector_preset("n8n", "workflow-bounded", allowed_workflow_ids=workflow_ids)
 
 
 @pytest.mark.parametrize("workflow_ids", [[123], ["wf-approved", None]])
 def test_n8n_template_rejects_non_string_resources(workflow_ids):
     with pytest.raises(ConnectorPresetError, match="must be strings"):
-        build_connector_preset(
-            "n8n", "workflow-bounded", allowed_workflow_ids=workflow_ids
-        )
+        build_connector_preset("n8n", "workflow-bounded", allowed_workflow_ids=workflow_ids)
 
 
 def test_atlassian_read_minimal_uses_provider_search_and_fetch():
@@ -184,10 +178,12 @@ def test_atlassian_read_minimal_uses_provider_search_and_fetch():
     assert set(policy) == {
         "atlassianUserInfo",
         "getAccessibleAtlassianResources",
-        "search",
-        "fetch",
+        "searchAtlassian",
+        "fetchAtlassian",
     }
-    assert policy["search"]["constraints"]["arguments"]["query"]["required"] is True
+    assert policy["searchAtlassian"]["constraints"]["arguments"]["query"]["required"] is True
+    assert "search" not in policy
+    assert "fetch" not in policy
     assert {rule["risk"] for rule in policy.values()} == {"read"}
 
 

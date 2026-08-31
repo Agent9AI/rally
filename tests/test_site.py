@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import subprocess
 import unittest
 from html.parser import HTMLParser
 
@@ -179,11 +180,17 @@ class TestProductSite(unittest.TestCase):
         private_browser = os.path.join(admin_root, "private-browser")
         for redirect_asset in ("index.html", "app.js"):
             self.assertTrue(os.path.exists(os.path.join(private_browser, redirect_asset)))
+        connector_callback = os.path.join(admin_root, "connect", "callback")
+        for callback_asset in ("index.html", "app.js"):
+            self.assertFalse(os.path.exists(os.path.join(connector_callback, callback_asset)))
         with open(os.path.join(admin_root, "index.html")) as handle:
             admin_html = handle.read()
         with open(os.path.join(admin_root, "app.js")) as handle:
             admin_app = handle.read()
         self.assertEqual(admin_html.count('class="connection-card'), 9)
+        self.assertEqual(admin_html.count("data-primary-action"), 9)
+        self.assertNotIn("data-token-action", admin_html)
+        self.assertIn("data-advanced-token", admin_html)
         self.assertIn("Google Cloud KMS", admin_html)
         self.assertIn("Stored in Google Cloud", admin_html)
         self.assertIn("Ciphertext only · KMS protected", admin_html)
@@ -200,10 +207,20 @@ class TestProductSite(unittest.TestCase):
         self.assertIn("window.location.assign", admin_app)
         self.assertIn('api("/v1/connectors")', admin_app)
         self.assertIn("Opening secure consent", admin_app)
+        self.assertIn("Every tool remains off", admin_app)
+        self.assertIn("recertification_required", admin_app)
+        self.assertIn('/v1/auth/logout', admin_app)
+        self.assertIn('/verify`', admin_app)
+        self.assertIn('return "Finish setup"', admin_app)
+        self.assertNotIn('return "Reconnect"', admin_app)
+        self.assertNotIn("data-secondary-action", admin_app)
         self.assertNotIn("window.open", admin_app)
         self.assertNotIn('headers.set("Authorization"', admin_app)
         self.assertIn('target="_blank"', admin_html)
-        self.assertIn("Authorize</li><li><span>2</span>Verify", admin_html)
+        self.assertIn('aria-label="Connection stages"', admin_html)
+        for stage in ("Authorize", "Discover", "Test", "Certify"):
+            self.assertIn(f"<b>{stage}</b>", admin_html)
+        self.assertNotIn("Open provider setup", admin_html)
         metadata_path = os.path.join(SITE, "oauth", "client-metadata.json")
         self.assertTrue(os.path.exists(metadata_path))
         with open(metadata_path) as handle:
@@ -224,7 +241,11 @@ class TestProductSite(unittest.TestCase):
         self.assertIn("https://accounts.google.com/gsi/client", security_headers)
         self.assertIn("https://accounts.google.com/gsi/style", security_headers)
         self.assertIn("https://*.a.run.app", security_headers)
-        self.assertIn("87  runner + ingress + policy + site", self.html)
+        self.assertIn("form-action 'self'", security_headers)
+        self.assertNotIn("form-action 'self' https://*.a.run.app", security_headers)
+        self.assertIn("/admin/connect/callback*", security_headers)
+        self.assertIn("Referrer-Policy: no-referrer", security_headers)
+        self.assertIn("88  runner + ingress + policy + site", self.html)
         self.assertIn('href="privacy/"', self.html)
         self.assertIn('href="terms/"', self.html)
         self.assertNotIn('href="https://github.com/Agent9AI/rally"', self.html)
@@ -263,7 +284,13 @@ class TestProductSite(unittest.TestCase):
         self.assertIn('href="../terms/"', admin_html)
         with open(os.path.join(ROOT, "studio", "og-card.html")) as handle:
             card = handle.read()
-        for phrase in ("THE ACCOUNTABLE AI TEAM", "Your AIs, finally", "196", "6/6", "0"):
+        for phrase in (
+            "THE ACCOUNTABLE AI TEAM",
+            "Your AIs, finally",
+            "259",
+            "6/6",
+            "0",
+        ):
             self.assertIn(phrase, card)
         self.assertNotIn("99 TESTS", card)
 
@@ -292,10 +319,25 @@ class TestProductSite(unittest.TestCase):
         )
         self.assertTrue(worker_config["workers_dev"])
         self.assertFalse(worker_config["preview_urls"])
+        self.assertFalse(worker_config["observability"]["enabled"])
+        self.assertFalse(worker_config["observability"]["logs"]["enabled"])
+        self.assertFalse(worker_config["observability"]["traces"]["enabled"])
         with open(os.path.join(ROOT, "src", "worker", "index.js")) as handle:
             worker = handle.read()
         self.assertIn('const SITE_ORIGIN = "https://agent9-rally.pages.dev"', worker)
-        self.assertIn("return await fetch(new Request(upstreamUrl, request))", worker)
+        self.assertIn(
+            "return await fetch(new Request(upstreamUrl, { method: request.method, headers }))",
+            worker,
+        )
+        for sensitive_header in (
+            "authorization",
+            "cookie",
+            "x-rally-id-token",
+            "x-rally-oauth-binding",
+            "x-rally-session",
+        ):
+            self.assertIn(f'headers.delete(name)', worker)
+            self.assertIn(f'"{sensitive_header}"', worker)
         self.assertIn('const GOOGLE_CALLBACK_PATH = "/admin/google/callback"', worker)
         self.assertIn(
             'const CONNECTOR_CALLBACK_PATH = "/admin/connect/callback"',
@@ -305,6 +347,16 @@ class TestProductSite(unittest.TestCase):
         self.assertIn("return proxyConnectorCallback(request, url)", worker)
         self.assertIn("MAX_GOOGLE_FORM_BODY", worker)
         self.assertIn("MAX_CONNECTOR_CALLBACK_QUERY", worker)
+
+    def test_worker_callback_contract(self):
+        result = subprocess.run(
+            ["node", os.path.join(ROOT, "tests", "test_worker_callback.mjs")],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        self.assertIn("worker callback contract passed", result.stdout)
 
 
 if __name__ == "__main__":

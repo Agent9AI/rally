@@ -21,7 +21,7 @@ and final submission.
 | Enter one category | PASS | All submission materials consistently select **Fortified Enterprise Fleet**. |
 | Gemini 3.5 or newer through Gemini API or Vertex AI | PASS | Gemini 3.7 Flash is the ADK coordinator through Vertex AI; the six-case live eval passes at 1.00 trajectory and 1.00 quality. |
 | At least one Google agent framework | PASS | The coordinator is implemented with Google ADK and tested under `cloud/`. |
-| At least one deployed Google Cloud infrastructure service | PASS | Private Cloud Run revision `rally-google-coordinator-00004-zxb` runs the ADK coordinator in project `rally-agent9-2026`; Firestore, IAM, Secret Manager, Artifact Registry, Cloud Logging, and Cloud Trace are live supporting services. |
+| At least one deployed Google Cloud infrastructure service | PASS | Private Cloud Run revision `rally-google-coordinator-00006-v7q` runs the ADK coordinator in project `rally-agent9-2026`; Firestore, IAM, Secret Manager, Artifact Registry, Cloud Logging, and Cloud Trace are live supporting services. |
 | Reproducible setup instructions | PASS | `README.md` and `docs/RUNBOOK.md` provide local, cloud, test, and operational instructions. |
 | Reviewable repository | PASS | `Agent9AI/rally` is public and carries the Apache License 2.0. The FAQ's private-repository judging-account exception no longer applies. |
 | Real autonomous agent work, not a generic chatbot | PASS | Durable intake, bounded multi-turn execution, sourced artifact creation, automated checks, cross-family verification, replay controls, evidence receipts, and completion invariants are implemented. |

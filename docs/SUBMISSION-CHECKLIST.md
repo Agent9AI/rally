@@ -10,7 +10,7 @@ entry. Items are ordered so a failure cannot invalidate later evidence.
 - [x] The live result reads 6/6, trajectory 1.00, quality 1.00.
 - [x] `git diff --check` passes.
 - [x] No token, private key, webhook URL, or prompt content appears in tracked files.
-- [x] The repository and site say 201 tests everywhere.
+- [x] The repository and site say 259 tests everywhere.
 - [x] The standard and filmed model pins are documented accurately.
 
 ## 2. Approval gate: Google Cloud deployment
@@ -29,8 +29,13 @@ this gate without the operator's explicit approval.
       service account, IAM, and Secret Manager while `deploy_service=false`.
 - [x] Confirm bootstrap created the application-token version without printing it.
 - [x] Build and push the commit-addressed image in `us-east1`.
-- [x] Phase 2 Terraform uses `deploy_service=true` and that exact immutable image.
-- [x] Confirm Cloud Run has at most one instance and is not publicly invokable.
+- [x] Production Terraform uses `deploy_service=true`,
+      `deploy_control_plane=true`, the `imterryim@gmail.com` account allowlist,
+      and `google_workspace_client_id=""` for this release.
+- [x] Both Cloud Run images are pinned by digest, not a mutable tag.
+- [x] Confirm the private coordinator has at most one instance. Confirm the
+      public control plane has at most two instances and all customer routes
+      still require verified Rally authentication.
 - [x] Install the service token in macOS Keychain using the documented command.
 - [x] Configure the local bridge URL and audience without committing credentials.
 

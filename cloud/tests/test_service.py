@@ -26,9 +26,7 @@ async def test_commission_is_durable_and_duplicate_safe(cloud_service, monkeypat
         return f"accepted {run_id} attempt {attempt}: {task}"
 
     monkeypatch.setattr(service, "coordinate", fake_coordinate)
-    async with httpx.AsyncClient(
-        transport=cloud_service, base_url="http://rally"
-    ) as client:
+    async with httpx.AsyncClient(transport=cloud_service, base_url="http://rally") as client:
         first = await client.post(
             "/v1/commissions",
             json={"task": "Ship it", "run_id": "r-test-123"},
@@ -60,9 +58,7 @@ async def test_failed_coordination_resumes_without_changing_request(cloud_servic
         return f"recovered {run_id} attempt {attempt}: {task}"
 
     monkeypatch.setattr(service, "coordinate", flaky_coordinate)
-    async with httpx.AsyncClient(
-        transport=cloud_service, base_url="http://rally"
-    ) as client:
+    async with httpx.AsyncClient(transport=cloud_service, base_url="http://rally") as client:
         failed = await client.post(
             "/v1/commissions",
             json={"task": "Ship it", "run_id": "r-test-123"},
@@ -86,9 +82,7 @@ async def test_idempotency_key_rejects_conflicting_task(cloud_service, monkeypat
         return "accepted"
 
     monkeypatch.setattr(service, "coordinate", fake_coordinate)
-    async with httpx.AsyncClient(
-        transport=cloud_service, base_url="http://rally"
-    ) as client:
+    async with httpx.AsyncClient(transport=cloud_service, base_url="http://rally") as client:
         await client.post(
             "/v1/commissions",
             json={"task": "Ship it", "run_id": "r-test-123"},
@@ -105,9 +99,7 @@ async def test_idempotency_key_rejects_conflicting_task(cloud_service, monkeypat
 
 @pytest.mark.asyncio
 async def test_agent_catalog_requires_service_auth(cloud_service):
-    async with httpx.AsyncClient(
-        transport=cloud_service, base_url="http://rally"
-    ) as client:
+    async with httpx.AsyncClient(transport=cloud_service, base_url="http://rally") as client:
         denied = await client.get("/v1/agents")
         allowed = await client.get("/v1/agents", headers=headers())
 
@@ -116,6 +108,5 @@ async def test_agent_catalog_requires_service_auth(cloud_service):
     catalog = allowed.json()["agents"]
     assert len(catalog) == 4
     assert any(
-        agent["id"] == "rally-openai-worker" and agent["family"] == "openai"
-        for agent in catalog
+        agent["id"] == "rally-openai-worker" and agent["family"] == "openai" for agent in catalog
     )

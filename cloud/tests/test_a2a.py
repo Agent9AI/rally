@@ -152,9 +152,7 @@ async def test_a2a_rejects_unsupported_http_content_type(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "protocol", [TransportProtocol.JSONRPC, TransportProtocol.HTTP_JSON]
-)
+@pytest.mark.parametrize("protocol", [TransportProtocol.JSONRPC, TransportProtocol.HTTP_JSON])
 async def test_official_a2a_client_can_stream_poll_and_list(a2a_service, protocol):
     client = await official_client(a2a_service, protocol)
     objective = "Repair webhook replay risk and independently verify it."
@@ -187,12 +185,8 @@ async def test_a2a_duplicate_message_reuses_the_rally_run(a2a_service):
     message_id = f"msg-{uuid.uuid4().hex}"
     client = await official_client(a2a_service, TransportProtocol.JSONRPC)
     try:
-        first = [
-            event async for event in client.send_message(a2a_message("Ship it", message_id))
-        ]
-        second = [
-            event async for event in client.send_message(a2a_message("Ship it", message_id))
-        ]
+        first = [event async for event in client.send_message(a2a_message("Ship it", message_id))]
+        second = [event async for event in client.send_message(a2a_message("Ship it", message_id))]
     finally:
         await close_official_client(client)
 
@@ -221,12 +215,9 @@ async def test_a2a_conflicting_replay_fails_closed(a2a_service):
     message_id = f"msg-{uuid.uuid4().hex}"
     client = await official_client(a2a_service, TransportProtocol.JSONRPC)
     try:
-        _ = [
-            event async for event in client.send_message(a2a_message("Ship it", message_id))
-        ]
+        _ = [event async for event in client.send_message(a2a_message("Ship it", message_id))]
         conflict = [
-            event
-            async for event in client.send_message(a2a_message("Delete it", message_id))
+            event async for event in client.send_message(a2a_message("Delete it", message_id))
         ]
     finally:
         await close_official_client(client)

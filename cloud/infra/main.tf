@@ -11,6 +11,21 @@ locals {
     "logging.googleapis.com",
     "run.googleapis.com",
     "secretmanager.googleapis.com",
+    "gmail.googleapis.com",
+    "drive.googleapis.com",
+    "docs.googleapis.com",
+    "sheets.googleapis.com",
+    "slides.googleapis.com",
+    "calendar-json.googleapis.com",
+    "chat.googleapis.com",
+    "people.googleapis.com",
+    "gmailmcp.googleapis.com",
+    "drivemcp.googleapis.com",
+    "docsmcp.googleapis.com",
+    "sheetsmcp.googleapis.com",
+    "slidesmcp.googleapis.com",
+    "calendarmcp.googleapis.com",
+    "chatmcp.googleapis.com",
   ])
 
   app_roles = toset([
@@ -18,7 +33,6 @@ locals {
     "roles/cloudtrace.agent",
     "roles/datastore.user",
     "roles/logging.logWriter",
-    "roles/secretmanager.secretAccessor",
     "roles/serviceusage.serviceUsageConsumer",
   ])
 }
@@ -130,6 +144,15 @@ resource "google_firestore_field" "connector_oauth_flow_ttl" {
   ttl_config {}
 }
 
+resource "google_firestore_field" "connector_execution_receipt_ttl" {
+  project    = var.project_id
+  database   = google_firestore_database.rally.name
+  collection = "connector_execution_receipts"
+  field      = "expires_at"
+
+  ttl_config {}
+}
+
 resource "google_kms_key_ring" "connector_vault" {
   project  = var.project_id
   name     = "rally-connector-vault"
@@ -163,6 +186,10 @@ resource "google_secret_manager_secret" "service_token" {
   project   = var.project_id
   secret_id = "rally-cloud-service-token"
 
+  lifecycle {
+    prevent_destroy = true
+  }
+
   replication {
     auto {}
   }
@@ -173,6 +200,35 @@ resource "google_secret_manager_secret" "service_token" {
 resource "google_secret_manager_secret_version" "service_token" {
   secret      = google_secret_manager_secret.service_token.id
   secret_data = random_password.service_token.result
+}
+
+resource "google_secret_manager_secret_iam_member" "service_token_coordinator" {
+  project   = var.project_id
+  secret_id = google_secret_manager_secret.service_token.secret_id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.coordinator.email}"
+}
+
+resource "google_secret_manager_secret" "workspace_oauth_client_secret" {
+  project   = var.project_id
+  secret_id = "rally-google-workspace-oauth-client-secret"
+
+  lifecycle {
+    prevent_destroy = true
+  }
+
+  replication {
+    auto {}
+  }
+
+  depends_on = [google_project_service.required]
+}
+
+resource "google_secret_manager_secret_iam_member" "workspace_oauth_control_plane" {
+  project   = var.project_id
+  secret_id = google_secret_manager_secret.workspace_oauth_client_secret.secret_id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.control_plane.email}"
 }
 
 resource "google_cloud_run_v2_service" "coordinator" {
@@ -279,6 +335,7 @@ resource "google_cloud_run_v2_service" "coordinator" {
     google_firestore_database.rally,
     google_project_iam_member.coordinator,
     google_secret_manager_secret_version.service_token,
+    google_secret_manager_secret_iam_member.service_token_coordinator,
   ]
 }
 
@@ -367,6 +424,25 @@ resource "google_cloud_run_v2_service" "control_plane" {
         name  = "RALLY_GOOGLE_WEB_CLIENT_IDS"
         value = var.google_web_client_id
       }
+      dynamic "env" {
+        for_each = var.google_workspace_client_id == "" ? [] : [var.google_workspace_client_id]
+        content {
+          name  = "RALLY_GOOGLE_WORKSPACE_CLIENT_ID"
+          value = env.value
+        }
+      }
+      dynamic "env" {
+        for_each = var.google_workspace_client_id == "" ? [] : [1]
+        content {
+          name = "RALLY_GOOGLE_WORKSPACE_CLIENT_SECRET"
+          value_source {
+            secret_key_ref {
+              secret  = google_secret_manager_secret.workspace_oauth_client_secret.secret_id
+              version = "latest"
+            }
+          }
+        }
+      }
       env {
         name  = "RALLY_ALLOWED_ORIGINS"
         value = join(",", var.control_plane_allowed_origins)
@@ -411,7 +487,9 @@ resource "google_cloud_run_v2_service" "control_plane" {
     google_firestore_field.auth_code_ttl,
     google_firestore_field.auth_session_ttl,
     google_firestore_field.connector_oauth_flow_ttl,
+    google_firestore_field.connector_execution_receipt_ttl,
     google_kms_crypto_key_iam_member.control_plane,
+    google_secret_manager_secret_iam_member.workspace_oauth_control_plane,
     google_project_iam_member.control_plane,
   ]
 }

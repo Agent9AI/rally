@@ -13,9 +13,13 @@ review. Deterministic policy—not any model's confidence—decides when it ends
 The next product layer connects the systems where company work lives.
 All ten catalogued systems—Google Workspace, Slack, GitHub, Cloudflare
 Observability, n8n Cloud, Stripe, BigQuery, Atlassian, Salesforce, and
-Hyperagent—now have runnable, deny-by-default adapters. They remain disabled
-until a customer completes that provider's required app/token setup,
-authenticates, proves live discovery, and explicitly selects a safe tool preset.
+Hyperagent—now have deny-by-default gateway adapters. The catalog is not an
+activation claim. A hosted card stays disabled until Rally has finished the
+provider registration needed to complete the flow itself; nontechnical users
+are not sent to a provider console to finish our setup. An available connection
+becomes **Certified** only after the user authenticates, live discovery matches
+the committed safe allowlist, and Rally completes one fixed harmless read. The
+proof records hashes and metadata, never the returned business content.
 
 The fleet uses the **Claude CLI** (`claude -p`), **Antigravity CLI** (`agy -p`)
 pinned to Gemini, and **Codex CLI** (`codex exec`) pinned to OpenAI. Each runs
@@ -115,7 +119,7 @@ still cannot finish, Rally tells you exactly where and why.
 
 | Piece | State |
 |---|---|
-| Turn loop, state machine, console projection, guards | working, 87 product/integration tests |
+| Turn loop, state machine, console projection, guards | working, 88 product/integration tests |
 | Claude + Gemini CLI execution | working, live multi-turn runs completed |
 | OpenAI Codex CLI execution | working, live authenticated preflight passed with per-user ChatGPT sign-in |
 | Executive turn emails + report | working through Resend |
@@ -123,15 +127,15 @@ still cannot finish, Rally tells you exactly where and why.
 | Judge console | live Pages UI backed by a double-sanitized D1 run projection; professional proof run `r-20260830-447f2f` is public |
 | `rally@updates.agent9.dev` route | working; replies return to the commissioner |
 | Connector gateway | BigQuery live MCP handshake + six-tool discovery verified; ten pinned runtime adapters; provider-safe presets; exact one-time human approvals; per-run authority, payload ceilings, and content-free receipts |
-| Product + Cloud test suite | 201 automated tests passing |
+| Product + Cloud test suite | 259 automated tests passing |
 | Google ADK coordinator | implemented; live eval 6/6, both metrics 1.00 |
 | Cloud Run + Firestore + Trace | deployed privately in `rally-agent9-2026`; authenticated commission, replay, Firestore, logs, and content-free trace verified |
-| Customer identity + credential vault | verified Google-account boundary, tenant-isolated API, and Cloud KMS envelope encryption implemented; Google web client registration required before public activation |
+| Customer identity + credential vault | verified Google-account boundary, tenant-isolated API, and Cloud KMS envelope encryption implemented; Google web sign-in and each business-system authorization remain separate trust grants |
 | A2A v1.0 boundary | Agent Card, JSON-RPC, HTTP+JSON, SSE streaming, polling, listing, Firestore tasks, and dual-auth tested with official SDK clients |
 | WebMCP browser surface | Three feature-detected tools shipped for public-run search, bounded verification inspection, and human-confirmed job drafting; production ChatGPT in-app invocation remains the final proof gate |
 
-The current release candidate has **201 automated tests**: 87 deterministic
-runner, ingress, policy, bridge, connector, and site tests plus 114 Cloud, A2A,
+The current release candidate has **259 automated tests**: 88 deterministic
+runner, ingress, policy, bridge, connector, and site tests plus 171 Cloud, A2A,
 credential, preset, approval, and connector-gateway service tests.
 The separate live ADK scorecard remains 6/6 at 1.00 trajectory and 1.00 quality.
 
@@ -152,12 +156,53 @@ email. The local host remains necessary because the coding subscriptions are
 accessed through desktop CLIs. Google Cloud is the durable intake, governance,
 identity, and observability plane—not a decorative API call.
 
+## What a connector card promises
+
+The hosted administrator signs into Rally first. That Google web sign-in proves
+who owns the vault; it does **not** authorize Gmail, Drive, or any other business
+system. Each connector uses a separate provider grant and returns to the same
+card that started it, where Rally either records a content-free certification or
+leaves the adapter disabled.
+
+At the registered production callback, Rally's Cloudflare Worker matches the
+one-time provider response to a short-lived, per-flow `HttpOnly`, `Secure`,
+`SameSite=Lax` browser-binding cookie, relays the response server-side, and
+clears the cookie. The control plane then atomically consumes the encrypted
+flow. The admin page receives neither the authorization code nor a provider
+token. The static Pages origin is deliberately not a callback fallback: if the
+Worker is unavailable, provider authorization fails closed instead of weakening
+the same-browser guarantee.
+
+Google Workspace is intentionally one product card rather than eight setup
+chores. Behind that card, Rally uses a separate confidential Workspace connector
+client—not the Rally Web sign-in client—and checks Gmail, Drive, Docs, Sheets,
+Slides, Calendar, Chat, and People independently. All eight must expose an
+allowlisted read surface. Rally runs fixed, resource-free canaries against Gmail,
+Drive, Calendar, Chat, and People; Docs, Sheets, and Slides are omitted from the
+certified manifest until Rally can prove a user-owned resource read. Until the
+confidential connector client is configured, the card remains unavailable
+rather than opening Google Cloud Console for the customer.
+
+The hosted vault is an activation bridge, not autonomous model authority. A
+signed-in administrator may call a Certified, preset-allowlisted read tool
+through the hosted control plane; Rally rechecks tenant ownership, readiness,
+arguments, and policy and writes a content-free receipt. Agent runs additionally
+receive a separate immutable, user-bound authority snapshot.
+
+Disconnecting an OAuth connector disables it first, then asks the provider to
+revoke the grant when it publishes a revocation endpoint. Rally deletes its
+encrypted copy only after a successful automatic revocation; if the provider
+does not offer one, Rally deletes its copy and reports that provider action is
+still required. Manually supplied keys and tokens must be revoked in the
+provider's own settings. These are acceptance rules, not a claim that every
+catalogued provider has passed live production certification.
+
 ## Quickstart
 
 ```bash
 make check                    # pins, binaries, credentials, limits
 make dry                      # exercise the loop, no tokens spent
-make test                     # 87 local policy, ingress, connector, recovery, and site tests
+make test                     # 88 local policy, ingress, connector, recovery, and site tests
 make cloud-test               # Cloud coordinator tests + lint
 make cloud-eval               # live ADK eval; exact trajectory + quality gates
 
@@ -167,7 +212,7 @@ make serve                    # poll for commissions and run them
 ./bin/rally connectors list
 ./bin/rally connectors install              # register the gateway with Antigravity
 ./bin/rally connectors --profile you@company.com list
-./bin/rally connectors auth atlassian       # browser OAuth + live tool discovery
+./bin/rally connectors auth atlassian       # local runtime OAuth + bounded discovery
 ./bin/rally connectors doctor bigquery      # ADC + live tool discovery
 ```
 

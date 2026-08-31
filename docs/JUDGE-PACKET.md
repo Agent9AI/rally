@@ -91,7 +91,7 @@ stale owner from overwriting the new attempt.
 
 ## Judge-visible numbers
 
-- 201 automated deterministic tests: 87 product tests + 114 Cloud/A2A/connector tests
+- 259 automated deterministic tests: 88 product tests + 171 Cloud/A2A/connector tests
 - 6 live ADK evaluation cases
 - 1.00 tool trajectory score
 - 1.00 response-quality score
@@ -121,8 +121,8 @@ request keys, account menus, and raw prompt fields off screen.
 |---|---|
 | Public product + professional proof run | <https://rally.agent9.dev/#demo> — `r-20260830-447f2f` |
 | Cloud project | `rally-agent9-2026` |
-| Cloud Run | `rally-google-coordinator-00004-zxb` in `us-east1` |
-| Immutable container | `sha256:b51e64c4071da49f1b61b97f621c83249bb9b77be9470638a338d6a0125f562e` |
+| Cloud Run | `rally-google-coordinator-00006-v7q` in `us-east1` |
+| Digest-pinned container | `sha256:b51e64c4071da49f1b61b97f621c83249bb9b77be9470638a338d6a0125f562e` |
 | Cloud Build | `aee66131-0ecc-4fbe-b5ca-cd4f920f9c6f` (`SUCCESS`) |
 | Firestore proof record | `r-cloud-redaction-20260829` in `(default)` |
 | Content-free Cloud Trace | `05b54fcc39e0f869fcb486ed62d5350f` — eight linked spans, all ADK payload attributes `{}` |

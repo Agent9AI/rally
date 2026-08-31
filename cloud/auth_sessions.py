@@ -65,6 +65,8 @@ class AuthSessionStore(Protocol):
 
     async def get_identity(self, session_token: str) -> UserIdentity | None: ...
 
+    async def revoke_session(self, session_token: str) -> bool: ...
+
 
 class MemoryAuthSessionStore:
     """Deterministic development store; raw codes and tokens are never retained."""
@@ -126,6 +128,13 @@ class MemoryAuthSessionStore:
                 self._sessions.pop(session_hash, None)
                 return None
             return _identity_from_record(record)
+
+    async def revoke_session(self, session_token: str) -> bool:
+        session_hash = _token_hash(session_token)
+        if session_hash is None:
+            return False
+        async with self._lock:
+            return self._sessions.pop(session_hash, None) is not None
 
 
 class FirestoreAuthSessionStore:
@@ -216,6 +225,20 @@ class FirestoreAuthSessionStore:
             return _identity_from_record(record)
         except Exception as exc:
             raise AuthSessionError("could not verify login session") from exc
+
+    async def revoke_session(self, session_token: str) -> bool:
+        session_hash = _token_hash(session_token)
+        if session_hash is None:
+            return False
+        document = self.sessions.document(session_hash)
+        try:
+            snapshot = await document.get()
+            if not snapshot.exists:
+                return False
+            await document.delete()
+            return True
+        except Exception as exc:
+            raise AuthSessionError("could not revoke login session") from exc
 
 
 def make_auth_session_store() -> AuthSessionStore:

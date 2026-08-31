@@ -1,4 +1,5 @@
 """A2A task persistence with Firestore production and memory test backends."""
+
 from __future__ import annotations
 
 import hashlib
@@ -101,9 +102,7 @@ class FirestoreA2ATaskStore(TaskStore):
             try:
                 start = next(i for i, task in enumerate(tasks) if task.id == start_task_id)
             except StopIteration as exc:
-                raise InvalidParamsError(
-                    f"Invalid page token: {params.page_token}"
-                ) from exc
+                raise InvalidParamsError(f"Invalid page token: {params.page_token}") from exc
         page_size = params.page_size or DEFAULT_LIST_TASKS_PAGE_SIZE
         end = start + page_size
         next_page_token = encode_page_token(tasks[end].id) if end < total_size else None

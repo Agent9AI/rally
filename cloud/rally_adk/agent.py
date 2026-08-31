@@ -4,6 +4,7 @@ This agent does not own Rally's checklist or completion state. It converts an
 executive request into a bounded handoff for the authoritative Rally runner.
 That separation keeps model output useful while keeping policy deterministic.
 """
+
 from __future__ import annotations
 
 import os

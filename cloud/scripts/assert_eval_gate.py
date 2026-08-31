@@ -1,4 +1,5 @@
 """Fail when the latest ADK result for any required Rally case did not pass."""
+
 from __future__ import annotations
 
 import json
@@ -50,8 +51,7 @@ def main() -> int:
         print("ADK eval gate FAIL")
         return 1
     print(
-        f"ADK eval gate PASS: {len(EXPECTED)}/{len(EXPECTED)} cases met "
-        "every configured threshold"
+        f"ADK eval gate PASS: {len(EXPECTED)}/{len(EXPECTED)} cases met every configured threshold"
     )
     return 0
 

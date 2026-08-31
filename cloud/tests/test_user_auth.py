@@ -20,9 +20,7 @@ def claims(**overrides):
 
 
 def install_verifier(monkeypatch, payload):
-    monkeypatch.setenv(
-        "RALLY_GOOGLE_WEB_CLIENT_IDS", "rally-client.apps.googleusercontent.com"
-    )
+    monkeypatch.setenv("RALLY_GOOGLE_WEB_CLIENT_IDS", "rally-client.apps.googleusercontent.com")
     monkeypatch.setattr(
         user_auth.google_id_token,
         "verify_oauth2_token",

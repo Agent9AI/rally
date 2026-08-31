@@ -45,14 +45,23 @@ button “Connect” only when all of these exist:
 - a state-bound callback with PKCE where supported
 - encrypted token storage and rotation
 - per-user tenant isolation and revocation
-- a post-connect capability check
+- bounded discovery against a committed safe allowlist
+- one fixed, harmless live read and a content-free proof
 - a complete rollback path
 
 Cloudflare, n8n Cloud, Stripe, Atlassian, and HyperAgent use provider-native
 OAuth in the current tab and return to the exact admin card. GitHub uses a
-guided fine-grained-token path. Google Workspace, Slack, and Salesforce remain
-labelled “App setup needed” until Rally's provider registrations are complete;
-their setup links open separately and are never presented as connections.
+guided fine-grained-token path. A provider whose Rally-owned registration is
+not complete remains disabled and labelled “Not available yet.” The card does
+not send a nontechnical administrator into a provider console and imply that
+finishing Rally's application setup is customer onboarding.
+
+Google Workspace needs a separate confidential OAuth client dedicated to the
+connector. It is not the Google Identity Services client used to sign into
+Rally. The customer sees one Workspace card, while Rally checks the eight
+official Gmail, Drive, Docs, Sheets, Slides, Calendar, Chat, and People MCP
+services independently behind it. If the confidential client is absent, or any
+service fails its allowlist check, the aggregate card remains disabled.
 
 ## Hosted control-plane slice
 
@@ -61,20 +70,41 @@ part that can be made self-service safely: account identity and encrypted
 credential custody. Sign-in uses Google Identity Services; a unique AES-GCM key
 protects each connection; Google Cloud KMS wraps that key; and Firestore stores
 only ciphertext and non-secret metadata. The browser retains no session or
-credential in persistent storage.
+credential in persistent storage; the admin uses page memory for its short-lived
+session and any pasted credential.
 
 The vault moves through `stored_unverified`, `verifying`, and `ready`. OAuth
 state is one-use, hashed at rest, expires after ten minutes, and its encrypted
-flow record is deleted atomically at callback. Rally stores a returned token
-before immediately testing authenticated MCP discovery and intersecting the
-live tool names with a committed safe preset. A failed check becomes
-`needs_attention`; no tool is enabled merely because a secret was accepted.
+flow record is deleted atomically at callback. In production, the Cloudflare
+Worker handles the registered callback server-side and returns to the same card.
+A per-flow `HttpOnly`, `Secure`, `SameSite=Lax` cookie proves that the return
+came back to the browser that started consent; it contains no identity or
+provider credential and is cleared at callback. The admin page receives neither
+the authorization code nor the provider token. There is no static callback
+fallback: if the production Worker is unavailable, authorization fails closed.
+Rally then checks authenticated MCP discovery against a
+committed safe allowlist and calls one predetermined read-only canary. Only a
+successful call may create the content-free proof: canary name, schema digest,
+timestamp, and approved-tool count, never the returned business data. A failed
+check becomes `needs_attention`; a stored credential or successful tool list
+alone enables nothing.
 
-This hosted activation plane proves custody, provider identity, and the safe
-tool boundary. The existing runner gateway remains a separate execution plane:
-a ready hosted connection is not delegated to an agent run until Rally issues a
-run-scoped, immutable authority snapshot for that user. That last bridge must
-remain explicit rather than letting a browser session become model authority.
+This hosted activation plane proves custody, provider identity, allowlist fit,
+and one harmless live read. A signed-in administrator may use its direct invoke
+route only for Certified, preset-allowlisted reads; every call rechecks tenant,
+policy, and arguments and writes a content-free receipt. That is not autonomous
+model authority. Agent runs remain separate and require a run-scoped, immutable
+authority snapshot for that user.
+
+Disconnect also fails closed. Rally disables the connector first. For OAuth
+connections whose metadata publishes a revocation endpoint, Rally revokes the
+grant before deleting its encrypted copy; failure leaves the copy sealed for
+retry. Without automatic revocation, Rally deletes its copy and reports that the
+administrator must revoke the grant, key, or token in provider settings. Signing
+out separately requests deletion of the current server-side session hash before
+clearing page memory; expiry remains the backstop if that request fails. The
+certification contract describes what qualifies as Ready, not which public
+provider accounts have already passed live certification.
 
 ## Company activation checklist
 

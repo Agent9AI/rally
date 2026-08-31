@@ -39,9 +39,7 @@ from connector_presets import ConnectorPresetError, build_connector_preset
 DEFAULT_CONFIG = os.path.join(ROOT, "config", "rally.json")
 
 
-def _credential_store(
-    cfg: dict[str, Any], connector_id: str, subject: str
-) -> ProfileKeychainStore:
+def _credential_store(cfg: dict[str, Any], connector_id: str, subject: str) -> ProfileKeychainStore:
     connector = connectors.configured_connector(cfg, connector_id, subject)
     service = (connector.get("auth") or {}).get("keychain_service")
     if not service:
@@ -213,9 +211,7 @@ def disable_connector(cfg: dict[str, Any], connector_id: str, subject: str) -> i
     settings = connectors.installation_settings(cfg, subject)
     enabled = set(settings["enabled"])
     enabled.discard(connector_id)
-    path = connectors.save_local_settings(
-        cfg, enabled, settings["overrides"], subject
-    )
+    path = connectors.save_local_settings(cfg, enabled, settings["overrides"], subject)
     print(
         f"disabled {connector_id} for {settings['profile_id']} in {path}; "
         "that profile's stored OAuth credentials were not deleted"
@@ -349,13 +345,12 @@ def build_parser() -> argparse.ArgumentParser:
     enable.add_argument("connector_id")
     enable.add_argument("--endpoint", default="")
     enable.add_argument(
-        "--credential-file", default="",
+        "--credential-file",
+        default="",
         help="profile-specific Google ADC file (required for non-local BigQuery profiles)",
     )
     enable.add_argument("--tool", action="append", default=[], metavar="NAME=RISK")
-    enable.add_argument(
-        "--preset", default="", help="provider-safe preset such as read-minimal"
-    )
+    enable.add_argument("--preset", default="", help="provider-safe preset such as read-minimal")
     enable.add_argument(
         "--workflow-id",
         action="append",
@@ -381,9 +376,7 @@ def build_parser() -> argparse.ArgumentParser:
     disconnect.add_argument("connector_id")
     approvals = sub.add_parser("approvals", help="list content-free run approvals")
     approvals.add_argument("run_dir")
-    approvals.add_argument(
-        "--status", choices=("pending", "approved", "consumed", "expired")
-    )
+    approvals.add_argument("--status", choices=("pending", "approved", "consumed", "expired"))
     review = sub.add_parser("review", help="privately inspect one exact approval request")
     review.add_argument("run_dir")
     review.add_argument("approval_id")
@@ -404,15 +397,19 @@ def main() -> int:
             return install_gateway()
         if args.command == "enable":
             return enable_connector(
-                cfg, args.connector_id, args.endpoint, args.tool,
-                args.profile, args.credential_file, args.preset, args.workflow_id,
+                cfg,
+                args.connector_id,
+                args.endpoint,
+                args.tool,
+                args.profile,
+                args.credential_file,
+                args.preset,
+                args.workflow_id,
             )
         if args.command == "disable":
             return disable_connector(cfg, args.connector_id, args.profile)
         if args.command == "register-client":
-            return register_oauth_client(
-                cfg, args.connector_id, args.profile, args.public_client
-            )
+            return register_oauth_client(cfg, args.connector_id, args.profile, args.public_client)
         if args.command == "import-token":
             return import_bearer_token(cfg, args.connector_id, args.profile)
         if args.command == "disconnect":
@@ -423,9 +420,9 @@ def main() -> int:
             return review_approval(args.run_dir, args.approval_id)
         if args.command == "approve":
             return approve(args.run_dir, args.approval_id, args.human_identity)
-        return asyncio.run(inspect_connector(
-            cfg, args.connector_id, args.command == "auth", args.profile
-        ))
+        return asyncio.run(
+            inspect_connector(cfg, args.connector_id, args.command == "auth", args.profile)
+        )
     except (
         ApprovalError,
         ConnectorCredentialError,
