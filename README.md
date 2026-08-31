@@ -222,7 +222,9 @@ with Lyria 3 Pro](docs/evidence/media/all-things-agentic-lyria-3-pro.mp3), a
 [73.33-second soulful hip-hop variant](docs/evidence/media/all-things-agentic-soulful-hip-hop-lyria-3-pro.mp3),
 and a [1024×1024 beagle image](docs/evidence/media/beagle-gemini-image.png) with
 Gemini 2.5 Flash Image. The repository preserves their hashes and non-secret
-[generation receipt](docs/evidence/media/generation-receipt.json).
+[generation receipt](docs/evidence/media/generation-receipt.json). The exact
+[provider-facing prompt for the hip-hop version](docs/evidence/media/all-things-agentic-soulful-hip-hop-prompt.md)
+is preserved verbatim and independently hash-matched to that receipt.
 
 The media call is a bounded tool action, not permission to self-approve. Rally
 writes the output inside the run workspace, workers inspect it under the same
